@@ -1,0 +1,14 @@
+[audio]
+sample_rate = 44100
+channels = 1
+
+[output]
+command = "afplay"
+args = ["-v", "0.3"]
+
+[mapping]
+play = '>'
+wait = ':'
+repeat = '|'
+repeat_line = '||'
+reference = '@'

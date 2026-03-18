@@ -1,0 +1,17 @@
+[include.riff_2]
+path = "./blabla"
+
+[seq.main]
+repeat = 2
+content = """
+> @riff_1 c3 0.5 : @riff_1
+> @riff_1 c4 0.5 : @riff_1
+"""
+
+[seq.riff_1]
+args = 'note vol'
+repeat = 4
+content = """
+> note 1 vol : 1
+> note+2 1 vol+0.1 | +2 : 1
+"""
