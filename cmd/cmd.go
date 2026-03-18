@@ -13,5 +13,12 @@ func Execute(cfg *Config, bleed *Bleed) error {
 	fmt.Printf("Include %v\n", bleed.Include)
 	fmt.Printf("Sequence %v\n", bleed.Sequence)
 
+	for k, v := range bleed.Sequence {
+		fmt.Printf("Sequence [%s]\n", k)
+		fmt.Printf("Sequence args %v\n", v.Args)
+		fmt.Printf("Sequence reps %v\n", v.Repeat)
+		fmt.Printf("Sequence content %v\n", v.Content)
+	}
+
 	return nil
 }

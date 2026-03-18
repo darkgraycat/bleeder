@@ -9,13 +9,12 @@ import (
 
 type Bleed struct {
 	Include map[string]struct {
-		Path string `toml:"include"`
+		Path string `toml:"path"`
 	} `toml:"include"`
-
 	Sequence map[string]struct {
-		Args    Args   `toml:"args"`
-		Content string `toml:"content"`
-		Repeat  int    `toml:"repear"`
+		Args    Args    `toml:"args"`
+		Repeat  int     `toml:"repeat"`
+		Content Content `toml:"content"`
 	} `toml:"seq"`
 }
 
@@ -30,11 +29,19 @@ func LoadBleed(path string) (*Bleed, error) {
 type Args []string
 
 func (a *Args) UnmarshalTOML(data any) error {
-	switch v := data.(type) {
-	case string:
-		*a = strings.Split(v, " ")
+	if s, ok := data.(string); ok {
+		*a = strings.Fields(s)
 		return nil
-	default:
-		return fmt.Errorf("command key must be a string or int, got %T", data)
 	}
+	return fmt.Errorf("args should be whitespace character separated string, got %T", data)
+}
+
+type Content []string
+
+func (c *Content) UnmarshalTOML(data any) error {
+	if s, ok := data.(string); ok {
+		*c = strings.Fields(s)
+		return nil
+	}
+	return fmt.Errorf("content should be whitespace character separated string, got %T", data)
 }
