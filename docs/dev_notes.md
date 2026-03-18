@@ -137,3 +137,15 @@ content = """
 `@`  Reference to sequence or sample
      Example: > @kick
      Example: : @intro
+
+
+### Flow
+CLI/Daemon
+    ↓
+Parser (TOML + DSL → IR)
+    ↓
+IR (Intermediate Representation)
+    ↓
+Generator (IR → WAV samples)
+    ↓
+Player (samples → audio output)
