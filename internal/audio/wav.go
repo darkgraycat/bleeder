@@ -42,21 +42,19 @@ func (wav *WAV) Write(w io.Writer) error {
 
 func makeWAVHeader(sr, chs, bps int) []byte {
 	buf := new(bytes.Buffer)
-	buf.Write([]byte("RIFF"))  // filetype block ID
-	buf.Write(make([]byte, 4)) // filesize placeholder
-	buf.Write([]byte("WAVE"))  // fileformat ID
-
-	buf.Write([]byte("fmt "))                                  // identifier
-	binary.Write(buf, binary.LittleEndian, uint32(16))         // fmt chunk size
-	binary.Write(buf, binary.LittleEndian, uint16(1))          // audio format (1 PCM)
-	binary.Write(buf, binary.LittleEndian, uint16(chs))        // number of channels
-	binary.Write(buf, binary.LittleEndian, uint32(sr))         // sample rate
-	binary.Write(buf, binary.LittleEndian, uint32(sr*chs*bps)) // byte rate
-	binary.Write(buf, binary.LittleEndian, uint16(chs*bps))    // block align
-	binary.Write(buf, binary.LittleEndian, uint16(bps*8))      // bits per sample
-
-	buf.Write([]byte("data"))  // identifier
-	buf.Write(make([]byte, 4)) // datasize placeholder
+	buf.Write([]byte("RIFF"))                                  // FileTypeBlocID
+	buf.Write(make([]byte, 4))                                 // FileSize
+	buf.Write([]byte("WAVE"))                                  // FileFormatID
+	buf.Write([]byte("fmt "))                                  // FormatBlocID
+	binary.Write(buf, binary.LittleEndian, uint32(16))         // BlocSize
+	binary.Write(buf, binary.LittleEndian, uint16(1))          // AudioFormat
+	binary.Write(buf, binary.LittleEndian, uint16(chs))        // NbrChannels
+	binary.Write(buf, binary.LittleEndian, uint32(sr))         // Frequency
+	binary.Write(buf, binary.LittleEndian, uint32(sr*chs*bps)) // BytePerSec
+	binary.Write(buf, binary.LittleEndian, uint16(chs*bps))    // BytePerBloc
+	binary.Write(buf, binary.LittleEndian, uint16(bps*8))      // BitsPerSample
+	buf.Write([]byte("data"))                                  // DataBlocID
+	buf.Write(make([]byte, 4))                                 // DataSize
 
 	return buf.Bytes()
 }
