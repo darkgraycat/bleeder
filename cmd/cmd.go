@@ -5,20 +5,28 @@ import (
 	"fmt"
 )
 
-type Exec func(args *utils.Args, cfg *Config) error
+type Exec func(args *utils.Args) error
 
-func ExecPlay(args *utils.Args, cfg *Config) error {
-	file := args.At(1)
-	fmt.Printf("[PLAY] %s\n", file)
-	return nil
+func ExecPlay(args *utils.Args) error {
+	cfg, err := LoadConfig(args.At(2))
+	if err != nil {
+		return err
+	}
+
+	bleed, err := LoadBleed(args.At(2))
+	if err != nil {
+		return err
+	}
+
+	return Execute(cfg, bleed)
 }
 
-func ExecSend(args *utils.Args, cfg *Config) error {
+func ExecSend(args *utils.Args) error {
 	fmt.Printf("[SEND] %v\n", args)
 	return nil
 }
 
-func ExecServe(args *utils.Args, cfg *Config) error {
+func ExecServe(args *utils.Args) error {
 	fmt.Printf("[SERVE] %v\n", args)
 	return nil
 }
@@ -45,24 +53,5 @@ func Execute(cfg *Config, bleed *Bleed) error {
 	bleeder := NewBleeder(cfg, bleed)
 	fmt.Printf("Bleeder %v", bleeder)
 
-	return nil
-}
-
-type Mode interface {
-	Run(args ...any) error
-}
-
-type ModePlay struct{}
-
-func (m ModePlay) Run(args ...any) error {
-	file := args[0].(string) // unsafe cast
-	fmt.Printf("Playing %v\n", file)
-	return nil
-}
-
-type ModeSend struct{}
-
-func (m ModeSend) Run(args ...any) error {
-	fmt.Printf("Sending %v\n", args...)
 	return nil
 }
