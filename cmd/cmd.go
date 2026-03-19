@@ -9,16 +9,11 @@ type Cmd func(args *utils.Args) error
 
 func CmdPlay(args *utils.Args) error {
 	cfg, err := LoadConfig(args.At(2))
-	if err != nil {
-		return err
-	}
-
 	bleed, err := LoadBleed(args.At(2))
 	if err != nil {
 		return err
 	}
-
-	return Execute(cfg, bleed)
+	return Test(cfg, bleed)
 }
 
 func CmdSend(args *utils.Args) error {
@@ -31,7 +26,7 @@ func CmdServe(args *utils.Args) error {
 	return nil
 }
 
-func Execute(cfg *Config, bleed *Bleed) error {
+func Test(cfg *Config, bleed *Bleed) error {
 	fmt.Println("Executing")
 	fmt.Println("Config")
 	fmt.Printf("Audio %v\n", cfg.Audio)
