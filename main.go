@@ -8,12 +8,13 @@ import (
 )
 
 func main() {
+	args := utils.NewArgs(os.Args)
+
 	modes := map[string]cmd.Cmd{
 		"play":  cmd.CmdPlay,
 		"send":  cmd.CmdSend,
 		"serve": cmd.CmdServe,
 	}
-	args := utils.NewArgs(os.Args)
 
 	mode, ok := modes[args.At(1)]
 	if !ok {
