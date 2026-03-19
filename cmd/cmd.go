@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-type Exec func(args *utils.Args) error
+type Cmd func(args *utils.Args) error
 
-func ExecPlay(args *utils.Args) error {
+func CmdPlay(args *utils.Args) error {
 	cfg, err := LoadConfig(args.At(2))
 	if err != nil {
 		return err
@@ -21,12 +21,12 @@ func ExecPlay(args *utils.Args) error {
 	return Execute(cfg, bleed)
 }
 
-func ExecSend(args *utils.Args) error {
+func CmdSend(args *utils.Args) error {
 	fmt.Printf("[SEND] %v\n", args)
 	return nil
 }
 
-func ExecServe(args *utils.Args) error {
+func CmdServe(args *utils.Args) error {
 	fmt.Printf("[SERVE] %v\n", args)
 	return nil
 }

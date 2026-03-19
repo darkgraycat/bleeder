@@ -8,10 +8,10 @@ import (
 )
 
 func main() {
-	modes := map[string]cmd.Exec{
-		"play":  cmd.ExecPlay,
-		"send":  cmd.ExecSend,
-		"serve": cmd.ExecServe,
+	modes := map[string]cmd.Cmd{
+		"play":  cmd.CmdPlay,
+		"send":  cmd.CmdSend,
+		"serve": cmd.CmdServe,
 	}
 	args := utils.NewArgs(os.Args)
 
