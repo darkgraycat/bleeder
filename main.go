@@ -10,12 +10,12 @@ import (
 func main() {
 	args := utils.NewArgs(os.Args)
 
-	mode, file := args.At(1), args.At(2)
-	// fmt.Printf("[MODE] %s - [FILE] %s\n", mode, file)
+	mode := args.At(1)
 
 	switch mode {
 	case "play":
-		cmd.ModePlay{}.Run(file)
+		cmd.ExecPlay(args, nil)
+		cmd.ModePlay{}.Run(args)
 	case "send":
 		cmd.ModeSend{}.Run(args.Positional)
 	default:

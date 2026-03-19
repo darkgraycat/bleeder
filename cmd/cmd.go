@@ -1,8 +1,27 @@
 package cmd
 
-import "fmt"
+import (
+	"bleeder/internal/utils"
+	"fmt"
+)
 
-// TODO: cleanup mess with modes
+type Exec func(args *utils.Args, cfg *Config) error
+
+func ExecPlay(args *utils.Args, cfg *Config) error {
+	file := args.At(1)
+	fmt.Printf("[PLAY] %s\n", file)
+	return nil
+}
+
+func ExecSend(args *utils.Args, cfg *Config) error {
+	fmt.Printf("[SEND] %v\n", args)
+	return nil
+}
+
+func ExecServe(args *utils.Args, cfg *Config) error {
+	fmt.Printf("[SERVE] %v\n", args)
+	return nil
+}
 
 func Execute(cfg *Config, bleed *Bleed) error {
 	fmt.Println("Executing")
