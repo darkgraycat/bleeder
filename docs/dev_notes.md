@@ -3,7 +3,16 @@ As a reference I am going to use SonicPI API
 https://gist.github.com/carltesta/424cc9e42f4de2ed52a41a612e22dc69
 Combining with what I learned about using GuitarPro 5
 
-### An examples
+### User scenarios
+1. Play file
+`bleeder play song.toml`
+2. Play stdin
+`cat song.toml | bleeder play`
+3. Play part using Neovim cmd
+`:%w !bleeder play`
+
+
+### Bleed.toml format examples
 #### Example 1: positional arguments
 ```toml
 [seq.riff_1]
@@ -149,3 +158,36 @@ IR (Intermediate Representation)
 Generator (IR → WAV samples)
     ↓
 Player (samples → audio output)
+
+
+### Implementation details
+This one
+```
+> note 1 vol : 1
+> note+2 1 vol+0.1 | +2 : 1
+```
+Can be read as
+```
+play note 1 vol wait 1
+play note+2 1 vol+0.1 repeat +2 wait 1
+```
+So every line is going to be splitted by chars from [commands] section of config.toml
+In this case we going to see something like
+```
+>
+note 1 vol
+:
+1
+>
+note+2 1 vol+0.1
+|
++2
+:
+1
+```
+
+
+
+
+
+

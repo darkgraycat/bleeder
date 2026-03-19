@@ -13,13 +13,16 @@ type Config struct {
 		Args    []string
 	} `toml:"output"`
 
-	Mapping struct {
+	Commands struct {
 		Play       string `toml:"play"`
 		Wait       string `toml:"wait"`
 		Repeat     string `toml:"repeat"`
 		RepeatLine string `toml:"repeat_line"`
-		Reference  string `toml:"reference"`
-	} `toml:"mapping"`
+	} `toml:"commands"`
+
+	Symbols struct {
+		Reference string `toml:"reference"`
+	} `toml:"symbols"`
 }
 
 func LoadConfig(path string) (*Config, error) {
