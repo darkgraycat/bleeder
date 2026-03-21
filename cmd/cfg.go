@@ -13,12 +13,12 @@ type Config struct {
 		Args    []string
 	} `toml:"output"`
 
-	Commands struct {
+	Instructions struct {
 		Play       string `toml:"play"`
 		Wait       string `toml:"wait"`
 		Repeat     string `toml:"repeat"`
 		RepeatLine string `toml:"repeat_line"`
-	} `toml:"commands"`
+	} `toml:"instructions"`
 
 	Symbols struct {
 		Reference string `toml:"reference"`

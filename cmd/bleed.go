@@ -10,7 +10,7 @@ import (
 type Bleed struct {
 	Meta struct {
 		Main string `toml:"main"`
-		Include []string `toml:"include"`
+		Bleeds []*Bleed `toml:"bleeds"`
 	} `toml:"meta"`
 	Sequence map[string]struct {
 		Args    Args    `toml:"args"`
@@ -25,6 +25,18 @@ func LoadBleed(path string) (*Bleed, error) {
 		return nil, err
 	}
 	return &bleed, nil
+}
+
+func (b *Bleed) UnmarshalTOML(data any) error {
+	if s, ok := data.(string); ok {
+		bleed, err := LoadBleed(s)
+		if err != nil {
+			return err
+		}
+		*b = *bleed
+		return nil
+	}
+	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
 }
 
 type Args []string

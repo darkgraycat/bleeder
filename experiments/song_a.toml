@@ -1,6 +1,6 @@
 [meta]
 main = "main"
-include = ["./experiments/included.toml"]
+bleeds = ["./experiments/included.toml"]
 
 [seq.main]
 repeat = 2

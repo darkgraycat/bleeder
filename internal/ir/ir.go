@@ -2,13 +2,13 @@ package ir
 
 type Program struct {
 	ctx          Context
-	instructions []Instruction
+	instructions []*Instruction
 }
 
 func NewProgram(ctx Context) *Program {
 	return &Program{
 		ctx:          ctx,
-		instructions: make([]Instruction, 0),
+		instructions: make([]*Instruction, 0),
 	}
 }
 
@@ -16,9 +16,8 @@ func (p *Program) Merge(src *Program) {
 	p.instructions = append(p.instructions, src.instructions...)
 }
 
-func (p *Program) Add(command Command) *Program {
-	// TODO: implement
-	return p
+func (p *Program) Add(i *Instruction) {
+	p.instructions = append(p.instructions, i)
 }
 
 type Context struct {
@@ -33,8 +32,3 @@ type Instruction struct {
 	Vol  float32
 }
 
-type Command func(ctx *Context) (*Instruction, error)
-
-func PlayCommand(ctx *Context) (*Instruction, error) {
-	return nil, nil
-}
