@@ -9,19 +9,25 @@ type Cmd func(args *utils.Args) error
 
 // Command to play specified .bleed.toml file
 func CmdPlay(args *utils.Args) error {
+	fmt.Printf("[PLAY] %v\n", args)
 	cfg, err := LoadConfig(args.At(2))
 	bleed, err := LoadBleed(args.At(2))
 	if err != nil {
 		return err
 	}
-	bleeder := NewBleeder(cfg)
-	fmt.Printf("Bleeder %v", bleeder)
+	fmt.Printf("Cfg %v\nBleed %v\n", cfg, bleed)
 
-	ir, err := bleeder.ParseBleed(bleed)
+	bleeder, err := NewBleeder(cfg).Bleed(bleed)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("IR %v", ir)
+	fmt.Printf("Bleeder %v\n", bleeder)
+
+	ir, err := bleeder.GetFullIR()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("IR %v\n", ir)
 
 	return nil
 }
