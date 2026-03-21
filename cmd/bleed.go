@@ -37,7 +37,7 @@ func (r *BleedRef) UnmarshalTOML(data any) error {
 		if err != nil {
 			return err
 		}
-		*r.Bleed = *bleed
+		r.Bleed = bleed
 		return nil
 	}
 	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
