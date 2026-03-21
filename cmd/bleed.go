@@ -8,9 +8,10 @@ import (
 )
 
 type Bleed struct {
-	Include map[string]struct {
-		Path string `toml:"path"`
-	} `toml:"include"`
+	Meta struct {
+		Main string `toml:"main"`
+		Include []string `toml:"include"`
+	} `toml:"meta"`
 	Sequence map[string]struct {
 		Args    Args    `toml:"args"`
 		Repeat  int     `toml:"repeat"`

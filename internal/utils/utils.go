@@ -1,5 +1,7 @@
 package utils
 
+// import "reflect"
+
 func IfThenElse[T any](cond bool, a, b T) T {
 	if cond {
 		return a
@@ -14,3 +16,8 @@ func Match[K comparable, V any](mapping map[K]V, key K, def V) V {
 	return def
 }
 
+// TODO: implement decoder to have shape and validation of it
+func DecodeArgs(a []string, dst any) error {
+	// v := reflect.ValueOf(dst)
+	return nil
+}

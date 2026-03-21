@@ -1,5 +1,6 @@
-[include.riff_2]
-path = "./blabla"
+[meta]
+main = "main"
+include = ["./experiments/included.toml"]
 
 [seq.main]
 repeat = 2

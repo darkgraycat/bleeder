@@ -8,22 +8,22 @@ import (
 )
 
 func main() {
+	// parse CLI args and define which cmd to use
 	args := utils.NewArgs(os.Args)
-
-	modes := map[string]cmd.Cmd{
+	cmds := map[string]cmd.Cmd{
 		"play":  cmd.CmdPlay,
-		"send":  cmd.CmdSend,
 		"serve": cmd.CmdServe,
+		"send":  cmd.CmdSend,
 	}
 
-	mode, ok := modes[args.At(1)]
+	cmd, ok := cmds[args.At(1)]
 	if !ok {
 		fmt.Fprintln(os.Stderr, "Unknown mode")
 		os.Exit(1)
 	}
 
-	err := mode(args)
-
+	// run selected cmd
+	err := cmd(args)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Runtime error", err)
 		os.Exit(1)

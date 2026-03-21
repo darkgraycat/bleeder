@@ -7,46 +7,33 @@ import (
 
 type Cmd func(args *utils.Args) error
 
+// Command to play specified .bleed.toml file
 func CmdPlay(args *utils.Args) error {
 	cfg, err := LoadConfig(args.At(2))
 	bleed, err := LoadBleed(args.At(2))
 	if err != nil {
 		return err
 	}
-	return Test(cfg, bleed)
-}
+	bleeder := NewBleeder(cfg)
+	fmt.Printf("Bleeder %v", bleeder)
 
-func CmdSend(args *utils.Args) error {
-	fmt.Printf("[SEND] %v\n", args)
+	ir, err := bleeder.ParseBleed(bleed)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("IR %v", ir)
+
 	return nil
 }
 
+// Start application in daemon mode listening
 func CmdServe(args *utils.Args) error {
 	fmt.Printf("[SERVE] %v\n", args)
 	return nil
 }
 
-func Test(cfg *Config, bleed *Bleed) error {
-	fmt.Println("Executing")
-	fmt.Println("Config")
-	fmt.Printf("Audio %v\n", cfg.Audio)
-	fmt.Printf("Output %v\n", cfg.Output)
-	fmt.Printf("Commands %v\n", cfg.Commands)
-	fmt.Printf("Symbols %v\n", cfg.Symbols)
-
-	fmt.Println("Bleed")
-	fmt.Printf("Include %v\n", bleed.Include)
-	fmt.Printf("Sequence %v\n", bleed.Sequence)
-
-	for k, v := range bleed.Sequence {
-		fmt.Printf("Sequence [%s]\n", k)
-		fmt.Printf("Sequence args %v\n", v.Args)
-		fmt.Printf("Sequence reps %v\n", v.Repeat)
-		fmt.Printf("Sequence content %v\n", v.Content)
-	}
-
-	bleeder := NewBleeder(cfg, bleed)
-	fmt.Printf("Bleeder %v", bleeder)
-
+// Send partial sequence data to play
+func CmdSend(args *utils.Args) error {
+	fmt.Printf("[SEND] %v\n", args)
 	return nil
 }

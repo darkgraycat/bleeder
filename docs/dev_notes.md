@@ -159,6 +159,61 @@ Generator (IR → WAV samples)
     ↓
 Player (samples → audio output)
 
+### Flow reexplained
+```
+bleeder <cmd>
+    <play>
+        load cfg
+        load bleed
+        create Player
+        create Bleeder
+            for each sequence
+                create ir.Program
+                parse content into instructions
+                store in Bleeder
+            on <method>
+                <intoIRFull>
+                    read main sequence
+                    create ir.Program
+                    parse content into instructions
+                    for each sequence reference
+                        call intoIRSeq method
+                        result merge with initial ir.Program
+                    return initial ir.Program
+                <intoIRSeq>
+                    return stored ir.Program value from Bleeder
+                <intoIRRaw>
+                    create ir.Program
+                    parse content into instructions
+                    for each sequence reference
+                        use stored ir.Program value from Bleeder
+                        merge with initial ir.Program
+                    return initial ir.Program
+    <serve>
+        // TODO
+    <send>
+        // TODO
+```
+
+**General flow**
+```
+DSL ("> c3 0.5 1")
+    ↓
+Command (function)
+    ↓
+Instruction (generic data: tag, freq, duration, etc.)
+    ↓
+Player (interprets instruction for output format)
+    ↓
+WAV / MIDI / TABS
+```
+
+**Parsing flow**
+
+
+
+
+
 
 ### Implementation details
 This one
