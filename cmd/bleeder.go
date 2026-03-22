@@ -47,15 +47,26 @@ func (b *Bleeder) GetMainIR() (*ir.Program, error) {
 
 // Get IR of specified section with args
 func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
+	// try IR from cache
 	key := fmt.Sprintf("%s:%v", name, args)
 	if IR, ok := b.irs[key]; ok {
 		return IR, nil
 	}
+	// get sequence from bleed
 	seq, ok := b.bleed.Sequence[name]
 	if !ok {
 		return nil, fmt.Errorf("Sequence is not found: %s", name)
 	}
-	content := seq.Content
+	// expands arguments
+	argpairs := make([]string, 0, len(seq.Args)*2)
+	for k, v := range seq.Args {
+		argpairs = append(argpairs, k, v)
+	}
+	replacer := strings.NewReplacer(argpairs...)
+	content := make([]string, 0, len(seq.Content))
+	for i, line := range seq.Content {
+		content[i] = replacer.Replace(line)
+	}
 	// TODO expand arguments
 	IR, err := b.GetRawIR(content)
 	if err != nil {
