@@ -1,5 +1,7 @@
 package utils
 
+import "strings"
+
 // import "reflect"
 
 func IfThenElse[T any](cond bool, a, b T) T {
@@ -14,6 +16,19 @@ func Match[K comparable, V any](mapping map[K]V, key K, def V) V {
 		return v
 	}
 	return def
+}
+
+func ReplaceByMap(replacements map[string]string, lines ...string) []string {
+	pairs := make([]string, 0, len(replacements)*2)
+	for k, v := range replacements {
+		pairs = append(pairs, k, v)
+	}
+	replacer := strings.NewReplacer(pairs...)
+	replaced := make([]string, len(lines))
+	for i, line := range lines {
+		replaced[i] = replacer.Replace(line)
+	}
+	return replaced
 }
 
 // TODO: implement decoder to have shape and validation of it

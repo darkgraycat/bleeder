@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bleeder/internal/ir"
+	"bleeder/internal/utils"
 	"fmt"
 	"strings"
 )
@@ -42,13 +43,14 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 
 // Get IR of the main sequence
 func (b *Bleeder) GetMainIR() (*ir.Program, error) {
+	// get main IR from cache or build it
 	return b.GetSeqIR(b.main, nil)
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 	// try IR from cache
-	key := fmt.Sprintf("%s:%v", name, args)
+	key := name + ":" + strings.Join(args, ",")
 	if IR, ok := b.irs[key]; ok {
 		return IR, nil
 	}
@@ -58,32 +60,8 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 		return nil, fmt.Errorf("Sequence is not found: %s", name)
 	}
 	// expands arguments
-	argpairs := make([]string, 0, len(seq.Args)*2)
-	for k, v := range seq.Args {
-		argpairs = append(argpairs, k, v)
-	}
-	replacer := strings.NewReplacer(argpairs...)
-	content := make([]string, 0, len(seq.Content))
-	for i, line := range seq.Content {
-		content[i] = replacer.Replace(line)
-	}
-	// TODO expand arguments
-	IR, err := b.GetRawIR(content)
-	if err != nil {
-		return nil, err
-	}
-	b.irs[key] = IR
-	return IR, nil
-	// content := b.bleed
-	// IR := b.GetRawIR() // need access to bleed file
-
-	// TODO: mb build it and write into cache?
-	// Its needed in case file contains unused sequences
-	// NO. We need to cache ALL sequences because of RawIR
-
-	// ah I need... no.. if I build everything in main
-	// like do a preload
-	// and methods only runs from cache
+	content := utils.ReplaceByMap(seq.Args, seq.Content...)
+	return b.GetRawIR(content)
 }
 
 // Get IR of raw DSL
