@@ -10,7 +10,7 @@ import (
 type Bleed struct {
 	Meta struct {
 		Main string `toml:"main"`
-		Bleeds []*BleedRef `toml:"bleeds"`
+		Bleeds []BleedRef `toml:"bleeds"`
 	} `toml:"meta"`
 	Sequence map[string]struct {
 		Args    Args    `toml:"args"`
