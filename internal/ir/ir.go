@@ -1,27 +1,18 @@
 package ir
 
-type Program struct {
-	ctx          Context
-	instructions []*Instruction
-}
+type Program []*Instruction
 
-func NewProgram(ctx Context) *Program {
-	return &Program{
-		ctx:          ctx,
-		instructions: make([]*Instruction, 0),
-	}
-}
-
-func (p *Program) Merge(src *Program) {
-	p.instructions = append(p.instructions, src.instructions...)
+func NewProgram() *Program {
+	p := Program(make([]*Instruction, 0))
+	return &p
 }
 
 func (p *Program) Add(i *Instruction) {
-	p.instructions = append(p.instructions, i)
+	*p = append(*p, i)
 }
 
-type Context struct {
-	SampleRate int
+func (p *Program) Merge(src *Program) {
+	*p = append(*p, *src...)
 }
 
 type Instruction struct {
@@ -31,4 +22,3 @@ type Instruction struct {
 	Dur  float32
 	Vol  float32
 }
-

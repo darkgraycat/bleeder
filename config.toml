@@ -6,11 +6,13 @@ channels = 1
 command = "afplay"
 args = ["-v", "0.3"]
 
-[instructions]
+[mapping]
 play = '>'
 wait = ':'
 repeat = '|'
 repeat_line = '||'
+debug = '#'
 
 [symbols]
 reference = '@'
+wave = '~'

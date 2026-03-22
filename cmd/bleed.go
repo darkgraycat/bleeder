@@ -9,7 +9,7 @@ import (
 
 type Bleed struct {
 	Meta struct {
-		Main string `toml:"main"`
+		Main   string     `toml:"main"`
 		Bleeds []BleedRef `toml:"bleeds"`
 	} `toml:"meta"`
 	Sequence map[string]struct {
@@ -43,14 +43,22 @@ func (r *BleedRef) UnmarshalTOML(data any) error {
 	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
 }
 
-type Args []string
+type Args map[string]string
 
 func (a *Args) UnmarshalTOML(data any) error {
-	if s, ok := data.(string); ok {
-		*a = strings.Fields(s)
-		return nil
+	s, ok := data.(string)
+	if !ok {
+		return fmt.Errorf("args should be string, got %T", data)
 	}
-	return fmt.Errorf("args should be whitespace character separated string, got %T", data)
+	*a = make(Args)
+	for part := range strings.FieldsSeq(s) {
+		k, v, ok := strings.Cut(part, ":")
+		if !ok {
+			return fmt.Errorf("invalid arg: %q", part)
+		}
+		(*a)[k] = v
+	}
+	return nil
 }
 
 type Content []string

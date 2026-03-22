@@ -10,9 +10,17 @@ content = """
 """
 
 [seq.riff_1]
-args = 'note vol'
+args = 'note:c3 vol:1.0'
 repeat = 4
 content = """
 > note 1 vol : 1
 > note+2 1 vol+0.1 | +2 : 1
+"""
+
+[seq.riff_2_advanced_stuff]
+# using default duration:1.0 and default volume:1.0
+content = """
+> c3 : 1 ||
+> d3 : 1 #
+> ~44020
 """

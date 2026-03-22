@@ -208,7 +208,30 @@ Player (interprets instruction for output format)
 WAV / MIDI / TABS
 ```
 
-**Parsing flow**
+**Circular reference validation**
+Input data:
+```toml
+[seq.riff1]
+> @riff2
+
+[seq.riff2]
+> @riff1
+
+[seq.main]
+> @riff1
+```
+Parsing flow:
+refs = []
+parse main
+    store "main" in refs
+    confirm "riff1" not in refs
+    parse "riff1"
+        store "riff1" in refs
+        confirm "riff2" not in refs
+        parse "riff2"
+            store "riff2" in refs
+            confirm "riff1" not in refs
+                ERROR: Circular dependency detected
 
 
 

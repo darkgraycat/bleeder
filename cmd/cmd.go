@@ -23,7 +23,7 @@ func CmdPlay(args *utils.Args) error {
 	}
 	fmt.Printf("Bleeder %v\n", bleeder)
 
-	ir, err := bleeder.GetFullIR()
+	ir, err := bleeder.GetMainIR()
 	if err != nil {
 		return err
 	}
