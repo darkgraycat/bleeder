@@ -12,7 +12,7 @@ type Bleed struct {
 		Main   string     `toml:"main"`
 		Bleeds []BleedRef `toml:"bleeds"`
 	} `toml:"meta"`
-	Sequence map[string]struct {
+	Sequences map[string]struct {
 		Args    Args    `toml:"args"`
 		Repeat  int     `toml:"repeat"`
 		Content Content `toml:"content"`
@@ -25,6 +25,23 @@ func LoadBleed(path string) (*Bleed, error) {
 		return nil, err
 	}
 	return &bleed, nil
+}
+
+func (b Bleed) String() string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "Main: %s\n", b.Meta.Main)
+	if len(b.Meta.Bleeds) > 0 {
+		sb.WriteString("Includes:\n")
+		for i, ref := range b.Meta.Bleeds {
+			fmt.Fprintf(&sb, "  [%d] %p\n", i, ref.Bleed)
+		}
+	}
+	sb.WriteString("Sequences:\n")
+	for k, v := range b.Sequences {
+		fmt.Fprintf(&sb, "  %s: repeat=%d args=%v content=%v\n",
+			k, v.Repeat, v.Args, v.Content)
+	}
+	return sb.String()
 }
 
 type BleedRef struct {

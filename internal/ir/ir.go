@@ -16,9 +16,10 @@ func (p *Program) Merge(src *Program) {
 }
 
 type Instruction struct {
-	Tag  string
-	Note int
-	Freq int
-	Dur  float32
-	Vol  float32
+	Note  int
+	Freq  int
+	Dur   float32
+	Vol   float32
+	Start float32
+	Tag   string
 }

@@ -55,7 +55,7 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 		return IR, nil
 	}
 	// get sequence from bleed
-	seq, ok := b.bleed.Sequence[name]
+	seq, ok := b.bleed.Sequences[name]
 	if !ok {
 		return nil, fmt.Errorf("Sequence is not found: %s", name)
 	}
@@ -68,26 +68,19 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 	IR := ir.NewProgram()
 	for _, line := range lines {
-		parts := strings.Split(line, " ")
-		// TODO: we need a different way of parsing
-		// Because > note+2 1 vol+0.1 | +2 : 1
-		// has 3 commands
-		instr := parts[0]
-		rest := parts[1:]
-		fmt.Printf("Parsing %s %v", instr, rest)
-
-		// TODO actual implementation
-		switch instr {
-		case b.cfg.Mapping.Play:
-			IR.Add(&ir.Instruction{Tag: fmt.Sprintf("Play %v", rest)})
-		case b.cfg.Mapping.Wait:
-			IR.Add(&ir.Instruction{Tag: fmt.Sprintf("Wait %v", rest)})
-		case b.cfg.Mapping.Repeat:
-			IR.Add(&ir.Instruction{Tag: fmt.Sprintf("Repeat %v", rest)})
-		case b.cfg.Mapping.RepeatLine:
-			IR.Add(&ir.Instruction{Tag: fmt.Sprintf("RepeatLine %v", rest)})
-		default:
-			return nil, fmt.Errorf("Unknown instruction: %s", instr)
+		var instr *ir.Instruction
+		for token := range strings.SplitSeq(line, " ") {
+			switch token {
+			case b.cfg.Mapping.Play:
+				instr = &ir.Instruction{}
+			case b.cfg.Mapping.Wait:
+			case b.cfg.Mapping.Repeat:
+			case b.cfg.Mapping.RepeatLine:
+			default:
+				IR.Add(instr)
+				// TODO: fill up current instruction
+				// return nil, fmt.Errorf("Unknown instruction: %v", instr)
+			}
 		}
 
 		// in case or @seq_reference // 2
@@ -97,15 +90,4 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 	}
 	// by good design this one should be main workhorse
 	return IR, nil
-}
-
-func printBleed(bleed *Bleed) {
-	for seq, d := range bleed.Sequence {
-		fmt.Printf("Seq %s\n", seq)
-		fmt.Printf("\tArgs %v\n", d.Args)
-		fmt.Printf("\tRepeat %v\n", d.Repeat)
-		for n, line := range d.Content {
-			fmt.Printf("\t%d: %v\n", n, line)
-		}
-	}
 }

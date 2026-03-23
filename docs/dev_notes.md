@@ -241,7 +241,7 @@ parse main
 ### Implementation details
 This one
 ```
-> note 1 vol : 1
+> note 1 vol : 1 ||
 > note+2 1 vol+0.1 | +2 : 1
 ```
 Can be read as
@@ -249,8 +249,8 @@ Can be read as
 play note 1 vol wait 1
 play note+2 1 vol+0.1 repeat +2 wait 1
 ```
-So every line is going to be splitted by chars from [commands] section of config.toml
-In this case we going to see something like
+
+In case it splitted by special chars:
 ```
 >
 note 1 vol
@@ -264,8 +264,43 @@ note+2 1 vol+0.1
 1
 ```
 
+But the most "parsable" I think is:
+```
+> note 1 vol
+: 1
+> note+2 1 vol+0.1
+| +2
+: 1
+```
+
+Nope, the most parsable is to expand | and || beforehand
+```
+> note 1 vol : 1 > note 1 vol : 1
+> note+2 1 vol+0.1 > note+4 1 vol+0.1 : 1
+```
+And after that we going to split into
+```
+> note 1 vol
+: 1
+> note 1 vol
+: 1
+> note+2 1 vol+0.1
+> note+4 1 vol+0.1
+: 1
+```
+
+Experiment
+```
+> c3 || > d3 ||
+```
+should be expanded as
+```
+> c3 > c3 > d3
+> c3 > c3 > d3
+```
 
 
+## Writting Renderers using IRs
 
 
 
