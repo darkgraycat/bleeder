@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bleeder/internal/ir"
-	"bleeder/internal/utils"
+	"bleeder/internal/shared"
 	"fmt"
 	"strings"
 )
@@ -25,6 +25,7 @@ func NewBleeder(cfg *Config) *Bleeder {
 
 // Bleed is a main init method
 func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
+	fmt.Printf("FN CALL Bleed(%p)\n", bleed)
 	// parse included bleeds
 	if bleed.Meta.Bleeds != nil {
 		for _, v := range bleed.Meta.Bleeds {
@@ -43,12 +44,14 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 
 // Get IR of the main sequence
 func (b *Bleeder) GetMainIR() (*ir.Program, error) {
+	fmt.Printf("FN CALL GetMainIR()\n")
 	// get main IR from cache or build it
 	return b.GetSeqIR(b.main, nil)
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
+	fmt.Printf("FN CALL GetSeqIR(%s)\n", name)
 	// try IR from cache
 	key := name + ":" + strings.Join(args, ",")
 	if IR, ok := b.irs[key]; ok {
@@ -60,24 +63,31 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 		return nil, fmt.Errorf("Sequence is not found: %s", name)
 	}
 	// expands arguments
-	content := utils.ReplaceByMap(seq.Args, seq.Content...)
+	content := shared.ReplaceByMap(seq.Args, seq.Content...)
 	return b.GetRawIR(content)
 }
 
 // Get IR of raw DSL
 func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
+	fmt.Printf("FN CALL GetRawIR(%s)\n", lines)
 	IR := ir.NewProgram()
 	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		fmt.Printf("---- LINE %s\n", line)
 		var instr *ir.Instruction
-		for token := range strings.SplitSeq(line, " ") {
+		// var firstInstrIdx int
+		for token := range strings.FieldsSeq(line) {
 			switch token {
 			case b.cfg.Mapping.Play:
-				instr = &ir.Instruction{}
+			case b.cfg.Mapping.Wave:
 			case b.cfg.Mapping.Wait:
 			case b.cfg.Mapping.Repeat:
 			case b.cfg.Mapping.RepeatLine:
-			default:
+				instr = &ir.Instruction{} // move to next instuction
 				IR.Add(instr)
+			default:
 				// TODO: fill up current instruction
 				// return nil, fmt.Errorf("Unknown instruction: %v", instr)
 			}
@@ -86,7 +96,6 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 		// in case or @seq_reference // 2
 		// IR2 := GetSeqIR(seq_reference, args)
 		// IR.Merge(IR2)
-
 	}
 	// by good design this one should be main workhorse
 	return IR, nil

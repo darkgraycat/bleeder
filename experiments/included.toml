@@ -1,17 +1,27 @@
-[seq.main]
+[meta]
+main = "export"
+
+[seq.export]
 repeat = 666
 content = """
-> c3 1 1 : 1
-> c3 1 1 : 1
-> c3 1 1 : 1
-> c3 1 1 : 1
+> @included_riff_1
+> @included_riff_2
 """
 
-[seq.riff_new]
+[seq.included_riff_1]
 repeat = 2
 content = """
 > d3 1 1 : 1
 > d3 1 1 : 1
 > d3 1 1 : 1
 > d3 1 1 : 1
+"""
+
+[seq.included_riff_2]
+repeat = 666
+content = """
+> c3 1 1 : 1
+> c3 1 1 : 1
+> c3 1 1 : 1
+> c3 1 1 : 1
 """

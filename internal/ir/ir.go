@@ -1,20 +1,73 @@
 package ir
 
-type Program []*Instruction
+// Intermediate Representation Program
+type Program struct {
+	instr []*Instruction
+	index map[*Instruction]int
+}
 
+// Create new Program instance
 func NewProgram() *Program {
-	p := Program(make([]*Instruction, 0))
+	p := Program{
+		instr: make([]*Instruction, 0),
+		index: make(map[*Instruction]int),
+	}
 	return &p
 }
 
-func (p *Program) Add(i *Instruction) {
-	*p = append(*p, i)
+// Add next Instruction pointer to the end
+func (p *Program) Add(insrt *Instruction) {
+	p.instr = append(p.instr, insrt)
+	p.index[insrt] = len(p.instr) - 1
 }
 
+// Merge another Program into current one
 func (p *Program) Merge(src *Program) {
-	*p = append(*p, *src...)
+	offset := len(p.instr)
+	p.instr = append(p.instr, src.instr...)
+	for i, instr := range src.instr {
+		p.index[instr] = offset + i
+	}
 }
 
+// Get the number of Instructions in Program
+func (p *Program) Length() int {
+	return len(p.instr)
+}
+
+// Get first Instruction
+func (p *Program) First() *Instruction {
+	if len(p.instr) == 0 {
+		return nil
+	}
+	return p.instr[0]
+}
+
+// Get last Instruction
+func (p *Program) Last() *Instruction {
+	if len(p.instr) == 0 {
+		return nil
+	}
+	return p.instr[len(p.instr)-1]
+}
+
+// Get next Instruction after provided one
+func (p *Program) Next(instr *Instruction) *Instruction {
+	if idx, ok := p.index[instr]; ok && idx+1 < len(p.instr) {
+		return p.instr[idx+1]
+	}
+	return nil
+}
+
+// Get previos Instruction after provided one
+func (p *Program) Prev(instr *Instruction) *Instruction {
+	if idx, ok := p.index[instr]; ok && idx-1 >= 0 {
+		return p.instr[idx-1]
+	}
+	return nil
+}
+
+// Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
 	Note  int
 	Freq  int

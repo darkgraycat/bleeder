@@ -13,6 +13,7 @@ content = """
 args = 'note:c3 vol:1.0'
 repeat = 4
 content = """
+> c3 0.5 : 0.3 > d3 0.5 : 0.3 > e3 0.5 : 0.3
 > note 1 vol : 1
 > note+2 1 vol+0.1 | +2 : 1
 """
@@ -22,5 +23,5 @@ content = """
 content = """
 > c3 : 1 ||
 > d3 : 1 #
-> ~44020
+~ 44020
 """

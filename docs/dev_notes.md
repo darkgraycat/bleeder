@@ -299,6 +299,25 @@ should be expanded as
 > c3 > c3 > d3
 ```
 
+Okay, in case we use array of pointers anyway
+so we can copy only pointers not values
+In this case lets back to split by lines then by whitespace chars:
+```
+>                       # line 0
+note 1 vol
+:
+1
+
+>                       # line 1
+note+2 1 vol+0.1
+|
++2
+:
+1
+```
+Algo:
+remember index of the first instruction in line
+
 
 ## Writting Renderers using IRs
 

@@ -9,10 +9,10 @@ args = ["-v", "0.3"]
 [mapping]
 play = '>'
 wait = ':'
+wave = '~'
 repeat = '|'
 repeat_line = '||'
 debug = '#'
 
 [symbols]
 reference = '@'
-wave = '~'

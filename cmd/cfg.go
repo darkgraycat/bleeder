@@ -16,6 +16,7 @@ type Config struct {
 	Mapping struct {
 		Play       string `toml:"play"`
 		Wait       string `toml:"wait"`
+		Wave       string `toml:"wave"`
 		Repeat     string `toml:"repeat"`
 		RepeatLine string `toml:"repeat_line"`
 		Debug      string `toml:"debug"`
@@ -23,7 +24,6 @@ type Config struct {
 
 	Symbols struct {
 		Reference string `toml:"reference"`
-		Wave      string `toml:"wave"`
 	} `toml:"symbols"`
 }
 

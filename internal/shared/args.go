@@ -1,9 +1,10 @@
-package utils
+package shared
 
 import (
 	"strings"
 )
 
+// TODO: write own parser using 'reflect'
 type Args struct {
 	Positional []string
 	Flags      map[string]string
@@ -39,3 +40,6 @@ func (a *Args) Has(flag string) bool {
 	return a.Flags[flag] == ""
 }
 
+func (a *Args) Length() int {
+	return len(a.Positional) + len(a.Flags)
+}

@@ -82,7 +82,7 @@ type Content []string
 
 func (c *Content) UnmarshalTOML(data any) error {
 	if s, ok := data.(string); ok {
-		*c = strings.Fields(s)
+		*c = strings.Split(s, "\n")
 		return nil
 	}
 	return fmt.Errorf("content should be whitespace character separated string, got %T", data)

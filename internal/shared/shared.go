@@ -1,8 +1,9 @@
-package utils
+package shared
 
-import "strings"
-
-// import "reflect"
+import (
+	// "reflect"
+	"strings"
+)
 
 func IfThenElse[T any](cond bool, a, b T) T {
 	if cond {
@@ -18,6 +19,12 @@ func Match[K comparable, V any](mapping map[K]V, key K, def V) V {
 	return def
 }
 
+// TODO: implement decoder to have shape and validation of it
+func DecodeArgs(a []string, dst any) error {
+	// v := reflect.ValueOf(dst)
+	return nil
+}
+
 func ReplaceByMap(replacements map[string]string, lines ...string) []string {
 	pairs := make([]string, 0, len(replacements)*2)
 	for k, v := range replacements {
@@ -29,10 +36,4 @@ func ReplaceByMap(replacements map[string]string, lines ...string) []string {
 		replaced[i] = replacer.Replace(line)
 	}
 	return replaced
-}
-
-// TODO: implement decoder to have shape and validation of it
-func DecodeArgs(a []string, dst any) error {
-	// v := reflect.ValueOf(dst)
-	return nil
 }
