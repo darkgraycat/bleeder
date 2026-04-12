@@ -2,39 +2,38 @@ package main
 
 import (
 	"bleeder/cmd"
-	// "bleeder/experiments"
-	"bleeder/internal/shared"
+	"flag"
 	"fmt"
 	"os"
 )
 
+var cmds = map[string]cmd.Cmd{
+	"play":   cmd.CmdPlay,
+	"listen": cmd.CmdListen,
+	"send":   cmd.CmdSend,
+}
+
 func main() {
-	// experiments.Run()
-	// return
+	// parse CLI flags
+	cmdArgs := cmd.CmdArgs{}
+	flag.StringVar(&cmdArgs.BleedPath, "bleed", "", "")
+	flag.StringVar(&cmdArgs.CfgPath, "cfg", "config.toml", "")
+	flag.StringVar(&cmdArgs.Seq, "seq", "", "")
+	flag.StringVar(&cmdArgs.Raw, "raw", "", "")
+	flag.Parse()
 
-	// parse CLI args and define which cmd to use
-	args := shared.NewArgs(os.Args)
-	cmds := map[string]cmd.Cmd{
-		"play":  cmd.CmdPlay,
-		"serve": cmd.CmdServe,
-		"send":  cmd.CmdSend,
-	}
-
-	fmt.Printf("Args P: %v, F: %v\n", args.Positional, args.Flags)
-
-	if args.Length() < 2 {
-		fmt.Fprintln(os.Stderr, "Mode is not specified")
-		os.Exit(1)
-	}
-
-	cmd, ok := cmds[args.At(1)]
+	// define which cmd to use
+	mode := flag.CommandLine.Arg(0)
+	fmt.Printf("MODE - %s\n", mode)
+	fmt.Printf("Cmd Args: %v\n", cmdArgs)
+	exec, ok := cmds[mode]
 	if !ok {
-		fmt.Fprintln(os.Stderr, "Unknown mode")
+		fmt.Fprintf(os.Stderr, "Unknown mode: %s\n", mode)
 		os.Exit(1)
 	}
 
 	// run selected cmd
-	err := cmd(args)
+	err := exec(&cmdArgs)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Runtime error", err)
 		os.Exit(1)

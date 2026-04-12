@@ -1,17 +1,21 @@
 package cmd
 
-import (
-	"bleeder/internal/shared"
-	"fmt"
-)
+import "fmt"
 
-type Cmd func(args *shared.Args) error
+type CmdArgs struct {
+	BleedPath string
+	CfgPath   string
+	Seq       string
+	Raw       string
+}
+
+type Cmd func(args *CmdArgs) error
 
 // Command to play specified .bleed.toml file
-func CmdPlay(args *shared.Args) error {
+func CmdPlay(args *CmdArgs) error {
 	fmt.Printf("[PLAY] %v\n", args)
-	cfg, err := LoadConfig(args.At(2))
-	bleed, err := LoadBleed(args.At(2))
+	cfg, err := LoadConfig(args.CfgPath)
+	bleed, err := LoadBleed(args.BleedPath)
 	if err != nil {
 		return err
 	}
@@ -20,7 +24,6 @@ func CmdPlay(args *shared.Args) error {
 	if err != nil {
 		return err
 	}
-
 
 	fmt.Printf("[PLAY] GetMainIR()\n")
 	ir, err := bleeder.GetMainIR()
@@ -34,13 +37,13 @@ func CmdPlay(args *shared.Args) error {
 }
 
 // Start application in daemon mode listening
-func CmdServe(args *shared.Args) error {
+func CmdListen(args *CmdArgs) error {
 	fmt.Printf("[SERVE] %v\n", args)
 	return nil
 }
 
 // Send partial sequence data to play
-func CmdSend(args *shared.Args) error {
+func CmdSend(args *CmdArgs) error {
 	fmt.Printf("[SEND] %v\n", args)
 	return nil
 }

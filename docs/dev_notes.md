@@ -115,39 +115,6 @@ content = """
 
 ```
 
-
-### API v0.1
-`>` - play command. arguments: freq, dur, vol
-`:` - wait command. arguments: time or sequence reference
-`|` - repeat last command. arguments: depends on last command (override)
-`||` - repeat whole line. arguments: same as for `|`
-`@` - reference to sequence or sample
-`+ - * /` - modifiers. can be applied to freq, dur, vol
-
-### API v0.1 detailed
-`>`  Play command
-     Args: freq, dur, vol
-     Example: > c3 1 0.5
-
-`:`  Wait command
-     Args: time OR sequence reference
-     Example: : 1.0
-     Example: : @intro
-
-`|`  Repeat last command
-     Args: override previous args
-     Example: > c3 1 0.5
-              | +2      (= > c3+2 1 0.5)
-
-`||` Repeat whole line
-     Args: same as |
-     Example: > c3 0.5 | +4 : 1 || +7
-
-`@`  Reference to sequence or sample
-     Example: > @kick
-     Example: : @intro
-
-
 ### Flow
 CLI/Daemon
     ↓
@@ -232,9 +199,6 @@ parse main
             store "riff2" in refs
             confirm "riff1" not in refs
                 ERROR: Circular dependency detected
-
-
-
 
 
 

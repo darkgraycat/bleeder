@@ -15,6 +15,11 @@ func NewProgram() *Program {
 	return &p
 }
 
+// Get an array of instructions
+func (p *Program) GetInstructions() []*Instruction {
+	return p.instr
+}
+
 // Add next Instruction pointer to the end
 func (p *Program) Add(insrt *Instruction) {
 	p.instr = append(p.instr, insrt)
@@ -69,10 +74,10 @@ func (p *Program) Prev(instr *Instruction) *Instruction {
 
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
-	Note  int
-	Freq  int
-	Dur   float32
-	Vol   float32
-	Start float32
-	Tag   string
+	Note  int     // integer representation of note (C4 is 60)
+	Freq  int     // frequence of sound to play
+	Dur   float32 // duration of sound
+	Vol   float32 // volume of sound
+	Start float32 // time to start
+	Info  string  // additional information
 }

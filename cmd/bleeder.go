@@ -23,9 +23,8 @@ func NewBleeder(cfg *Config) *Bleeder {
 	}
 }
 
-// Bleed is a main init method
+// Load bleed sequences
 func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
-	fmt.Printf("FN CALL Bleed(%p)\n", bleed)
 	// parse included bleeds
 	if bleed.Meta.Bleeds != nil {
 		for _, v := range bleed.Meta.Bleeds {
@@ -34,7 +33,7 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 				return nil, err
 			}
 		}
-	}
+	} 
 	// parse main section to cache sequences
 	b.bleed = bleed
 	b.main = bleed.Meta.Main
@@ -89,7 +88,6 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 				IR.Add(instr)
 			default:
 				// TODO: fill up current instruction
-				// return nil, fmt.Errorf("Unknown instruction: %v", instr)
 			}
 		}
 
