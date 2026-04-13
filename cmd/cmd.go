@@ -15,11 +15,13 @@ type Cmd func(args *CmdArgs) error
 func CmdPlay(args *CmdArgs) error {
 	fmt.Printf("[PLAY] %v\n", args)
 	cfg, err := LoadConfig(args.CfgPath)
+	if err != nil {
+		return fmt.Errorf("Config - %v", err)
+	}
 	bleed, err := LoadBleed(args.BleedPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("Bleed - %v", err)
 	}
-
 	bleeder, err := NewBleeder(cfg).Bleed(bleed)
 	if err != nil {
 		return err
@@ -38,7 +40,7 @@ func CmdPlay(args *CmdArgs) error {
 
 // Start application in daemon mode listening
 func CmdListen(args *CmdArgs) error {
-	fmt.Printf("[SERVE] %v\n", args)
+	fmt.Printf("[LISTEN] %v\n", args)
 	return nil
 }
 
@@ -47,3 +49,4 @@ func CmdSend(args *CmdArgs) error {
 	fmt.Printf("[SEND] %v\n", args)
 	return nil
 }
+

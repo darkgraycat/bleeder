@@ -4,12 +4,14 @@ import (
 	"strings"
 )
 
+// Deprecated: use flag package instead
 // TODO: write own parser using 'reflect'
 type Args struct {
 	Positional []string
 	Flags      map[string]string
 }
 
+// Deprecated: use flag package instead
 func NewArgs(args []string) *Args {
 	pos := make([]string, 0)
 	flg := make(map[string]string)
