@@ -55,11 +55,11 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 func (b *Bleeder) GetMainIR() (*ir.Program, error) {
 	fmt.Printf("FN CALL GetMainIR()\n")
 	// get main IR from cache or build it
-	return b.GetSeqIR(b.main, nil)
+	return b.GetSeqIR(b.main, nil, 0)
 }
 
 // Get IR of specified section with args
-func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
+func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, error) {
 	fmt.Printf("FN CALL GetSeqIR(%s)\n", name)
 	// try IR from cache
 	key := name + ":" + strings.Join(args, ",")
@@ -73,15 +73,14 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 	}
 	// expands arguments
 	content := shared.ReplaceByMap(seq.Args, seq.Content...)
-	return b.GetRawIR(content)
+	return b.GetRawIR(content, t)
 }
 
 // Get IR of raw DSL
-func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
+func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 	fmt.Printf("FN CALL GetRawIR(%s)\n", lines)
 	IR := ir.NewProgram()
-	ad := 0.0 // accumulated delay
-	ld := 0.0 // last delay
+	rt := 0.0 // repeated time
 	for _, line := range lines {
 		// skip empty lines
 		if len(line) == 0 {
@@ -97,41 +96,43 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 			switch v[0] {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
-				inst = &ir.Instruction{
-					// TODO: convert note into freq
-					Freq: parseArg(v, 1, 0, 440.0),
-					Dur:  parseArg(v, 2, 0, 1.0),
-					Vol:  parseArg(v, 3, 0, 1.0),
-					Time: ad,
-					Info: r, // Just for debug
-				}
-				IR.Add(inst)
+				// TODO: to implement
+				// inst = &ir.Instruction{
+				// 	// TODO: convert note into freq
+				// 	Freq: parseArg(v, 1, 0, 440),
+				// 	Dur:  parseArg(v, 2, 0, 1),
+				// 	Vol:  parseArg(v, 3, 0, 1),
+				// 	Time: ad,
+				// 	Info: r, // Just for debug
+				// }
+				// IR.Add(inst)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
 				inst = &ir.Instruction{
-					Freq: parseArg(v, 1, 0, 440.0),
-					Dur:  parseArg(v, 2, 0, 1.0),
-					Vol:  parseArg(v, 3, 0, 1.0),
-					Time: ad,
+					Freq: parseArg(v, 1, 0, 440),
+					Dur:  parseArg(v, 2, 0, 1),
+					Vol:  parseArg(v, 3, 0, 1),
+					Time: t,
 					Info: r, // Just for debug
 				}
 				IR.Add(inst)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				ld = parseArg(v, 1, 0, 1.0)
-				ad += ld
+				w := parseArg(v, 1, 0, 1)
+				t += w
+				rt += w
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
 				inst = &ir.Instruction{
 					Freq: inst.Freq,
 					Dur:  inst.Dur,
 					Vol:  inst.Vol,
-					Time: ad,
+					Time: t,
 					Info: "REPEAT " + inst.Info,
 				}
-				ad += ld
-				ld = 0.0
 				IR.Add(inst)
+				t += rt
+				rt = 0
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
 				// TODO
