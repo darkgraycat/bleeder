@@ -4,6 +4,6 @@ main = "main"
 [seq.main]
 repeat = 2
 content = """
-> c3 : 1 |
-> e3 : 1 |
+~ 444.0 3.5 : 2 |
+~ 555.0 : 1 |
 """

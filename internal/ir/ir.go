@@ -73,9 +73,9 @@ func (p *Program) Prev(inst *Instruction) *Instruction {
 
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
-	Freq  float64 // frequence
-	Dur   float64 // duration
-	Vol   float64 // volume
-	Start float64 // start time
-	Info  string  // additional information
+	Freq float64 // frequence
+	Dur  float64 // duration
+	Vol  float64 // volume
+	Time float64 // start time
+	Info string  // additional information
 }

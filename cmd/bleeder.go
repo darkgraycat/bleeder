@@ -79,7 +79,7 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 	fmt.Printf("FN CALL GetRawIR(%s)\n", lines)
 	IR := ir.NewProgram()
-	startTime := 0.0
+	t := 0.0 // next instruction time
 	for _, line := range lines {
 		// skip empty lines
 		if len(line) == 0 {
@@ -87,47 +87,47 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 		}
 		fmt.Printf("-- LINE %s\n", line)
 		// split by instruction characters
+		var inst *ir.Instruction
 		raw := strings.Split(b.r.Replace(line), "\\")[1:]
 		for _, r := range raw {
-			var inst ir.Instruction
 			v := strings.Fields(r)
 			fmt.Printf("-- RAW  %s\n", v)
 			switch v[0] {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
-				inst = ir.Instruction{
+				inst = &ir.Instruction{
 					// TODO: convert note into freq
-					Freq:  shared.ParseFloat64(v, 1, 440.0),
-					Dur:   shared.ParseFloat64(v, 2, 1.0),
-					Vol:   shared.ParseFloat64(v, 3, 1.0),
-					Start: startTime,
-					Info:  r, // Just for debug
+					Freq: shared.ParseFloat64(v, 1, 440.0),
+					Dur:  shared.ParseFloat64(v, 2, 1.0),
+					Vol:  shared.ParseFloat64(v, 3, 1.0),
+					Time: t,
+					Info: r, // Just for debug
 				}
-				IR.Add(&inst)
+				IR.Add(inst)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
-				inst = ir.Instruction{
-					Freq:  shared.ParseFloat64(v, 1, 440.0),
-					Dur:   shared.ParseFloat64(v, 2, 1.0),
-					Vol:   shared.ParseFloat64(v, 3, 1.0),
-					Start: startTime,
-					Info:  r, // Just for debug
+				inst = &ir.Instruction{
+					Freq: shared.ParseFloat64(v, 1, 440.0),
+					Dur:  shared.ParseFloat64(v, 2, 1.0),
+					Vol:  shared.ParseFloat64(v, 3, 1.0),
+					Time: t,
+					Info: r, // Just for debug
 				}
-				IR.Add(&inst)
+				IR.Add(inst)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				startTime += shared.ParseFloat64(v, 1, 1.0)
+				t += shared.ParseFloat64(v, 1, 1.0)
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
-				// TODO:
-				inst = ir.Instruction{
-					Freq:  inst.Freq,
-					Dur:   inst.Dur,
-					Vol:   inst.Vol,
-					Start: startTime,
-					Info:  "REPEAT",
+				inst = &ir.Instruction{
+					Freq: inst.Freq,
+					Dur:  inst.Dur,
+					Vol:  inst.Vol,
+					Time: t,
+					Info: "REPEAT " + inst.Info,
 				}
-				IR.Add(&inst)
+				t += inst.Time // TODO: investigate is it a bug or feature?
+				IR.Add(inst)
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
 				// TODO
