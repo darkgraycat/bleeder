@@ -4,6 +4,7 @@ import (
 	"bleeder/internal/ir"
 	"bleeder/internal/shared"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -79,54 +80,57 @@ func (b *Bleeder) GetSeqIR(name string, args []string) (*ir.Program, error) {
 func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 	fmt.Printf("FN CALL GetRawIR(%s)\n", lines)
 	IR := ir.NewProgram()
-	t := 0.0 // next instruction time
+	ad := 0.0 // accumulated delay
+	ld := 0.0 // last delay
 	for _, line := range lines {
 		// skip empty lines
 		if len(line) == 0 {
 			continue
 		}
-		fmt.Printf("-- LINE %s\n", line)
+		// fmt.Printf("-- LINE %s\n", line)
 		// split by instruction characters
 		var inst *ir.Instruction
 		raw := strings.Split(b.r.Replace(line), "\\")[1:]
 		for _, r := range raw {
 			v := strings.Fields(r)
-			fmt.Printf("-- RAW  %s\n", v)
+			// fmt.Printf("-- RAW  %s\n", v)
 			switch v[0] {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
 				inst = &ir.Instruction{
 					// TODO: convert note into freq
-					Freq: shared.ParseFloat64(v, 1, 440.0),
-					Dur:  shared.ParseFloat64(v, 2, 1.0),
-					Vol:  shared.ParseFloat64(v, 3, 1.0),
-					Time: t,
+					Freq: parseArg(v, 1, 0, 440.0),
+					Dur:  parseArg(v, 2, 0, 1.0),
+					Vol:  parseArg(v, 3, 0, 1.0),
+					Time: ad,
 					Info: r, // Just for debug
 				}
 				IR.Add(inst)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
 				inst = &ir.Instruction{
-					Freq: shared.ParseFloat64(v, 1, 440.0),
-					Dur:  shared.ParseFloat64(v, 2, 1.0),
-					Vol:  shared.ParseFloat64(v, 3, 1.0),
-					Time: t,
+					Freq: parseArg(v, 1, 0, 440.0),
+					Dur:  parseArg(v, 2, 0, 1.0),
+					Vol:  parseArg(v, 3, 0, 1.0),
+					Time: ad,
 					Info: r, // Just for debug
 				}
 				IR.Add(inst)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				t += shared.ParseFloat64(v, 1, 1.0)
+				ld = parseArg(v, 1, 0, 1.0)
+				ad += ld
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
 				inst = &ir.Instruction{
 					Freq: inst.Freq,
 					Dur:  inst.Dur,
 					Vol:  inst.Vol,
-					Time: t,
+					Time: ad,
 					Info: "REPEAT " + inst.Info,
 				}
-				t += inst.Time // TODO: investigate is it a bug or feature?
+				ad += ld
+				ld = 0.0
 				IR.Add(inst)
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
@@ -141,4 +145,15 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 		// IR.Merge(IR2)
 	}
 	return IR, nil
+}
+
+func parseArg(v []string, i int, prev, def float64) float64 {
+	if i >= len(v) {
+		return prev + def
+	}
+	f, err := strconv.ParseFloat(v[i], 64)
+	if err != nil {
+		return prev + def
+	}
+	return f
 }
