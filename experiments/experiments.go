@@ -14,13 +14,6 @@
 
 package experiments
 
-type Program struct {
-	instr []string
-	mark int
-}
-
-func (p *Program) SetMark() {}
-
 func Run(){
 
 }

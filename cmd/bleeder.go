@@ -75,8 +75,8 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 			continue
 		}
 		fmt.Printf("---- LINE %s\n", line)
-		var instr *ir.Instruction
-		// var firstInstrIdx int
+		var inst *ir.Instruction
+		// var firstInstIdx int
 		for token := range strings.FieldsSeq(line) {
 			switch token {
 			case b.cfg.Mapping.Play:
@@ -84,8 +84,8 @@ func (b *Bleeder) GetRawIR(lines []string) (*ir.Program, error) {
 			case b.cfg.Mapping.Wait:
 			case b.cfg.Mapping.Repeat:
 			case b.cfg.Mapping.RepeatLine:
-				instr = &ir.Instruction{} // move to next instuction
-				IR.Add(instr)
+				inst = &ir.Instruction{} // move to next instuction
+				IR.Add(inst)
 			default:
 				// TODO: fill up current instruction
 			}
