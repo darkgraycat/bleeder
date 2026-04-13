@@ -1,0 +1,9 @@
+[meta]
+main = "main"
+
+[seq.main]
+repeat = 2
+content = """
+> c3 : 1 |
+> e3 : 1 |
+"""

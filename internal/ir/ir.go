@@ -73,10 +73,9 @@ func (p *Program) Prev(inst *Instruction) *Instruction {
 
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
-	Note  int     // integer representation of note (C4 is 60)
-	Freq  int     // frequence of sound to play
-	Dur   float32 // duration of sound
-	Vol   float32 // volume of sound
-	Start float32 // time to start
+	Freq  float64 // frequence
+	Dur   float64 // duration
+	Vol   float64 // volume
+	Start float64 // start time
 	Info  string  // additional information
 }

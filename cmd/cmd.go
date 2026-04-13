@@ -1,6 +1,9 @@
 package cmd
 
-import "fmt"
+import (
+	"bleeder/internal/player"
+	"fmt"
+)
 
 type CmdArgs struct {
 	BleedPath string
@@ -28,25 +31,31 @@ func CmdPlay(args *CmdArgs) error {
 	}
 
 	fmt.Printf("[PLAY] GetMainIR()\n")
-	ir, err := bleeder.GetMainIR()
+	IR, err := bleeder.GetMainIR()
 	if err != nil {
 		return err
 	}
-	// TODO: render IR using player
-	fmt.Printf("IR %v\n", ir)
+	fmt.Printf("IR %v\n", IR)
 
+	// TODO: define correct player by config or some
+	p := player.NewWAVPlayer()
+	err = p.Play(IR, 0, IR.Length())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // Start application in daemon mode listening
 func CmdListen(args *CmdArgs) error {
+	// TODO
 	fmt.Printf("[LISTEN] %v\n", args)
 	return nil
 }
 
 // Send partial sequence data to play
 func CmdSend(args *CmdArgs) error {
+	// TODO
 	fmt.Printf("[SEND] %v\n", args)
 	return nil
 }
-

@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -33,4 +34,15 @@ func ReplaceByMap(m map[string]string, lines ...string) []string {
 		out[i] = r.Replace(s)
 	}
 	return out
+}
+
+func ParseFloat64(v []string, i int, def float64) float64 {
+    if i >= len(v) {
+        return def
+    }
+    f, err := strconv.ParseFloat(v[i], 64)
+    if err != nil {
+        return def
+    }
+    return f
 }

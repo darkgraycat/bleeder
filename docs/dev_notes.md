@@ -282,6 +282,12 @@ note+2 1 vol+0.1
 Algo:
 remember index of the first instruction in line
 
+Main problem in parsing splitted by emptyspace - next token has unknown sense
+
+But what if:
+collect args till next instruction
+on next operation - fill prev instruction with args
+
 
 ## Writting Renderers using IRs
 

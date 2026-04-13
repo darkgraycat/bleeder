@@ -10,12 +10,12 @@ import (
 type Bleed struct {
 	Meta struct {
 		Main   string     `toml:"main"`
-		Bleeds []BleedRef `toml:"bleeds"`
+		Bleeds []bleedRef `toml:"bleeds"`
 	} `toml:"meta"`
 	Sequences map[string]struct {
-		Args    Args    `toml:"args"`
+		Args    args    `toml:"args"`
 		Repeat  int     `toml:"repeat"`
-		Content Content `toml:"content"`
+		Content content `toml:"content"`
 	} `toml:"seq"`
 }
 
@@ -44,11 +44,11 @@ func (b Bleed) String() string {
 	return sb.String()
 }
 
-type BleedRef struct {
+type bleedRef struct {
 	*Bleed
 }
 
-func (r *BleedRef) UnmarshalTOML(data any) error {
+func (r *bleedRef) UnmarshalTOML(data any) error {
 	if s, ok := data.(string); ok {
 		bleed, err := LoadBleed(s)
 		if err != nil {
@@ -60,14 +60,14 @@ func (r *BleedRef) UnmarshalTOML(data any) error {
 	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
 }
 
-type Args map[string]string
+type args map[string]string
 
-func (a *Args) UnmarshalTOML(data any) error {
+func (a *args) UnmarshalTOML(data any) error {
 	s, ok := data.(string)
 	if !ok {
 		return fmt.Errorf("args should be string, got %T", data)
 	}
-	*a = make(Args)
+	*a = make(args)
 	for part := range strings.FieldsSeq(s) {
 		k, v, ok := strings.Cut(part, ":")
 		if !ok {
@@ -78,9 +78,9 @@ func (a *Args) UnmarshalTOML(data any) error {
 	return nil
 }
 
-type Content []string
+type content []string
 
-func (c *Content) UnmarshalTOML(data any) error {
+func (c *content) UnmarshalTOML(data any) error {
 	if s, ok := data.(string); ok {
 		*c = strings.Split(s, "\n")
 		return nil
