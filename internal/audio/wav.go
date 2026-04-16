@@ -4,40 +4,62 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"math"
 )
 
+// WAV file format interface
 type WAV struct {
-	SampleRate int
-	Channels   int
-	Header     []byte
-	Samples    []int16
+	sampleRate float64 // sample rate
+	channels   int     // channels amount
+	header     []byte  // premade header bytes
+	samples    []int16 // samples bytes
 }
 
+// Create new WAV instance
 func NewWAV(sampleRate, channels int) *WAV {
 	return &WAV{
-		SampleRate: sampleRate,
-		Channels:   channels,
-		Header:     makeWAVHeader(sampleRate, channels, 2),
-		Samples:    []int16{},
+		sampleRate: float64(sampleRate),
+		channels:   channels,
+		header:     makeWAVHeader(sampleRate, channels, 2),
+		samples:    []int16{},
 	}
 }
 
-func (wav *WAV) AppendSamples(samples []int16) {
-	wav.Samples = append(wav.Samples, samples...)
+// Get sample rate
+func (w *WAV) SampleRate() float64 { return w.sampleRate }
+
+// Append samples into current WAV
+func (w *WAV) Append(samples []int16) {
+	w.samples = append(w.samples, samples...)
 }
 
-func (wav *WAV) Write(w io.Writer) error {
-	dataSize := uint32(len(wav.Samples) * 2)
+// Generate tone samples
+func (w *WAV) GenerateSamples(freq, dur, vol float64, wave WaveFunc) []int16 {
+	numSamples := int(dur * w.sampleRate)
+	samples := make([]int16, numSamples)
+	phase := 0.0
+	step := freq / w.sampleRate
+	amp := vol * math.MaxInt16
+	for i := range samples {
+		samples[i] = int16(wave(phase) * amp)
+		phase += step
+		if phase >= 1 {
+			phase -= 1
+		}
+	}
+	return samples
+}
+
+// Write WAV data
+func (w *WAV) Write(wr io.Writer) error {
+	dataSize := uint32(len(w.samples) * 2)
 	fileSize := uint32(36 + dataSize)
-
-	binary.LittleEndian.PutUint32(wav.Header[4:8], fileSize)
-	binary.LittleEndian.PutUint32(wav.Header[40:44], dataSize)
-
-	if _, err := w.Write(wav.Header); err != nil {
+	binary.LittleEndian.PutUint32(w.header[4:8], fileSize)
+	binary.LittleEndian.PutUint32(w.header[40:44], dataSize)
+	if _, err := wr.Write(w.header); err != nil {
 		return err
 	}
-
-	return binary.Write(w, binary.LittleEndian, wav.Samples)
+	return binary.Write(wr, binary.LittleEndian, w.samples)
 }
 
 func makeWAVHeader(sr, chs, bps int) []byte {

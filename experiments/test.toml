@@ -1,10 +1,19 @@
 [meta]
-main = "main"
+main = "test1"
+
+[seq.test1]
+content = '''
+~ 200 : 1
+~ 400 : 1
+~ 800 : 1
+'''
 
 [seq.main]
 repeat = 2
+# TODO: fix bug if there is no |
 content = """
-~ 444.0 3.5 : 2 |
-~ 333.0 |
-~ 555.0 : 1 |
+~ 261 0.8 : 1
+~ 293 0.8 : 1
+~ 329 0.8 : 1
 """
+

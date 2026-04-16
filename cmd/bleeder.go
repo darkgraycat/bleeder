@@ -10,23 +10,22 @@ import (
 
 // Core DSL processor and IRs generator
 type Bleeder struct {
-	irs   map[string]*ir.Program
-	cfg   *Config
-	bleed *Bleed
-	main  string
-	r     *strings.Replacer
+	bleed    *Bleed                 // reference to Bleed
+	cfg      *Config                // reference to Config
+	main     string                 // main sequence name
+	programs map[string]*ir.Program // set of stored IR programs
+	replacer *strings.Replacer      // cached string replacer
 }
 
 // Create new Bleeder instance
 func NewBleeder(cfg *Config) *Bleeder {
 	return &Bleeder{
-		irs: make(map[string]*ir.Program),
-		cfg: cfg,
-		r: strings.NewReplacer(
+		cfg:      cfg,
+		programs: make(map[string]*ir.Program),
+		replacer: strings.NewReplacer(
 			cfg.Mapping.Play, "\\"+cfg.Mapping.Play,
 			cfg.Mapping.Wait, "\\"+cfg.Mapping.Wait,
 			cfg.Mapping.Wave, "\\"+cfg.Mapping.Wave,
-			cfg.Mapping.Repeat, "\\"+cfg.Mapping.Repeat,
 			cfg.Mapping.RepeatLine, "\\"+cfg.Mapping.RepeatLine,
 			cfg.Mapping.Debug, "\\"+cfg.Mapping.Debug,
 		),
@@ -63,8 +62,8 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 	fmt.Printf("FN CALL GetSeqIR(%s)\n", name)
 	// try IR from cache
 	key := name + ":" + strings.Join(args, ",")
-	if IR, ok := b.irs[key]; ok {
-		return IR, nil
+	if pr, ok := b.programs[key]; ok {
+		return pr, nil
 	}
 	// get sequence from bleed
 	seq, ok := b.bleed.Sequences[name]
@@ -79,7 +78,7 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 // Get IR of raw DSL
 func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 	fmt.Printf("FN CALL GetRawIR(%s)\n", lines)
-	IR := ir.NewProgram()
+	pr := ir.NewProgram()
 	rt := 0.0 // repeated time
 	for _, line := range lines {
 		// skip empty lines
@@ -88,8 +87,8 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 		}
 		// fmt.Printf("-- LINE %s\n", line)
 		// split by instruction characters
-		var inst *ir.Instruction
-		raw := strings.Split(b.r.Replace(line), "\\")[1:]
+		var in *ir.Instruction
+		raw := strings.Split(b.replacer.Replace(line), "\\")[1:]
 		for _, r := range raw {
 			v := strings.Fields(r)
 			// fmt.Printf("-- RAW  %s\n", v)
@@ -97,25 +96,19 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
 				// TODO: to implement
-				// inst = &ir.Instruction{
-				// 	// TODO: convert note into freq
-				// 	Freq: parseArg(v, 1, 0, 440),
-				// 	Dur:  parseArg(v, 2, 0, 1),
-				// 	Vol:  parseArg(v, 3, 0, 1),
-				// 	Time: ad,
-				// 	Info: r, // Just for debug
-				// }
-				// IR.Add(inst)
+				// in case of @seq_reference
+				// IR2 := GetSeqIR(seq_reference, args)
+				// IR.Merge(IR2)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
-				inst = &ir.Instruction{
+				in = &ir.Instruction{
 					Freq: parseArg(v, 1, 0, 440),
 					Dur:  parseArg(v, 2, 0, 1),
 					Vol:  parseArg(v, 3, 0, 1),
 					Time: t,
 					Info: r, // Just for debug
 				}
-				IR.Add(inst)
+				pr.Add(in)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
 				w := parseArg(v, 1, 0, 1)
@@ -123,14 +116,14 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 				rt += w
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
-				inst = &ir.Instruction{
-					Freq: inst.Freq,
-					Dur:  inst.Dur,
-					Vol:  inst.Vol,
+				in = &ir.Instruction{
+					Freq: in.Freq,
+					Dur:  in.Dur,
+					Vol:  in.Vol,
 					Time: t,
-					Info: "REPEAT " + inst.Info,
+					Info: "REPEAT " + in.Info,
 				}
-				IR.Add(inst)
+				pr.Add(in)
 				t += rt
 				rt = 0
 			// parse REPEAT LINE
@@ -140,12 +133,8 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 				fmt.Printf("Unknown instruction: %s\n", v[0])
 			}
 		}
-
-		// in case or @seq_reference // 2
-		// IR2 := GetSeqIR(seq_reference, args)
-		// IR.Merge(IR2)
 	}
-	return IR, nil
+	return pr, nil
 }
 
 func parseArg(v []string, i int, prev, def float64) float64 {

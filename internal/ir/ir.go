@@ -2,71 +2,82 @@ package ir
 
 // Intermediate Representation Program
 type Program struct {
-	insts []*Instruction
-	index map[*Instruction]int
+	instructions []*Instruction       // instructions array
+	indexesCache map[*Instruction]int // instructions cache
 }
 
 // Create new Program instance
 func NewProgram() *Program {
 	return &Program{
-		insts: make([]*Instruction, 0),
-		index: make(map[*Instruction]int),
+		instructions: make([]*Instruction, 0),
+		indexesCache: make(map[*Instruction]int),
 	}
 }
 
 // Get an array of instructions
 func (p *Program) GetInstructions() []*Instruction {
-	return p.insts
+	return p.instructions
 }
 
 // Add next Instruction pointer to the end
-func (p *Program) Add(inst *Instruction) {
-	p.insts = append(p.insts, inst)
-	p.index[inst] = len(p.insts) - 1
+func (p *Program) Add(in *Instruction) {
+	p.instructions = append(p.instructions, in)
+	p.indexesCache[in] = len(p.instructions) - 1
+}
+
+// Cut Instructions into new Program
+func (p *Program) Cut(start, end int) *Program {
+	sliced := p.instructions[start:end]
+	np := NewProgram()
+	for i, in := range sliced {
+		np.instructions = append(np.instructions, in)
+		np.indexesCache[in] = i
+	}
+	return np
 }
 
 // Merge another Program into current one
 func (p *Program) Merge(src *Program) {
-	offset := len(p.insts)
-	p.insts = append(p.insts, src.insts...)
-	for i, inst := range src.insts {
-		p.index[inst] = offset + i
+	offset := len(p.instructions)
+	p.instructions = append(p.instructions, src.instructions...)
+	for i, in := range src.instructions {
+		p.indexesCache[in] = offset + i
 	}
 }
 
 // Get the number of Instructions in Program
 func (p *Program) Length() int {
-	return len(p.insts)
+	return len(p.instructions)
 }
 
 // Get first Instruction
 func (p *Program) First() *Instruction {
-	if len(p.insts) == 0 {
+	if len(p.instructions) == 0 {
 		return nil
 	}
-	return p.insts[0]
+	return p.instructions[0]
 }
 
 // Get last Instruction
 func (p *Program) Last() *Instruction {
-	if len(p.insts) == 0 {
+	if len(p.instructions) == 0 {
 		return nil
 	}
-	return p.insts[len(p.insts)-1]
+	return p.instructions[len(p.instructions)-1]
 }
 
 // Get next Instruction after provided one
-func (p *Program) Next(inst *Instruction) *Instruction {
-	if idx, ok := p.index[inst]; ok && idx+1 < len(p.insts) {
-		return p.insts[idx+1]
+func (p *Program) Next(in *Instruction) *Instruction {
+	if idx, ok := p.indexesCache[in]; ok && idx+1 < len(p.instructions) {
+		return p.instructions[idx+1]
 	}
 	return nil
 }
 
 // Get previos Instruction after provided one
-func (p *Program) Prev(inst *Instruction) *Instruction {
-	if idx, ok := p.index[inst]; ok && idx-1 >= 0 {
-		return p.insts[idx-1]
+func (p *Program) Prev(in *Instruction) *Instruction {
+	if idx, ok := p.indexesCache[in]; ok && idx-1 >= 0 {
+		return p.instructions[idx-1]
 	}
 	return nil
 }
