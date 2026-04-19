@@ -8,6 +8,11 @@ type Config struct {
 		Channels   int `toml:"channels"`
 	} `toml:"audio"`
 
+	Parser struct {
+		DefaultDur float64 `toml:"default_dur"`
+		DefaultVol float64 `toml:"default_vol"`
+	} `toml:"parser"`
+
 	Output struct {
 		Command string
 		Args    []string

@@ -28,6 +28,12 @@ func NewWAV(sampleRate, channels int) *WAV {
 // Get sample rate
 func (w *WAV) SampleRate() float64 { return w.sampleRate }
 
+// Get channels
+func (w *WAV) Channels() int { return w.channels }
+
+// Get samples
+func (w *WAV) Samples() []int16 { return  w.samples }
+
 // Append samples into current WAV
 func (w *WAV) Append(samples []int16) {
 	w.samples = append(w.samples, samples...)

@@ -30,12 +30,10 @@ func CmdPlay(args *CmdArgs) error {
 		return err
 	}
 
-	fmt.Printf("[PLAY] GetMainIR()\n")
 	pr, err := bleeder.GetMainIR()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("IR %v\n", pr)
 
 	// TODO: define correct player by config or some
 	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)

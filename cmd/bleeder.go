@@ -52,14 +52,14 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 
 // Get IR of the main sequence
 func (b *Bleeder) GetMainIR() (*ir.Program, error) {
-	fmt.Printf("FN CALL GetMainIR()\n")
+	fmt.Printf("CALL GetMainIR\n")
 	// get main IR from cache or build it
 	return b.GetSeqIR(b.main, nil, 0)
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, error) {
-	fmt.Printf("FN CALL GetSeqIR(%s)\n", name)
+	fmt.Printf("CALL GetSeqIR %s\n", name)
 	// try IR from cache
 	key := name + ":" + strings.Join(args, ",")
 	if pr, ok := b.programs[key]; ok {
@@ -77,7 +77,9 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 
 // Get IR of raw DSL
 func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
-	fmt.Printf("FN CALL GetRawIR(%s)\n", lines)
+	fmt.Printf("CALL GetRawIR\n%s\n", strings.Join(lines, "\n"))
+	defDur := b.cfg.Parser.DefaultDur
+	defVol := b.cfg.Parser.DefaultVol
 	pr := ir.NewProgram()
 	rt := 0.0 // repeated time
 	for _, line := range lines {
@@ -103,15 +105,15 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 			case b.cfg.Mapping.Wave:
 				in = &ir.Instruction{
 					Freq: parseArg(v, 1, 0, 440),
-					Dur:  parseArg(v, 2, 0, 1),
-					Vol:  parseArg(v, 3, 0, 1),
+					Dur:  parseArg(v, 2, 0, defDur),
+					Vol:  parseArg(v, 3, 0, defVol),
 					Time: t,
 					Info: r, // Just for debug
 				}
 				pr.Add(in)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				w := parseArg(v, 1, 0, 1)
+				w := parseArg(v, 1, 0, defDur)
 				t += w
 				rt += w
 			// parse REPEAT

@@ -12,9 +12,7 @@ func WaveSine(p Phase) float64 {
 	return math.Sin(2 * math.Pi * p)
 }
 
-// f(x) =  1 if x < 0.5
-//
-//	-1 if x ≥ 0.5
+// f(x) = 1 if x < 0.5 or -1 if x ≥ 0.5
 func WaveSquare(p Phase) float64 {
 	if p < 0.5 {
 		return 1
@@ -27,9 +25,7 @@ func WaveSaw(p Phase) float64 {
 	return 2*p - 1
 }
 
-// f(x) = 4x - 1 if x < 0.5
-//
-//	3 - 4x if x ≥ 0.5
+// f(x) = 4x - 1 if x < 0.5 or 3 - 4x if x ≥ 0.5
 func WaveTriangle(p Phase) float64 {
 	if p < 0.5 {
 		return 4*p - 1

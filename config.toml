@@ -1,10 +1,16 @@
 [audio]
 sample_rate = 44100
+# sample_rate = 22050
+# sample_rate = 1000
 channels = 1
+
+[parser]
+default_dur = 1.0
+default_vol = 1.0
 
 [output]
 command = "afplay"
-args = ["-v", "0.3"]
+args = ["-v", "0.8"]
 
 [mapping]
 play = '>'
