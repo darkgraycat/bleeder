@@ -73,22 +73,19 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 		return nil, fmt.Errorf("Sequence is not found: %s", name)
 	}
 	// expands arguments
-	content := make([]string, len(seq.Content))
 	pairs := make([]string, len(seq.Args))
 	copy(pairs, seq.Args)
 	for i, arg := range args {
 		pairs[i*2+1] = arg
 	}
-	r := strings.NewReplacer(pairs...)
-	for i, line := range seq.Content {
-		content[i] = r.Replace(line)
-	}
+	content := strings.NewReplacer(pairs...).Replace(seq.Content)
 	return b.GetRawIR(content, t)
 }
 
 // Get IR of raw DSL
-func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
-	fmt.Printf("CALL GetRawIR\n%s\n", strings.Join(lines, "\n"))
+func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
+	fmt.Printf("CALL GetRawIR\n%s\n", content)
+	lines := strings.Split(content, "\n")
 	defDur := b.cfg.Parser.DefaultDur
 	defVol := b.cfg.Parser.DefaultVol
 	pr := ir.NewProgram()

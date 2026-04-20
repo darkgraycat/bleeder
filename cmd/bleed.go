@@ -13,10 +13,10 @@ type Bleed struct {
 		Bleeds []bleedRef `toml:"bleeds"` // included bleeds
 	} `toml:"meta"`
 	Sequences map[string]struct {
-		Args    args    `toml:"args"`    // sequence arguments
-		Repeat  int     `toml:"repeat"`  // repeats count
-		Shape   string  `toml:"shape"`   // shape of the wave (TODO)
-		Content content `toml:"content"` // sequence contents
+		Args    args   `toml:"args"`    // sequence arguments
+		Repeat  int    `toml:"repeat"`  // repeats count
+		Shape   string `toml:"shape"`   // shape of the wave (TODO)
+		Content string `toml:"content"` // sequence contents
 	} `toml:"seq"`
 }
 
@@ -76,14 +76,4 @@ func (a *args) UnmarshalTOML(data any) error {
 		*a = append(*a, k, v)
 	}
 	return nil
-}
-
-type content []string
-
-func (c *content) UnmarshalTOML(data any) error {
-	if s, ok := data.(string); ok {
-		*c = strings.Split(s, "\n")
-		return nil
-	}
-	return fmt.Errorf("content should be whitespace character separated string, got %T", data)
 }
