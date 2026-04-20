@@ -26,6 +26,10 @@ content = """
      Args: freq, dur, vol
      Example: `> c3 1 0.5`
 
+`@`  Play sequence
+     Args: name, ...sequence arguments
+     Example: `@ chord c5 0.5`
+
 `:`  Wait command
      Args: time
      Example: `: 1.0`
@@ -38,6 +42,3 @@ content = """
      Args: same as for `|`
      Example: `> c3 0.5 | +4 : 1 || +7`
 
-`@`  Reference to sequence or sample
-     Example: `> @kick`
-     Example: `: @intro`

@@ -20,16 +20,13 @@ type Config struct {
 
 	Mapping struct {
 		Play       string `toml:"play"`
-		Wait       string `toml:"wait"`
 		Wave       string `toml:"wave"`
+		Seq        string `toml:"seq"`
+		Wait       string `toml:"wait"`
 		Repeat     string `toml:"repeat"`
 		RepeatLine string `toml:"repeat_line"`
 		Debug      string `toml:"debug"`
 	} `toml:"mapping"`
-
-	Symbols struct {
-		Reference string `toml:"reference"`
-	} `toml:"symbols"`
 }
 
 func LoadConfig(path string) (*Config, error) {

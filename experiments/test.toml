@@ -1,7 +1,25 @@
 [meta]
-# main = "repeats"
-main = "overlap_both"
-# main = "1st24f"
+main = "seqArgsRoot"
+
+[seq.seqArgsRoot]
+content = """
+@ seqArgs e3 0.9
+: 2.0
+@ seqArgs a3 0.9
+"""
+
+[seq.seqArgs]
+args = 'note:c3 d:1.0'
+content = """
+> note d : 1.0
+> note d : 1.0
+"""
+
+[seq.notes]
+content = """
+> a2 > e3 > a3 :
+> a2 > e3 > a3 :
+"""
 
 [seq.repeats]
 content = """

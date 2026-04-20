@@ -14,11 +14,9 @@ args = ["-v", "0.8"]
 
 [mapping]
 play = '>'
-wait = ':'
 wave = '~'
+seq = '@'
+wait = ':'
 repeat = '|'
 repeat_line = '||'
 debug = '#'
-
-[symbols]
-reference = '@'

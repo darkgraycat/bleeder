@@ -9,14 +9,14 @@ import (
 
 type Bleed struct {
 	Meta struct {
-		Main   string     `toml:"main"`
-		Bleeds []bleedRef `toml:"bleeds"`
+		Main   string     `toml:"main"`   // main sequence name
+		Bleeds []bleedRef `toml:"bleeds"` // included bleeds
 	} `toml:"meta"`
 	Sequences map[string]struct {
-		Args    args    `toml:"args"`
-		Repeat  int     `toml:"repeat"`
-		Shape   string  `toml:"shape"` // TODO: use it
-		Content content `toml:"content"`
+		Args    args    `toml:"args"`    // sequence arguments
+		Repeat  int     `toml:"repeat"`  // repeats count
+		Shape   string  `toml:"shape"`   // shape of the wave (TODO)
+		Content content `toml:"content"` // sequence contents
 	} `toml:"seq"`
 }
 
@@ -61,20 +61,19 @@ func (r *bleedRef) UnmarshalTOML(data any) error {
 	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
 }
 
-type args map[string]string
+type args []string
 
 func (a *args) UnmarshalTOML(data any) error {
 	s, ok := data.(string)
 	if !ok {
 		return fmt.Errorf("args should be string, got %T", data)
 	}
-	*a = make(args)
 	for part := range strings.FieldsSeq(s) {
 		k, v, ok := strings.Cut(part, ":")
 		if !ok {
 			return fmt.Errorf("invalid arg: %q", part)
 		}
-		(*a)[k] = v
+		*a = append(*a, k, v)
 	}
 	return nil
 }
