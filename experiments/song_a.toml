@@ -11,7 +11,7 @@ content = """
 
 [seq.riff_1]
 args = 'note:c3 vol:1.0'
-repeat = 4
+repeat = 4 # TODO: implement repeat
 content = """
 > c3 0.5 : 0.3 > d3 0.5 : 0.3 > e3 0.5 : 0.3
 > note 1 vol : 1

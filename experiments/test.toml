@@ -1,6 +1,13 @@
 [meta]
+# main = "repeats"
 main = "overlap_both"
 # main = "1st24f"
+
+[seq.repeats]
+content = """
+~ 110 : 0.2 ~ 164 : |
+~ 87  : 0.2 ~ 130 : |
+"""
 
 [seq.overlap_both]
 content = '''

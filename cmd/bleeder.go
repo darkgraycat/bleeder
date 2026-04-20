@@ -26,6 +26,7 @@ func NewBleeder(cfg *Config) *Bleeder {
 			cfg.Mapping.Play, "\\"+cfg.Mapping.Play,
 			cfg.Mapping.Wait, "\\"+cfg.Mapping.Wait,
 			cfg.Mapping.Wave, "\\"+cfg.Mapping.Wave,
+			cfg.Mapping.Repeat, "\\"+cfg.Mapping.Repeat,
 			cfg.Mapping.RepeatLine, "\\"+cfg.Mapping.RepeatLine,
 			cfg.Mapping.Debug, "\\"+cfg.Mapping.Debug,
 		),
@@ -81,7 +82,8 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 	defDur := b.cfg.Parser.DefaultDur
 	defVol := b.cfg.Parser.DefaultVol
 	pr := ir.NewProgram()
-	rt := 0.0 // repeated time
+	rt := 0.0 // relative time
+	lastRt := 0.0
 	for _, line := range lines {
 		// skip empty lines
 		if len(line) == 0 {
@@ -104,18 +106,19 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
 				in = &ir.Instruction{
-					Freq: parseArg(v, 1, 0, 440),
-					Dur:  parseArg(v, 2, 0, defDur),
-					Vol:  parseArg(v, 3, 0, defVol),
+					Freq: parseFloatArg(v, 1, 0, 440),
+					Dur:  parseFloatArg(v, 2, 0, defDur),
+					Vol:  parseFloatArg(v, 3, 0, defVol),
 					Time: t,
 					Info: r, // Just for debug
 				}
 				pr.Add(in)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				w := parseArg(v, 1, 0, defDur)
+				w := parseFloatArg(v, 1, 0, defDur)
 				t += w
 				rt += w
+				lastRt = rt
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
 				in = &ir.Instruction{
@@ -126,7 +129,7 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 					Info: "REPEAT " + in.Info,
 				}
 				pr.Add(in)
-				t += rt
+				t += lastRt
 				rt = 0
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
@@ -139,7 +142,7 @@ func (b *Bleeder) GetRawIR(lines []string, t float64) (*ir.Program, error) {
 	return pr, nil
 }
 
-func parseArg(v []string, i int, prev, def float64) float64 {
+func parseFloatArg(v []string, i int, prev, def float64) float64 {
 	if i >= len(v) {
 		return prev + def
 	}

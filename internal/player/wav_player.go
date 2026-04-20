@@ -22,8 +22,12 @@ func NewWAVPlayer(sampleRate, channels int) *WAVPlayer {
 func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 	sr := p.wav.SampleRate()
 	instructions := pr.GetInstructions()
-	totalSamples := int((pr.Last().Time + pr.Last().Dur) * sr)
+	totalSamples := int(math.Ceil((pr.Last().Time + pr.Last().Dur) * sr))
 	fmt.Printf("Total samples %d\n", totalSamples)
+
+	for i, in := range instructions {
+		fmt.Printf("%d - %f\t%f %f\t%s\n", i, in.Freq, in.Dur, in.Time, in.Info)
+	}
 
 	out := p.getSamples3(instructions, totalSamples, audio.WaveSaw)
 	p.wav.Append(out)

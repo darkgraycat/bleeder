@@ -15,6 +15,7 @@ type Bleed struct {
 	Sequences map[string]struct {
 		Args    args    `toml:"args"`
 		Repeat  int     `toml:"repeat"`
+		Shape   string  `toml:"shape"` // TODO: use it
 		Content content `toml:"content"`
 	} `toml:"seq"`
 }
