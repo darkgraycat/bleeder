@@ -1,18 +1,60 @@
 [meta]
-main = "seqArgsRoot"
+main = "main"
 
-[seq.seqArgsRoot]
+[seq.main]
 content = """
-@ seqArgs e3 0.9
-: 2.0
-@ seqArgs a3 0.9
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+
+@ arpeggio a2 0.8 0.4 : 1.6
+@ arpeggio f2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
+@ arpeggio d2 0.8 0.4 : 1.6
 """
 
-[seq.seqArgs]
-args = 'note:c3 d:1.0'
+[seq.chord]
+args = 'note:e2 d:1.0'
 content = """
-> note d : 1.0
-> note d : 1.0
+> note d
+> note d
+"""
+
+[seq.arpeggio]
+args = 'note:e2 d:0.6 p:0.4'
+content = """
+> note d : p | +7 | +5 | -6
 """
 
 [seq.notes]
@@ -46,35 +88,4 @@ content = '''
 ~ 87.31 ~ 130.81 ~ 196 :
 '''
 
-[seq.1st24f]
-content = '''
-~ 1318.51 :
-~ 1318.51 ~ 1318.51 :
-~ 1318.51 ~ 1318.51 ~ 1318.51 :
-'''
-
-[seq.overlap2]
-content = '''
-~ 261 ~ 293
-'''
-
-[seq.overlap3]
-content = '''
-~ 261 ~ 293 ~ 329
-'''
-
-[seq.test1]
-content = '''
-~ 200 :
-~ 400 :
-~ 800 :
-'''
-
-[seq.main]
-repeat = 2
-content = """
-~ 261 0.8 : 1
-~ 293 0.8 : 1
-~ 329 0.8 : 1
-"""
 

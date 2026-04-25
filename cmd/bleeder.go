@@ -3,8 +3,8 @@ package cmd
 import (
 	"bleeder/internal/audio"
 	"bleeder/internal/ir"
+	"bleeder/internal/shared"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -70,7 +70,7 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 	// get sequence from bleed
 	seq, ok := b.bleed.Sequences[name]
 	if !ok {
-		return nil, fmt.Errorf("Sequence is not found: %s", name)
+		return nil, fmt.Errorf("sequence is not found: %s", name)
 	}
 	// expands arguments
 	pairs := make([]string, len(seq.Args))
@@ -107,9 +107,9 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
 				in = &ir.Instruction{
-					Freq: audio.NoteToFreq(v[1]),
-					Dur:  parseFloatArg(v, 2, 0, defDur),
-					Vol:  parseFloatArg(v, 3, 0, defVol),
+					Freq: parseNoteArg(v, 1, "c4"),
+					Dur:  parseFloatArg(v, 2, defDur),
+					Vol:  parseFloatArg(v, 3, defVol),
 					Time: t,
 					Info: r, // Just for debug
 				}
@@ -117,9 +117,9 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
 				in = &ir.Instruction{
-					Freq: parseFloatArg(v, 1, 0, 440),
-					Dur:  parseFloatArg(v, 2, 0, defDur),
-					Vol:  parseFloatArg(v, 3, 0, defVol),
+					Freq: parseFloatArg(v, 1, 440),
+					Dur:  parseFloatArg(v, 2, defDur),
+					Vol:  parseFloatArg(v, 3, defVol),
 					Time: t,
 					Info: r, // Just for debug
 				}
@@ -134,15 +134,16 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 				pr.Merge(pr2)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				w := parseFloatArg(v, 1, 0, defDur)
+				w := parseFloatArg(v, 1, defDur)
 				t += w
 				rt += w
 				lastRt = rt
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
+				_, mod := parseInstructionArg(v, 1, "")
 				in = &ir.Instruction{
-					Freq: in.Freq,
-					Dur:  in.Dur,
+					Freq: audio.TransposeFreq(in.Freq, mod),
+					Dur:  in.Dur, // TODO
 					Vol:  in.Vol,
 					Time: t,
 					Info: "REPEAT " + in.Info,
@@ -161,13 +162,25 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 	return pr, nil
 }
 
-func parseFloatArg(v []string, i int, prev, def float64) float64 {
-	if i >= len(v) {
-		return prev + def
+func parseInstructionArg(v []string, idx int, def string) (arg string, mod float64) {
+	if idx >= len(v) {
+		return def, 0.0
 	}
-	f, err := strconv.ParseFloat(v[i], 64)
-	if err != nil {
-		return prev + def
+	i := strings.IndexAny(v[idx], "+-")
+	if i == -1 {
+		return v[idx], 0.0
 	}
-	return f
+	return v[idx][:i], shared.Str2Float(v[idx][i:], 0.0)
+}
+
+func parseNoteArg(v []string, idx int, def string) float64 {
+	s, mod := parseInstructionArg(v, idx, def)
+	fmt.Printf("DEBUG S %s, F %f\n", s, mod)
+	i := audio.GetNoteIndex(s) + int(mod)
+	return audio.FreqByNoteIndex(i)
+}
+
+func parseFloatArg(v []string, idx int, def float64) float64 {
+	s, mod := parseInstructionArg(v, idx, shared.Float2Str(def))
+	return shared.Str2Float(s, 0.0) + mod
 }

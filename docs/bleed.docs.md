@@ -2,7 +2,7 @@
 Example:
 ```toml
 [seq.riff_1]
-args = note vol
+args = 'note:e2 vol:1.0'
 repeat = 4
 content = """
 > note 1 vol : 1

@@ -1,0 +1,36 @@
+[meta]
+main = "main"
+tempo = 128
+
+[seq.main]
+args = 'a:@one b:@two'
+content = """
+a-a
+b-b
+"""
+
+[seq.one]
+args = 'b:e3'
+content = """
+--b- --b- --b- --b-
+"""
+
+[seq.two]
+args = 'a:c3'
+content = """
+aa-a aa-a aa-a
+"""
+
+
+[riff.arpeggio]
+args="a:e2 b:a+2 c:a+2"
+content="""
+abc>
+"""
+
+[riff.master]
+args="a:@arpeggio a3 b:@arpeggio a4"
+content="""
+a>>>
+b>>>
+"""

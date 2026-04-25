@@ -19,11 +19,11 @@ func CmdPlay(args *CmdArgs) error {
 	fmt.Printf("[PLAY] %v\n", args)
 	cfg, err := LoadConfig(args.CfgPath)
 	if err != nil {
-		return fmt.Errorf("Config - %v", err)
+		return fmt.Errorf("config - %v", err)
 	}
 	bleed, err := LoadBleed(args.BleedPath)
 	if err != nil {
-		return fmt.Errorf("Bleed - %v", err)
+		return fmt.Errorf("bleed - %v", err)
 	}
 	bleeder, err := NewBleeder(cfg).Bleed(bleed)
 	if err != nil {

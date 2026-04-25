@@ -29,7 +29,7 @@ func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 		fmt.Printf("%d - %f\t%f %f\t%s\n", i, in.Freq, in.Dur, in.Time, in.Info)
 	}
 
-	out := p.getSamples3(instructions, totalSamples, audio.WaveSaw)
+	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
 	p.wav.Append(out)
 
 	f, err := os.CreateTemp("", "note*.wav")
@@ -47,38 +47,7 @@ func (p *WAVPlayer) Stop() error {
 	return nil
 }
 
-func (p *WAVPlayer) getSamples1(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
-	sr := p.wav.SampleRate()
-	out := make([]int16, total)
-	for _, in := range instructions {
-		offset := int(in.Time * sr)
-		samples := p.wav.GenerateSamples(in.Freq, in.Dur, in.Vol, wave)
-		for i, s := range samples {
-			out[offset+i] += s
-		}
-	}
-	return out
-}
-
-func (p *WAVPlayer) getSamples2(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
-	sr := p.wav.SampleRate()
-	buf := make([]float64, total)
-	out := make([]int16, total)
-	for _, in := range instructions {
-		offset := int(in.Time * sr)
-		samples := p.wav.GenerateSamples(in.Freq, in.Dur, in.Vol, wave)
-		for i, s := range samples {
-			buf[offset+i] += float64(s)
-		}
-	}
-	for i, s := range buf {
-		clamped := math.Max(-math.MaxInt16, math.Min(math.MaxInt16, s))
-		out[i] = int16(clamped)
-	}
-	return out
-}
-
-func (p *WAVPlayer) getSamples3(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
+func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
 	sr := p.wav.SampleRate()
 	density := make([]int, total)
 	buf := make([]float64, total)

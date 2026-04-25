@@ -292,4 +292,32 @@ on next operation - fill prev instruction with args
 ## Writting Renderers using IRs
 
 
+## Riffs DSL example (post-MVP)
+```toml
+[riff.test]
+args = 'a:c3 b:e3'
+tempo = 128
+content = """
+--b- --b- --b- --b-
+aa-a aa-a aa-a aa-a
+"""
+```
+
+#### more on it
+What if with notes we also can play sequences?
+And make Bleeder as nested visualisation tool?
+Because with current syntax it looks like SonicPI
+Example of it can be found at `./experiments/example_of_new_syntax_idea.toml`
+
+In case we have sequence with nested sequences with different duration each
+What duration of "-" going to be?
+Is it shortest or longest sequence duration?
+```toml
+[seq.example]
+args = 'a:@one b:@two'
+content = """
+a-a
+b-b
+"""
+```
 
