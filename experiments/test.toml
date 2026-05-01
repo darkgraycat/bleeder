@@ -3,27 +3,53 @@ main = "main"
 
 [seq.main]
 content = """
-> d3 0.6 : 0.6
-> f#3 0.2 : 0.2 | |
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
+@ hs5times : 32
 """
+
+[seq.hs5times]
+content = """
+@ heart-shaped : 6.4
+@ heart-shaped : 6.4
+@ heart-shaped : 6.4
+@ heart-shaped : 6.4
+@ heart-shaped : 6.4
+"""
+
 
 [seq.heart-shaped]
 content = """
+@ chord5 a2 1.6
 @ arpeggio a3 : 1.6
+@ chord5 f2 1.6
 @ arpeggio f3 : 1.6
+@ chord5 d2 3.2
 @ arpeggio d3 : 1.6
-@ arpeggio d3 : 1.6
-
-@ arpeggio a3 : 1.6
-@ arpeggio f3 : 1.6
 @ arpeggio d3 : 1.6
 """
 
-[seq.chord]
+# HELPERS
+[seq.chord5]
 args = 'note:e2 d:1.0'
 content = """
-> note d
-> note d
+> note d | +7
 """
 
 [seq.arpeggio]
@@ -31,36 +57,3 @@ args = 'note:e2 d:0.6 p:0.4'
 content = """
 > note d : p | +7 | +5 | -5
 """
-
-[seq.notes]
-content = """
-> a2 > e3 > a3 :
-> a2 > e3 > a3 :
-"""
-
-[seq.repeats]
-content = """
-~ 110 : 0.2 ~ 164 : |
-~ 87  : 0.2 ~ 130 : |
-"""
-
-[seq.overlap_both]
-content = '''
-~ 110 :
-~ 110 ~ 164.81 :
-~ 110 ~ 164.81 ~ 220 :
-: 1
-~ 87.31 :
-~ 87.31 ~ 130.81 :
-~ 87.31 ~ 130.81 ~ 174.61 :
-: 1
-~ 110 :
-~ 110 ~ 164.81 :
-~ 110 ~ 164.81 ~ 233.1 :
-: 1
-~ 87.31 :
-~ 87.31 ~ 130.81 :
-~ 87.31 ~ 130.81 ~ 196 :
-'''
-
-

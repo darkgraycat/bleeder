@@ -4,6 +4,7 @@ import (
 	"bleeder/internal/audio"
 	"bleeder/internal/ir"
 	"bleeder/internal/shared"
+	"bleeder/internal/shared/logs"
 	"fmt"
 	"strings"
 )
@@ -55,14 +56,14 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 
 // Get IR of the main sequence
 func (b *Bleeder) GetMainIR() (*ir.Program, error) {
-	fmt.Printf("CALL GetMainIR\n")
+	logs.Debug("CALL GetMainIR")
 	// get main IR from cache or build it
 	return b.GetSeqIR(b.main, nil, 0)
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, error) {
-	fmt.Printf("CALL GetSeqIR %s, %v\n", name, args)
+	logs.Debug("CALL GetSeqIR %s, %v", name, args)
 	// try IR from cache
 	key := name + ":" + strings.Join(args, ",")
 	if pr, ok := b.programs[key]; ok {
@@ -80,20 +81,29 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 		pairs[i*2+1] = arg
 	}
 	content := strings.NewReplacer(pairs...).Replace(seq.Content)
-	return b.GetRawIR(content, t)
+	pr, t, err := b.GetRawIR(content, t)
+	if err != nil {
+		return nil, err
+	}
+	for i := 1; i < seq.Repeat; i++ {
+		pr2, t2, err := b.GetRawIR(content, t)
+		if err != nil {
+			return nil, err
+		}
+		t += t2
+		pr.Merge(pr2)
+	}
+	return pr, nil
 }
 
 // Get IR of raw DSL
-func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
-	fmt.Printf("CALL GetRawIR\n%s\n", content)
+func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, float64, error) {
+	logs.Debug("CALL GetRawIR\n%s\n", content)
 	lines := strings.Split(content, "\n")
 	defDur := b.cfg.Parser.DefaultDur
 	defVol := b.cfg.Parser.DefaultVol
 	pr := ir.NewProgram()
-	rt := 0.0 // relative time
-	lastRt := 0.0
-
-	lastDelay := 0.0
+	accDelay := 0.0
 
 	for _, line := range lines {
 		// skip empty lines
@@ -101,13 +111,14 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 			continue
 		}
 		// split by instruction characters
-		var in *ir.Instruction
+		in := &ir.Instruction{Info: "Start"}
 		raw := strings.Split(b.replacer.Replace(line), REPLACER_CHAR)[1:]
 		for _, r := range raw {
 			v := strings.Fields(r)
 			switch v[0] {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
+				accDelay = 0
 				in = &ir.Instruction{
 					Freq: parseNoteArg(v, 1, "c4"),
 					Dur:  parseFloatArg(v, 2, defDur),
@@ -118,6 +129,7 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 				pr.Add(in)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
+				accDelay = 0
 				in = &ir.Instruction{
 					Freq: parseFloatArg(v, 1, 440),
 					Dur:  parseFloatArg(v, 2, defDur),
@@ -128,21 +140,18 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 				pr.Add(in)
 			// parse SEQ
 			case b.cfg.Mapping.Seq:
+				accDelay = 0
 				args := v[2:]
 				pr2, err := b.GetSeqIR(v[1], args, t)
 				if err != nil {
-					return nil, err
+					return nil, t, err
 				}
 				pr.Merge(pr2)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
 				w := parseFloatArg(v, 1, in.Dur)
-				fmt.Printf("WAIT FOR: %f\n", w)
-				fmt.Printf("BEF t: %f rt: %f lrt: %f\n", t, rt, lastRt)
 				t += w
-				rt += w
-				lastRt = rt
-				fmt.Printf("AFT t: %f rt: %f lrt: %f\n", t, rt, lastRt)
+				accDelay = +w
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
 				_, mod := parseInstructionArg(v, 1, "")
@@ -153,9 +162,8 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 					Time: t,
 					Info: "REPEAT " + in.Info,
 				}
+				t += accDelay
 				pr.Add(in)
-				t += lastRt
-				rt = 0
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
 				// TODO
@@ -164,7 +172,7 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 			}
 		}
 	}
-	return pr, nil
+	return pr, t, nil
 }
 
 func parseInstructionArg(v []string, idx int, def string) (arg string, mod float64) {
@@ -180,7 +188,6 @@ func parseInstructionArg(v []string, idx int, def string) (arg string, mod float
 
 func parseNoteArg(v []string, idx int, def string) float64 {
 	s, mod := parseInstructionArg(v, idx, def)
-	fmt.Printf("-- DEBUG S %s, F %f\n", s, mod)
 	i := audio.GetNoteIndex(s) + int(mod)
 	return audio.FreqByNoteIndex(i)
 }

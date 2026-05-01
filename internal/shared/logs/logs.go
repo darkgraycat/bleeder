@@ -1,6 +1,11 @@
 package logs
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+var start = time.Now()
 
 const (
 	reset   = "\033[0m"
@@ -14,21 +19,22 @@ const (
 )
 
 func Info(format string, a ...any) {
-	log(blue, "[INFO] ", format, a)
+	log(blue, "[INFO] ", format, a...)
 }
 
 func Warn(format string, a ...any) {
-	log(yellow, "[WARN] ", format, a)
+	log(yellow, "[WARN] ", format, a...)
 }
 
 func Error(format string, a ...any) {
-	log(red, "[ERROR] ", format, a)
+	log(red, "[ERROR] ", format, a...)
 }
 
 func Debug(format string, a ...any) {
-	log(magenta, "[DEBUG] ", format, a)
+	log(magenta, "[DEBUG] ", format, a...)
 }
 
 func log(clr, prefix, format string, a ...any) {
-	fmt.Printf(clr+prefix+reset+format+"\n", a...)
+	timestr := "(" + time.Since(start).String() + ") "
+	fmt.Printf(clr+prefix+reset+timestr+format+"\n", a...)
 }
