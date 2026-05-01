@@ -13,7 +13,7 @@ type Bleeder struct {
 	bleed    *Bleed                 // reference to Bleed
 	cfg      *Config                // reference to Config
 	main     string                 // main sequence name
-	programs map[string]*ir.Program // set of stored IR programs
+	programs map[string]*ir.Program // cached IR programs
 	replacer *strings.Replacer      // cached string replacer
 }
 

@@ -3,45 +3,8 @@ main = "main"
 
 [seq.main]
 content = """
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-
-@ arpeggio a2 0.8 0.4 : 1.6
-@ arpeggio f2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
-@ arpeggio d2 0.8 0.4 : 1.6
+> a3 0.6 : 0.4
+> d3 0.6
 """
 
 [seq.chord]
@@ -54,7 +17,13 @@ content = """
 [seq.arpeggio]
 args = 'note:e2 d:0.6 p:0.4'
 content = """
-> note d : p | +7 | +5 | -6
+> note d : p | +7 | +5
+"""
+
+[seq.arpeggio2]
+args = 'note:e2 o1:+7 o2:+5'
+content = """
+> note 0.6 : 0.4 | o1 | o2
 """
 
 [seq.notes]

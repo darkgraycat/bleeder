@@ -56,6 +56,33 @@ func (w *WAV) GenerateSamples(freq, dur, vol float64, wave WaveFunc) []int16 {
 	return samples
 }
 
+// TODO: think about proper way of generating samples or etc
+func (w *WAV) GenerateSamples2(freq, dur, vol, attackCoef, releaseCoef float64, wave WaveFunc) []int16 {
+	numSamples := int(dur * w.sampleRate)
+	samples := make([]int16, numSamples)
+	phase := 0.0
+	step := freq / w.sampleRate
+	amp := vol * math.MaxInt16
+	attack := int(w.sampleRate * attackCoef)
+	release := int(w.sampleRate * releaseCoef)
+	attackStep := 1.0 / float64(attack)
+	releaseStep := 1.0 / float64(release)
+	for i := range samples {
+		envelope := 1.0
+		if i < attack {
+			envelope = attackStep * float64(i)
+		} else if i >= numSamples-release {
+			envelope = releaseStep * float64(numSamples-i)
+		}
+		samples[i] = int16(wave(phase) * amp * envelope)
+		phase += step
+		if phase >= 1 {
+			phase -= 1
+		}
+	}
+	return samples
+}
+
 // Write WAV data
 func (w *WAV) Write(wr io.Writer) error {
 	dataSize := uint32(len(w.samples) * 2)
