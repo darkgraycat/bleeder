@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const REPLACER_CHAR = "\\"
+
 // Core DSL processor and IRs generator
 type Bleeder struct {
 	bleed    *Bleed                 // reference to Bleed
@@ -23,12 +25,12 @@ func NewBleeder(cfg *Config) *Bleeder {
 		cfg:      cfg,
 		programs: make(map[string]*ir.Program),
 		replacer: strings.NewReplacer(
-			cfg.Mapping.Play, "\\"+cfg.Mapping.Play,
-			cfg.Mapping.Wave, "\\"+cfg.Mapping.Wave,
-			cfg.Mapping.Seq, "\\"+cfg.Mapping.Seq,
-			cfg.Mapping.Wait, "\\"+cfg.Mapping.Wait,
-			cfg.Mapping.RepeatLine, "\\"+cfg.Mapping.RepeatLine,
-			cfg.Mapping.Repeat, "\\"+cfg.Mapping.Repeat,
+			cfg.Mapping.Play, REPLACER_CHAR+cfg.Mapping.Play,
+			cfg.Mapping.Wave, REPLACER_CHAR+cfg.Mapping.Wave,
+			cfg.Mapping.Seq, REPLACER_CHAR+cfg.Mapping.Seq,
+			cfg.Mapping.Wait, REPLACER_CHAR+cfg.Mapping.Wait,
+			cfg.Mapping.RepeatLine, REPLACER_CHAR+cfg.Mapping.RepeatLine,
+			cfg.Mapping.Repeat, REPLACER_CHAR+cfg.Mapping.Repeat,
 		),
 	}
 }
@@ -90,18 +92,19 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 	pr := ir.NewProgram()
 	rt := 0.0 // relative time
 	lastRt := 0.0
+
+	lastDelay := 0.0
+
 	for _, line := range lines {
 		// skip empty lines
 		if len(line) == 0 {
 			continue
 		}
-		// fmt.Printf("-- LINE %s\n", line)
 		// split by instruction characters
 		var in *ir.Instruction
-		raw := strings.Split(b.replacer.Replace(line), "\\")[1:]
+		raw := strings.Split(b.replacer.Replace(line), REPLACER_CHAR)[1:]
 		for _, r := range raw {
 			v := strings.Fields(r)
-			// fmt.Printf("-- RAW  %s\n", v)
 			switch v[0] {
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
@@ -133,10 +136,13 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, error) {
 				pr.Merge(pr2)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				w := parseFloatArg(v, 1, defDur)
+				w := parseFloatArg(v, 1, in.Dur)
+				fmt.Printf("WAIT FOR: %f\n", w)
+				fmt.Printf("BEF t: %f rt: %f lrt: %f\n", t, rt, lastRt)
 				t += w
 				rt += w
 				lastRt = rt
+				fmt.Printf("AFT t: %f rt: %f lrt: %f\n", t, rt, lastRt)
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
 				_, mod := parseInstructionArg(v, 1, "")
@@ -174,7 +180,7 @@ func parseInstructionArg(v []string, idx int, def string) (arg string, mod float
 
 func parseNoteArg(v []string, idx int, def string) float64 {
 	s, mod := parseInstructionArg(v, idx, def)
-	fmt.Printf("DEBUG S %s, F %f\n", s, mod)
+	fmt.Printf("-- DEBUG S %s, F %f\n", s, mod)
 	i := audio.GetNoteIndex(s) + int(mod)
 	return audio.FreqByNoteIndex(i)
 }

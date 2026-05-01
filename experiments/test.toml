@@ -5,9 +5,8 @@ main = "main"
 content = """
 > d3 0.6 : 0.6
 > f#3 0.2 : 0.2 | |
-
-: 2
 """
+
 [seq.heart-shaped]
 content = """
 @ arpeggio a3 : 1.6
