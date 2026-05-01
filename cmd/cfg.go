@@ -25,7 +25,6 @@ type Config struct {
 		Wait       string `toml:"wait"`
 		Repeat     string `toml:"repeat"`
 		RepeatLine string `toml:"repeat_line"`
-		Debug      string `toml:"debug"`
 	} `toml:"mapping"`
 }
 

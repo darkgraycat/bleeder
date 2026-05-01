@@ -3,8 +3,21 @@ main = "main"
 
 [seq.main]
 content = """
-> a3 0.6 : 0.4
-> d3 0.6
+> d3 0.6 : 0.6
+> f#3 0.2 : 0.2 | |
+
+: 2
+"""
+[seq.heart-shaped]
+content = """
+@ arpeggio a3 : 1.6
+@ arpeggio f3 : 1.6
+@ arpeggio d3 : 1.6
+@ arpeggio d3 : 1.6
+
+@ arpeggio a3 : 1.6
+@ arpeggio f3 : 1.6
+@ arpeggio d3 : 1.6
 """
 
 [seq.chord]
@@ -17,13 +30,7 @@ content = """
 [seq.arpeggio]
 args = 'note:e2 d:0.6 p:0.4'
 content = """
-> note d : p | +7 | +5
-"""
-
-[seq.arpeggio2]
-args = 'note:e2 o1:+7 o2:+5'
-content = """
-> note 0.6 : 0.4 | o1 | o2
+> note d : p | +7 | +5 | -5
 """
 
 [seq.notes]

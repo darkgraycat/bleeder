@@ -29,7 +29,6 @@ func NewBleeder(cfg *Config) *Bleeder {
 			cfg.Mapping.Wait, "\\"+cfg.Mapping.Wait,
 			cfg.Mapping.RepeatLine, "\\"+cfg.Mapping.RepeatLine,
 			cfg.Mapping.Repeat, "\\"+cfg.Mapping.Repeat,
-			cfg.Mapping.Debug, "\\"+cfg.Mapping.Debug,
 		),
 	}
 }
