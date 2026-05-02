@@ -4,7 +4,6 @@ import (
 	"bleeder/internal/audio"
 	"bleeder/internal/ir"
 	"bleeder/internal/shared/logs"
-	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -21,24 +20,26 @@ func NewWAVPlayer(sampleRate, channels int) *WAVPlayer {
 }
 
 func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
-	logs.Debug("PLAY")
+	logs.Info("Play")
 	sr := p.wav.SampleRate()
-	instructions := pr.GetInstructions()
-	totalSamples := int(math.Ceil((pr.Last().Time + pr.Last().Dur) * sr))
-	fmt.Printf("Total instructions %d\n", pr.Length())
-	fmt.Printf("Total samples %d\n", totalSamples)
+	instructions := pr.Instructions()
+	duration := pr.Duration()
+	totalSamples := int(duration * float64(sr))
+	logs.Info("Total instructions %d", pr.Length())
+	logs.Info("Total samples %d", totalSamples)
+	logs.Info("Total duration %f", duration)
 
-	// for i, in := range instructions {
-	// 	fmt.Printf("%d - %f\t%f %f\t%s\n", i, in.Freq, in.Dur, in.Time, in.Info)
-	// }
+	for i, in := range instructions {
+		logs.Debug("%d - %f\t%f %f\t%s", i, in.Freq, in.Dur, in.Time, in.Info)
+	}
 
-	logs.Debug("GET SAMPLES")
+	logs.Debug("get samples")
 	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
 
-	logs.Debug("APPEND SAMPLES")
+	logs.Debug("append samples")
 	p.wav.Append(out)
 
-	logs.Debug("CREATE FILE")
+	logs.Debug("create file")
 	f, err := os.CreateTemp("", "out*.wav")
 	if err != nil {
 		return err
@@ -46,10 +47,10 @@ func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 	defer os.Remove(f.Name())
 	defer f.Close()
 
-	logs.Debug("WRITE FILE")
+	logs.Debug("write file")
 	p.wav.Write(f)
 
-	logs.Debug("EXECUTE")
+	logs.Debug("execute")
 	return exec.Command("afplay", "-v", "0.5", f.Name()).Run()
 }
 
@@ -58,19 +59,22 @@ func (p *WAVPlayer) Stop() error {
 }
 
 func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
-	sr := p.wav.SampleRate()
+	sr := float64(p.wav.SampleRate())
 	buf := make([]float64, total)
 	out := make([]int16, total)
 	clip := float64(math.MaxInt16)
+	logs.Debug("geting samples")
+
 	for _, in := range instructions {
 		offset := int(in.Time * sr)
 		// TODO
 		// samples := p.wav.GenerateSamples(in.Freq, in.Dur, in.Vol, wave)
-		samples := p.wav.GenerateSamples2(in.Freq, in.Dur, in.Vol, 0.03, 0.06, wave)
+		samples := p.wav.GenerateSamplesEnvelope(in.Freq, in.Dur, in.Vol, 0.03, 0.06, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}
 	}
+	logs.Debug("normalising")
 	for i, s := range buf {
 		s = math.Tanh(s/clip) * clip // soft-clipping
 		out[i] = int16(s)

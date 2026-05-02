@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Used for parsing hack to split content by operations
 const REPLACER_CHAR = "\\"
 
 // Core DSL processor and IRs generator
@@ -38,6 +39,7 @@ func NewBleeder(cfg *Config) *Bleeder {
 
 // Load bleed sequences
 func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
+	logs.Debug("Bleeder Bleed")
 	// parse included bleeds
 	if bleed.Meta.Bleeds != nil {
 		for _, v := range bleed.Meta.Bleeds {
@@ -50,20 +52,20 @@ func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 	// parse main section to cache sequences
 	b.bleed = bleed
 	b.main = bleed.Meta.Main
-	_, err := b.GetMainIR()
+	_, err := b.GenMainIR()
 	return b, err // nil, err // b, nil
 }
 
 // Get IR of the main sequence
-func (b *Bleeder) GetMainIR() (*ir.Program, error) {
-	logs.Debug("CALL GetMainIR")
+func (b *Bleeder) GenMainIR() (*ir.Program, error) {
+	logs.Debug("Bleeder GenMainIR")
 	// get main IR from cache or build it
-	return b.GetSeqIR(b.main, nil, 0)
+	return b.GenSeqIR(b.main, nil, 0)
 }
 
 // Get IR of specified section with args
-func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, error) {
-	logs.Debug("CALL GetSeqIR %s, %v", name, args)
+func (b *Bleeder) GenSeqIR(name string, args []string, t float64) (*ir.Program, error) {
+	logs.Debug("Bleeder GenSeqIR %s, %v", name, args)
 	// try IR from cache
 	key := name + ":" + strings.Join(args, ",")
 	if pr, ok := b.programs[key]; ok {
@@ -81,12 +83,12 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 		pairs[i*2+1] = arg
 	}
 	content := strings.NewReplacer(pairs...).Replace(seq.Content)
-	pr, t, err := b.GetRawIR(content, t)
+	pr, t, err := b.GenRawIR(content, t)
 	if err != nil {
 		return nil, err
 	}
 	for i := 1; i < seq.Repeat; i++ {
-		pr2, t2, err := b.GetRawIR(content, t)
+		pr2, t2, err := b.GenRawIR(content, t)
 		if err != nil {
 			return nil, err
 		}
@@ -97,8 +99,8 @@ func (b *Bleeder) GetSeqIR(name string, args []string, t float64) (*ir.Program, 
 }
 
 // Get IR of raw DSL
-func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, float64, error) {
-	logs.Debug("CALL GetRawIR\n%s\n", content)
+func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, error) {
+	logs.Debug("Bleeder GenRawIR\n%s", content)
 	lines := strings.Split(content, "\n")
 	defDur := b.cfg.Parser.DefaultDur
 	defVol := b.cfg.Parser.DefaultVol
@@ -142,7 +144,7 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, float64, err
 			case b.cfg.Mapping.Seq:
 				accDelay = 0
 				args := v[2:]
-				pr2, err := b.GetSeqIR(v[1], args, t)
+				pr2, err := b.GenSeqIR(v[1], args, t)
 				if err != nil {
 					return nil, t, err
 				}
@@ -160,13 +162,13 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, float64, err
 					Dur:  in.Dur, // TODO
 					Vol:  in.Vol,
 					Time: t,
-					Info: "REPEAT " + in.Info,
+					Info: "REPEAT " + r,
 				}
 				t += accDelay
 				pr.Add(in)
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
-				// TODO
+				return nil, t, fmt.Errorf("not implemented yet: %s", b.cfg.Mapping.RepeatLine)
 			default:
 				fmt.Printf("Unknown instruction: %s\n", v[0])
 			}
@@ -174,6 +176,8 @@ func (b *Bleeder) GetRawIR(content string, t float64) (*ir.Program, float64, err
 	}
 	return pr, t, nil
 }
+
+// private helpers
 
 func parseInstructionArg(v []string, idx int, def string) (arg string, mod float64) {
 	if idx >= len(v) {
@@ -188,7 +192,7 @@ func parseInstructionArg(v []string, idx int, def string) (arg string, mod float
 
 func parseNoteArg(v []string, idx int, def string) float64 {
 	s, mod := parseInstructionArg(v, idx, def)
-	i := audio.GetNoteIndex(s) + int(mod)
+	i := audio.NoteIndex(s) + int(mod)
 	return audio.FreqByNoteIndex(i)
 }
 

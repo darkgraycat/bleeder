@@ -15,7 +15,7 @@ func NewProgram() *Program {
 }
 
 // Get an array of instructions
-func (p *Program) GetInstructions() []*Instruction {
+func (p *Program) Instructions() []*Instruction {
 	return p.instructions
 }
 
@@ -48,6 +48,18 @@ func (p *Program) Merge(src *Program) {
 // Get the number of Instructions in Program
 func (p *Program) Length() int {
 	return len(p.instructions)
+}
+
+// Get duration of whole Program
+func (p *Program) Duration() float64 {
+	dur := 0.0
+	for _, in := range p.instructions {
+		end := in.Time + in.Dur
+		if end > dur {
+			dur = end
+		}
+	}
+	return dur
 }
 
 // Get first Instruction

@@ -49,7 +49,7 @@ func FreqByNoteIndex(idx int) float64 {
 }
 
 // Get note index by note name
-func GetNoteIndex(note string) int {
+func NoteIndex(note string) int {
 	if i, ok := noteIndexTable[note]; ok {
 		return i
 	}

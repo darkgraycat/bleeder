@@ -3,36 +3,20 @@ main = "main"
 
 [seq.main]
 content = """
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
-@ hs5times : 32
+@ missile : 8
 """
 
-[seq.hs5times]
-content = """
-@ heart-shaped : 6.4
-@ heart-shaped : 6.4
-@ heart-shaped : 6.4
-@ heart-shaped : 6.4
-@ heart-shaped : 6.4
-"""
-
+[seq.missile]
+content = '''
+@ chord5 e2 2
+@ arpeggio e3 : 2
+@ chord5 g#2 2
+@ arpeggio g#2 : 2
+@ chord5 c#3 2
+@ arpeggio c#3 : 2
+@ chord5 a2 2
+@ arpeggio a3 : 2
+'''
 
 [seq.heart-shaped]
 content = """
@@ -44,6 +28,7 @@ content = """
 @ arpeggio d3 : 1.6
 @ arpeggio d3 : 1.6
 """
+
 
 # HELPERS
 [seq.chord5]

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bleeder/cmd"
+	"bleeder/internal/shared/logs"
 	"flag"
 	"fmt"
 	"os"
@@ -14,6 +15,7 @@ var cmds = map[string]cmd.Cmd{
 }
 
 func main() {
+	logs.SetLogLevel(1)
 	// parse CLI flags
 	cmdMode := ""
 	cmdArgs := cmd.CmdArgs{}

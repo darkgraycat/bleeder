@@ -1,0 +1,59 @@
+meta:
+  main: main
+
+sequences:
+  main:
+    content: |
+      @ heart-shaped : 6.4
+      @ heart-shaped : 6.4
+      @ heart-shaped : 6.4
+      @ heart-shaped : 6.4
+
+  heart-shaped:
+    content: |
+      @ chord5 a2 1.6
+      @ arpeggio a3 : 1.6
+      @ chord5 f2 1.6
+      @ arpeggio f3 : 1.6
+      @ chord5 d2 3.2
+      @ arpeggio d3 : 1.6
+      @ arpeggio d3 : 1.6
+
+  # HELPERS
+  chord5:
+    args:
+      note: e2
+      dur: 1.0
+    content: |
+      > note dur | +7
+
+  arpeggio:
+    args: "note:e2 d:0.6 p:0.4"
+    args:
+      note: e2
+      dur: 0.6
+      del: 0.4
+    content: |
+      > note dur : del | +7 | +5 | -5
+
+riffs:
+  arpeggio:
+    args:
+      a: e2
+      b: a+7
+      c: a+12
+    content: |
+      abc
+
+  other-one:
+    args:
+      a: e2
+      b: a+7
+    content: |
+      --a- --a-
+      bb-b bb-b
+
+
+  
+
+

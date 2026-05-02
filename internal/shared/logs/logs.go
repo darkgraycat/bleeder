@@ -6,6 +6,7 @@ import (
 )
 
 var start = time.Now()
+var loglevel = 0
 
 const (
 	reset   = "\033[0m"
@@ -18,23 +19,39 @@ const (
 	white   = "\033[37m"
 )
 
-func Info(format string, a ...any) {
-	log(blue, "[INFO] ", format, a...)
-}
-
-func Warn(format string, a ...any) {
-	log(yellow, "[WARN] ", format, a...)
+func SetLogLevel(level int) {
+	loglevel = level
 }
 
 func Error(format string, a ...any) {
+	if loglevel > 3 {
+		return
+	}
 	log(red, "[ERROR] ", format, a...)
 }
 
+func Warn(format string, a ...any) {
+	if loglevel > 2 {
+		return
+	}
+	log(yellow, "[WARN] ", format, a...)
+}
+
+func Info(format string, a ...any) {
+	if loglevel > 1 {
+		return
+	}
+	log(blue, "[INFO] ", format, a...)
+}
+
 func Debug(format string, a ...any) {
-	log(magenta, "[DEBUG] ", format, a...)
+	if loglevel > 0 {
+		return
+	}
+	timestr := "(" + time.Since(start).String() + ") "
+	log(magenta, "[DEBUG] ", timestr+format, a...)
 }
 
 func log(clr, prefix, format string, a ...any) {
-	timestr := "(" + time.Since(start).String() + ") "
-	fmt.Printf(clr+prefix+reset+timestr+format+"\n", a...)
+	fmt.Printf(clr+prefix+reset+format+"\n", a...)
 }

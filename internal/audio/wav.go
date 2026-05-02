@@ -9,7 +9,7 @@ import (
 
 // WAV file format interface
 type WAV struct {
-	sampleRate float64 // sample rate
+	sampleRate int     // sample rate
 	channels   int     // channels amount
 	header     []byte  // premade header bytes
 	samples    []int16 // samples bytes
@@ -18,7 +18,7 @@ type WAV struct {
 // Create new WAV instance
 func NewWAV(sampleRate, channels int) *WAV {
 	return &WAV{
-		sampleRate: float64(sampleRate),
+		sampleRate: sampleRate,
 		channels:   channels,
 		header:     makeWAVHeader(sampleRate, channels, 2),
 		samples:    []int16{},
@@ -26,13 +26,13 @@ func NewWAV(sampleRate, channels int) *WAV {
 }
 
 // Get sample rate
-func (w *WAV) SampleRate() float64 { return w.sampleRate }
+func (w *WAV) SampleRate() int { return w.sampleRate }
 
 // Get channels
 func (w *WAV) Channels() int { return w.channels }
 
 // Get samples
-func (w *WAV) Samples() []int16 { return  w.samples }
+func (w *WAV) Samples() []int16 { return w.samples }
 
 // Append samples into current WAV
 func (w *WAV) Append(samples []int16) {
@@ -41,10 +41,10 @@ func (w *WAV) Append(samples []int16) {
 
 // Generate tone samples
 func (w *WAV) GenerateSamples(freq, dur, vol float64, wave WaveFunc) []int16 {
-	numSamples := int(dur * w.sampleRate)
+	numSamples := int(dur * float64(w.sampleRate))
 	samples := make([]int16, numSamples)
 	phase := 0.0
-	step := freq / w.sampleRate
+	step := freq / float64(w.sampleRate)
 	amp := vol * math.MaxInt16
 	for i := range samples {
 		samples[i] = int16(wave(phase) * amp)
@@ -56,15 +56,15 @@ func (w *WAV) GenerateSamples(freq, dur, vol float64, wave WaveFunc) []int16 {
 	return samples
 }
 
-// TODO: think about proper way of generating samples or etc
-func (w *WAV) GenerateSamples2(freq, dur, vol, attackCoef, releaseCoef float64, wave WaveFunc) []int16 {
-	numSamples := int(dur * w.sampleRate)
+// Generate tone samples using attack and release
+func (w *WAV) GenerateSamplesEnvelope(freq, dur, vol, attackCoef, releaseCoef float64, wave WaveFunc) []int16 {
+	numSamples := int(dur * float64(w.sampleRate))
 	samples := make([]int16, numSamples)
 	phase := 0.0
-	step := freq / w.sampleRate
+	step := freq / float64(w.sampleRate)
 	amp := vol * math.MaxInt16
-	attack := int(w.sampleRate * attackCoef)
-	release := int(w.sampleRate * releaseCoef)
+	attack := int(float64(w.sampleRate) * attackCoef)
+	release := int(float64(w.sampleRate) * releaseCoef)
 	attackStep := 1.0 / float64(attack)
 	releaseStep := 1.0 / float64(release)
 	for i := range samples {

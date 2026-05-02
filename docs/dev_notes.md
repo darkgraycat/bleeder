@@ -323,3 +323,45 @@ b-b
 
 
 ## Rethinking current DSL
+Its damn hell trying to calculate pauses and it has visual overhead
+just to play two notes sequentially 0.5 sec each.
+For ex: 
+```
+> e3 0.5 : 0.5 > d3 0.5 : 0.5
+```
+
+#### Take 1 - shrink
+```
+>e3 0.5 :0.5 >d3 0.5 :0.5
+```
+Or shrink even more
+```
+>e3 0.5:0.5 >d3 0.5:0.5
+```
+Rule:
+separate -
+- operations by special chars
+- arguments by whitespaces
+- and newlines only needed if || is used
+
+#### Take 2 - default delay duration
+```
+>e3 0.5: >d3 0.5:
+```
+Rule
+value for ":" defaults to
+- duration of last used operation (> ~ or @)
+
+#### Take 3 - default delay duration + offset
+```
+>e3 0.5:-0.2 >d3 0.5:-0.2
+or even
+>e3 .5:-.2 >d3 .5:-.2
+```
+Rule
+same as in Take 2 but we can mod it by using + and - sign
+
+
+## I want to have live-coding
+How can we do this?
+

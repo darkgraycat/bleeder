@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bleeder/internal/player"
+	"bleeder/internal/shared/logs"
 	"fmt"
 )
 
@@ -16,7 +17,7 @@ type Cmd func(args *CmdArgs) error
 
 // Command to play specified .bleed.toml file
 func CmdPlay(args *CmdArgs) error {
-	fmt.Printf("[PLAY] %v\n", args)
+	logs.Info("PLAY %v", args)
 	cfg, err := LoadConfig(args.CfgPath)
 	if err != nil {
 		return fmt.Errorf("config - %v", err)
@@ -30,7 +31,7 @@ func CmdPlay(args *CmdArgs) error {
 		return err
 	}
 
-	pr, err := bleeder.GetMainIR()
+	pr, err := bleeder.GenMainIR()
 	if err != nil {
 		return err
 	}
@@ -47,13 +48,13 @@ func CmdPlay(args *CmdArgs) error {
 // Start application in daemon mode listening
 func CmdListen(args *CmdArgs) error {
 	// TODO
-	fmt.Printf("[LISTEN] %v\n", args)
+	logs.Info("LISTEN %v", args)
 	return nil
 }
 
 // Send partial sequence data to play
 func CmdSend(args *CmdArgs) error {
 	// TODO
-	fmt.Printf("[SEND] %v\n", args)
+	logs.Info("SEND %v", args)
 	return nil
 }
