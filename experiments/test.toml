@@ -1,10 +1,11 @@
 [meta]
-main = "main"
+main = 'main'
 
 [seq.main]
-content = """
+content = '''
 @ missile : 8
-"""
+@ heart-shaped : 8
+'''
 
 [seq.missile]
 content = '''
@@ -19,7 +20,7 @@ content = '''
 '''
 
 [seq.heart-shaped]
-content = """
+content = '''
 @ chord5 a2 1.6
 @ arpeggio a3 : 1.6
 @ chord5 f2 1.6
@@ -27,18 +28,17 @@ content = """
 @ chord5 d2 3.2
 @ arpeggio d3 : 1.6
 @ arpeggio d3 : 1.6
-"""
-
+'''
 
 # HELPERS
 [seq.chord5]
 args = 'note:e2 d:1.0'
-content = """
+content = '''
 > note d | +7
-"""
+'''
 
 [seq.arpeggio]
 args = 'note:e2 d:0.6 p:0.4'
-content = """
+content = '''
 > note d : p | +7 | +5 | -5
-"""
+'''

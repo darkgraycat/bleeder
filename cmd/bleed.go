@@ -9,8 +9,8 @@ import (
 
 type Bleed struct {
 	Meta struct {
-		Main   string     `toml:"main"`   // main sequence name
-		Bleeds []bleedRef `toml:"bleeds"` // included bleeds
+		Main    string     `toml:"main"`    // main sequence name
+		Include []bleedRef `toml:"include"` // included bleeds
 	} `toml:"meta"`
 	Sequences map[string]struct {
 		Args    args   `toml:"args"`    // sequence arguments
@@ -31,9 +31,9 @@ func LoadBleed(path string) (*Bleed, error) {
 func (b Bleed) String() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Main: %s\n", b.Meta.Main)
-	if len(b.Meta.Bleeds) > 0 {
+	if len(b.Meta.Include) > 0 {
 		sb.WriteString("Includes:\n")
-		for i, ref := range b.Meta.Bleeds {
+		for i, ref := range b.Meta.Include {
 			fmt.Fprintf(&sb, "  [%d] %p\n", i, ref.Bleed)
 		}
 	}

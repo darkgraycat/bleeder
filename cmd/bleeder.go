@@ -41,13 +41,15 @@ func NewBleeder(cfg *Config) *Bleeder {
 func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
 	logs.Debug("Bleeder Bleed")
 	// parse included bleeds
-	if bleed.Meta.Bleeds != nil {
-		for _, v := range bleed.Meta.Bleeds {
-			_, err := b.Bleed(v.Bleed)
-			if err != nil {
-				return nil, err
-			}
-		}
+	if bleed.Meta.Include != nil {
+		// TODO: will be fixed during parser rewrite
+		return nil, fmt.Errorf("not implemented yet")
+		// for _, v := range bleed.Meta.Include {
+		// 	_, err := b.Bleed(v.Bleed)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// }
 	}
 	// parse main section to cache sequences
 	b.bleed = bleed
@@ -67,7 +69,11 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 func (b *Bleeder) GenSeqIR(name string, args []string, t float64) (*ir.Program, error) {
 	logs.Debug("Bleeder GenSeqIR %s, %v", name, args)
 	// try IR from cache
-	key := name + ":" + strings.Join(args, ",")
+	key := name
+	if len(args) > 0 {
+		key += ":" + strings.Join(args, ",")
+	}
+	fmt.Printf("LOOKING FOR %s\n", key)
 	if pr, ok := b.programs[key]; ok {
 		return pr, nil
 	}
@@ -95,6 +101,8 @@ func (b *Bleeder) GenSeqIR(name string, args []string, t float64) (*ir.Program, 
 		t += t2
 		pr.Merge(pr2)
 	}
+	// cache generated IR
+	b.programs[key] = pr
 	return pr, nil
 }
 
