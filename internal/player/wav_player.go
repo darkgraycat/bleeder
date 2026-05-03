@@ -24,7 +24,7 @@ func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 	sr := p.wav.SampleRate()
 	instructions := pr.Instructions()
 	duration := pr.Duration()
-	totalSamples := int(duration * float64(sr))
+	totalSamples := duration * sr
 	logs.Info("Total instructions %d", pr.Length())
 	logs.Info("Total samples %d", totalSamples)
 	logs.Info("Total duration %f", duration)
@@ -59,17 +59,17 @@ func (p *WAVPlayer) Stop() error {
 }
 
 func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
-	sr := float64(p.wav.SampleRate())
+	sr := p.wav.SampleRate()
 	buf := make([]float64, total)
 	out := make([]int16, total)
 	clip := float64(math.MaxInt16)
 	logs.Debug("geting samples")
 
 	for _, in := range instructions {
-		offset := int(in.Time * sr)
+		offset := in.Time * sr
 		// TODO
 		// samples := p.wav.GenerateSamples(in.Freq, in.Dur, in.Vol, wave)
-		samples := p.wav.GenerateSamplesEnvelope(in.Freq, in.Dur, in.Vol, 0.03, 0.06, wave)
+		samples := p.wav.GenerateSamplesEnvelope(in.Freq, float64(in.Dur), float64(in.Vol), 0.03, 0.06, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}

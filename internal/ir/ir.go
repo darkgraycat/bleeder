@@ -51,8 +51,8 @@ func (p *Program) Length() int {
 }
 
 // Get duration of whole Program
-func (p *Program) Duration() float64 {
-	dur := 0.0
+func (p *Program) Duration() int {
+	dur := 0
 	for _, in := range p.instructions {
 		end := in.Time + in.Dur
 		if end > dur {
@@ -97,9 +97,9 @@ func (p *Program) Prev(in *Instruction) *Instruction {
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
 	Freq float64 // frequence
-	Dur  float64 // duration
 	Vol  float64 // volume
-	Time float64 // start time
+	Dur  int     // duration
+	Time int     // start time
 	Info string  // additional information
 }
 

@@ -27,7 +27,7 @@ var replacer = strings.NewReplacer(
 	opLast, opSplitter+opLast,
 )
 
-func ParseRaw(content string, t float64) (*ir.Program, error) {
+func ParseRaw(content string, t int) (*ir.Program, error) {
 	pr := ir.NewProgram()
 	lastOp := opWait
 	in := &ir.Instruction{Info: "Start"}

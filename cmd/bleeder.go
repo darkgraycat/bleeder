@@ -131,9 +131,9 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 				accDelay = 0
 				in = &ir.Instruction{
 					Freq: parseNoteArg(v, 1, "c4"),
-					Dur:  parseFloatArg(v, 2, defDur),
+					Dur:  int(parseFloatArg(v, 2, defDur)),
 					Vol:  parseFloatArg(v, 3, defVol),
-					Time: t,
+					Time: int(t),
 					Info: r, // Just for debug
 				}
 				pr.Add(in)
@@ -142,9 +142,9 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 				accDelay = 0
 				in = &ir.Instruction{
 					Freq: parseFloatArg(v, 1, 440),
-					Dur:  parseFloatArg(v, 2, defDur),
+					Dur:  int(parseFloatArg(v, 2, defDur)),
 					Vol:  parseFloatArg(v, 3, defVol),
-					Time: t,
+					Time: int(t),
 					Info: r, // Just for debug
 				}
 				pr.Add(in)
@@ -159,7 +159,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 				pr.Merge(pr2)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				w := parseFloatArg(v, 1, in.Dur)
+				w := parseFloatArg(v, 1, float64(in.Dur))
 				t += w
 				accDelay = +w
 			// parse REPEAT
@@ -169,7 +169,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 					Freq: audio.TransposeFreq(in.Freq, mod),
 					Dur:  in.Dur, // TODO
 					Vol:  in.Vol,
-					Time: t,
+					Time: int(t),
 					Info: "REPEAT " + r,
 				}
 				t += accDelay
