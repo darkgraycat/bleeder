@@ -5,11 +5,12 @@ import (
 	"strconv"
 )
 
-const C4 = 261.6255653006 // base
+const C4freq = 261.6255653006 // base
 
-var freqTable = make(map[string]float64)
-var indexesTable = make(map[int]float64)
-var noteIndexTable = make(map[string]int)
+var noteToFreq = make(map[string]float64)
+var noteToMidi = make(map[string]int)
+var midiToFreq = make(map[int]float64)
+var midiToNote = make(map[int]string)
 
 func init() {
 	noteIndex := map[string]int{
@@ -21,39 +22,50 @@ func init() {
 		"a": 9, "a#": 10, "bb": 10,
 		"b": 11,
 	}
-	for note, idx := range noteIndex {
+	for noteName, idx := range noteIndex {
 		for octave := 0; octave <= 9; octave++ {
 			semitones := (octave-4)*12 + idx
-			frequency := C4 * math.Pow(2, float64(semitones)/12)
-			freqTable[note+strconv.Itoa(octave)] = frequency
-			indexesTable[semitones+60] = frequency
-			noteIndexTable[note+strconv.Itoa(octave)] = semitones + 60
+			freq := C4freq * math.Pow(2, float64(semitones)/12)
+			note := noteName + strconv.Itoa(octave)
+			midi := semitones + 60
+			noteToFreq[note] = freq
+			noteToMidi[note] = midi
+			midiToFreq[midi] = freq
+			midiToNote[midi] = note
 		}
 	}
 }
 
 // Get frequency by note name
-func FreqByNoteName(note string) float64 {
-	if f, ok := freqTable[note]; ok {
+func NoteToFreq(note string) float64 {
+	if f, ok := noteToFreq[note]; ok {
 		return f
 	}
-	return C4
+	return C4freq
 }
 
-// Get frequency by note name
-func FreqByNoteIndex(idx int) float64 {
-	if f, ok := indexesTable[idx]; ok {
-		return f
-	}
-	return C4
-}
-
-// Get note index by note name
-func NoteIndex(note string) int {
-	if i, ok := noteIndexTable[note]; ok {
+// Get midi number by note name
+func NoteToMidi(note string) int {
+	if i, ok := noteToMidi[note]; ok {
 		return i
 	}
 	return -1
+}
+
+// Get frequency by midi number
+func MidiToFreq(idx int) float64 {
+	if f, ok := midiToFreq[idx]; ok {
+		return f
+	}
+	return C4freq
+}
+
+// Get note name by midi number
+func MidiToNote(idx int) string {
+	if f, ok := midiToNote[idx]; ok {
+		return f
+	}
+	return "c4"
 }
 
 // Transpose frequency by semitone steps

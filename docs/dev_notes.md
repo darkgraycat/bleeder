@@ -1,3 +1,15 @@
+# TODO
+1. Rethink DSL + timing approach with relative integer beats instead of float seconds 
+2. Rewrite parser to have better error handling for better user expirience
+3. Rethink output approach - output should be in stdout
+4. Develop tablike grid sequencer DLS addition (we will keep both)
+5. Parser should now duration of last played sequence as well
+6. Do we need so many commands like '>' '~' '@', or we can use '~' and '@' to tell its type isnt a note
+
+--- questions
+do I really need repeat line operation?
+
+
 ## DSL development
 As a reference I am going to use SonicPI API
 https://gist.github.com/carltesta/424cc9e42f4de2ed52a41a612e22dc69

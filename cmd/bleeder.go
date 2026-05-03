@@ -200,8 +200,8 @@ func parseInstructionArg(v []string, idx int, def string) (arg string, mod float
 
 func parseNoteArg(v []string, idx int, def string) float64 {
 	s, mod := parseInstructionArg(v, idx, def)
-	i := audio.NoteIndex(s) + int(mod)
-	return audio.FreqByNoteIndex(i)
+	i := audio.NoteToMidi(s) + int(mod)
+	return audio.MidiToFreq(i)
 }
 
 func parseFloatArg(v []string, idx int, def float64) float64 {

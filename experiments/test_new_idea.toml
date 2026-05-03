@@ -1,2 +1,20 @@
 [meta]
 main = 'main'
+
+[seq.song]
+content = '''
+@chord5 a2 8
+@arpeggio a3 8 3:
+'''
+
+[seq.chord5]
+args = 'note:e2 d:8'
+content = '''
+note d |+7
+'''
+
+[seq.arpeggio]
+args = 'note:e2 p:8/4 d:2'
+content = '''
+note d>p |+7 |+5 |-5
+'''

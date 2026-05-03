@@ -14,6 +14,13 @@
 
 package experiments
 
+import "bleeder/internal/bleeder"
+
 func Run() {
+	content := `
+	:c3 4_ |+7
+	:e4 _4 >60 4 _+4 | +2
+	`
+	bleeder.ParseRaw(content, 0)
 
 }

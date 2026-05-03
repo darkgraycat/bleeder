@@ -3,8 +3,8 @@ main = 'main'
 
 [seq.main]
 content = '''
-@ missile : 8
 @ heart-shaped : 8
+@ missile : 8
 '''
 
 [seq.missile]
@@ -21,13 +21,14 @@ content = '''
 
 [seq.heart-shaped]
 content = '''
-@ chord5 a2 1.6
-@ arpeggio a3 : 1.6
-@ chord5 f2 1.6
-@ arpeggio f3 : 1.6
-@ chord5 d2 3.2
-@ arpeggio d3 : 1.6
-@ arpeggio d3 : 1.6
+@ arpeggio a3
+@ chord5 a2 1.6 : 1.6
+@ arpeggio f3
+@ chord5 f2 1.6 : 1.6
+@ arpeggio d3
+@ chord5 d2 1.6 : 1.6
+@ arpeggio d3
+@ chord5 d2 1.6 : 1.6
 '''
 
 # HELPERS

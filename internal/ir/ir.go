@@ -64,18 +64,18 @@ func (p *Program) Duration() float64 {
 
 // Get first Instruction
 func (p *Program) First() *Instruction {
-	if len(p.instructions) == 0 {
-		return nil
+	if n := len(p.instructions); n > 0 {
+		return p.instructions[0]
 	}
-	return p.instructions[0]
+	return nil
 }
 
 // Get last Instruction
 func (p *Program) Last() *Instruction {
-	if len(p.instructions) == 0 {
-		return nil
+	if n := len(p.instructions); n > 0 {
+		return p.instructions[n-1]
 	}
-	return p.instructions[len(p.instructions)-1]
+	return nil
 }
 
 // Get next Instruction after provided one
@@ -102,3 +102,5 @@ type Instruction struct {
 	Time float64 // start time
 	Info string  // additional information
 }
+
+// TODO: make Dur and Time ints

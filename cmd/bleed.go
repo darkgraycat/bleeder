@@ -8,16 +8,26 @@ import (
 )
 
 type Bleed struct {
-	Meta struct {
-		Main    string     `toml:"main"`    // main sequence name
-		Include []bleedRef `toml:"include"` // included bleeds
-	} `toml:"meta"`
+	Meta      `toml:"meta"`
+	Seqs      map[string]Seq `toml:"seq2"` // TODO: make it main
 	Sequences map[string]struct {
 		Args    args   `toml:"args"`    // sequence arguments
 		Repeat  int    `toml:"repeat"`  // repeats count
 		Shape   string `toml:"shape"`   // shape of the wave (TODO)
 		Content string `toml:"content"` // sequence contents
 	} `toml:"seq"`
+}
+
+type Meta struct {
+	Main    string     `toml:"main"`    // main sequence name
+	Include []bleedRef `toml:"include"` // included bleeds
+}
+
+type Seq struct {
+	Args    args   `toml:"args"`    // sequence arguments
+	Repeat  int    `toml:"repeat"`  // repeats count
+	Shape   string `toml:"shape"`   // shape of the wave (TODO)
+	Content string `toml:"content"` // sequence contents
 }
 
 func LoadBleed(path string) (*Bleed, error) {
