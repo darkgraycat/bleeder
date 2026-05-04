@@ -23,7 +23,9 @@ import (
 func Run() {
 	logs.SetLogLevel(2) // debug
 
-	content := `:e#4`
+	content := `
+	~40_ |*2
+	`
 	logs.Debug("parse raw")
 	pr, _ := bleeder.ParseContent(content, 0)
 

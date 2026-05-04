@@ -38,14 +38,18 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 	if len(replaced) < 1 {
 		return pr, nil
 	}
+
 	lastOp := opWait
 	lastDelay := 0
 	in := &ir.Instruction{Info: "Noop"}
+
 	for raw := range strings.SplitSeq(replaced[1:], opSplitter) {
 		op := string(raw[0])
 		args := strings.Fields(raw[1:])
 		fmt.Printf("Line %s - %v\n", op, args) // TODO: remove log
+
 		switch op {
+		// >
 		case opMidi:
 			in = &ir.Instruction{
 				Freq: audio.MidiToFreq(int(getArg(args, 0, 60))),
@@ -54,8 +58,10 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 				Time: t,
 				Info: raw,
 			}
+			lastOp = op
 			lastDelay = 0
 			pr.Add(in)
+		// :
 		case opNote:
 			in = &ir.Instruction{
 				Freq: audio.MidiToFreq(int(getNoteArg(args, 0, "c4"))),
@@ -64,8 +70,10 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 				Time: t,
 				Info: raw,
 			}
+			lastOp = op
 			lastDelay = 0
 			pr.Add(in)
+		// ~
 		case opFreq:
 			in = &ir.Instruction{
 				Freq: getArg(args, 0, audio.C4freq),
@@ -74,16 +82,28 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 				Time: t,
 				Info: raw,
 			}
+			lastOp = op
 			lastDelay = 0
 			pr.Add(in)
+		// @
 		case opLink:
+			lastOp = op
 			return nil, fmt.Errorf("not implemented yet: %s", op)
+		// _
 		case opWait:
 			lastDelay = int(getArg(args, 0, float64(in.Dur)))
 			t += lastDelay
+		// |
 		case opLast:
+			freq := in.Freq
+			switch lastOp {
+			case opMidi, opNote:
+				freq = audio.MidiToFreq(int(getArg(args, 0, freq)))
+			case opFreq:
+				freq = getArg(args, 0, freq)
+			}
 			in = &ir.Instruction{
-				Freq: audio.MidiToFreq(int(getArg(args, 0, audio.FreqToMidi(in.Freq)))),
+				Freq: freq,
 				Dur:  int(getArg(args, 1, float64(in.Dur))),
 				Vol:  getArg(args, 2, in.Vol),
 				Time: t,
@@ -92,9 +112,6 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 			t += lastDelay
 			pr.Add(in)
 		}
-		// TODO: check if I need to memorize it
-		// it we need to store last duration - we can acc it by getting sequence
-		lastOp = op
 	}
 
 	// TODO: remove logs
@@ -102,7 +119,6 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 		fmt.Printf("%d - %f hz\to: %v\td: %v\t %s\n", i, in.Freq, in.Time, in.Dur, in.Info)
 	}
 
-	fmt.Println(lastOp, in) // TODO: remove line
 	return pr, nil
 }
 
