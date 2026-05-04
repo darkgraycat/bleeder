@@ -29,10 +29,6 @@ func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 	logs.Info("Total samples %d", totalSamples)
 	logs.Info("Total duration %f", duration)
 
-	for i, in := range instructions {
-		logs.Debug("%d - %f\t%f %f\t%s", i, in.Freq, in.Dur, in.Time, in.Info)
-	}
-
 	logs.Debug("get samples")
 	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
 

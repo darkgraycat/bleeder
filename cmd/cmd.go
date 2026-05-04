@@ -18,14 +18,21 @@ type Cmd func(args *CmdArgs) error
 // Command to play specified .bleed.toml file
 func CmdPlay(args *CmdArgs) error {
 	logs.Info("PLAY %v", args)
+
+	logs.Debug("loading config")
 	cfg, err := LoadConfig(args.CfgPath)
 	if err != nil {
 		return fmt.Errorf("config - %v", err)
 	}
+	logs.Debug("config loaded")
+
+	logs.Debug("loading bleed")
 	bleed, err := LoadBleed(args.BleedPath)
 	if err != nil {
 		return fmt.Errorf("bleed - %v", err)
 	}
+	logs.Debug("bleed loaded")
+
 	bleeder, err := NewBleeder(cfg).Bleed(bleed)
 	if err != nil {
 		return err

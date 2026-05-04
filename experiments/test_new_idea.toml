@@ -16,5 +16,13 @@ note d |+7
 [seq.arpeggio]
 args = 'note:e2 p:8/4 d:2'
 content = '''
-note d>p |+7 |+5 |-5
+:note d_p |+7 |+5 |-5
+'''
+
+[riff.arpeggio]
+args = 'a:e2 b:a+7 c:a+12'
+content = '''
+a>---
+-b>b>
+--c>-
 '''

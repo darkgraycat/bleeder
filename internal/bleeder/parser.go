@@ -75,11 +75,10 @@ func ParseRaw(content string, t int) (*ir.Program, error) {
 			lastDelay = 0
 			pr.Add(in)
 		case opLink:
-			// return nil, fmt.Errorf("not implemented yet: %s", op)
+			return nil, fmt.Errorf("not implemented yet: %s", op)
 		case opWait:
 			lastDelay = int(getArg(args, 0, float64(in.Dur)))
 			t += lastDelay
-			// return nil, fmt.Errorf("not implemented yet: %s", op)
 		case opLast:
 			in = &ir.Instruction{
 				Freq: audio.MidiToFreq(int(getArg(args, 0, audio.FreqToMidi(in.Freq)))),
@@ -88,15 +87,15 @@ func ParseRaw(content string, t int) (*ir.Program, error) {
 				Time: t,
 				Info: "REPEAT" + raw,
 			}
+			t += lastDelay
 			pr.Add(in)
 		}
 		lastOp = op
 	}
 
 	// TODO: remove logs
-	fmt.Println("idx -\tfreq\ttime\tdur\t- info")
 	for i, in := range pr.Instructions() {
-		fmt.Printf("%d -\t%f\t%d\t%d\t- %s\n", i, in.Freq, in.Time, in.Dur, in.Info)
+		fmt.Printf("%d - %f hz\to: %v\td: %v\t %s\n", i, in.Freq, in.Time, in.Dur, in.Info)
 	}
 
 	fmt.Println(lastOp, in) // TODO: remove line

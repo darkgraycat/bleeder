@@ -17,24 +17,37 @@ package experiments
 import (
 	"bleeder/internal/bleeder"
 	"bleeder/internal/player"
+	"bleeder/internal/shared/logs"
 )
 
 func Run() {
-	content := `
-	:e2 2 |+7 _
-	:g#2 2 |+7 _
-	:c#2 2 |+7 _
-	:a2 2 |+7 _
+	logs.SetLogLevel(0) // debug
 
-	_2
-	>30 |+12 |+12 _
+	content := `
+	:e3 2_1 |+7 |+5 |-5
 	`
+	logs.Debug("parse raw")
 	pr, _ := bleeder.ParseRaw(content, 0)
+
+	logs.Debug("new wav player")
 	p := player.NewWAVPlayer(44100, 1)
+
+	logs.Debug("play IR")
 	p.Play(pr, 0, pr.Length())
 }
 
 /*
+	_8
+	:e2 4 |+7
+	_4
+	:g#2 4 |+7 _
+	:c#2 4 |+7 _
+	:a2 4 |+7 _
+
+	_2
+	>30 |+12 |+12 _
+
+
 	>30 >42 >54
 
 	:e2
