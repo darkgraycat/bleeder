@@ -21,7 +21,7 @@ func main() {
 	// TODO remove
 	experiments.Run()
 	if 2 > 1 {
-		logs.Info("End")
+		logs.Info("Exit")
 		return
 	}
 

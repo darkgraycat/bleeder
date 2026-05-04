@@ -373,6 +373,14 @@ or even
 Rule
 same as in Take 2 but we can mod it by using + and - sign
 
+#### Take 4 - extended math with defaults
+Make math work not only in sequences but in seq args list
+Allow all 4 operators +-/*
+Rule
+8/2 - div 8 by 2
+x/2 - div x by 2 (x going to be substituted during seq arguments substitution)
+/2 - div prev op nth arg by 2
+
 
 ## I want to have live-coding
 How can we do this?

@@ -64,7 +64,7 @@ func (p *Program) Duration() int {
 
 // Get first Instruction
 func (p *Program) First() *Instruction {
-	if n := len(p.instructions); n > 0 {
+	if l := len(p.instructions); l > 0 {
 		return p.instructions[0]
 	}
 	return nil
@@ -72,8 +72,8 @@ func (p *Program) First() *Instruction {
 
 // Get last Instruction
 func (p *Program) Last() *Instruction {
-	if n := len(p.instructions); n > 0 {
-		return p.instructions[n-1]
+	if l := len(p.instructions); l > 0 {
+		return p.instructions[l-1]
 	}
 	return nil
 }

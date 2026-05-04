@@ -68,6 +68,11 @@ func MidiToNote(idx int) string {
 	return "c4"
 }
 
+// Get midi float number by freq
+func FreqToMidi(freq float64) float64 {
+	return 60 + 12*math.Log2(freq/C4freq)
+}
+
 // Transpose frequency by semitone steps
 func TransposeFreq(freq, steps float64) float64 {
 	return freq * math.Pow(2, steps/12)

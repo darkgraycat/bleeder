@@ -14,13 +14,34 @@
 
 package experiments
 
-import "bleeder/internal/bleeder"
+import (
+	"bleeder/internal/bleeder"
+	"bleeder/internal/player"
+)
 
 func Run() {
 	content := `
-	:c3 4_ |+7
-	:e4 _4 >60 4 _+4 | +2
-	`
-	bleeder.ParseRaw(content, 0)
+	:e2 2 |+7 _
+	:g#2 2 |+7 _
+	:c#2 2 |+7 _
+	:a2 2 |+7 _
 
+	_2
+	>30 |+12 |+12 _
+	`
+	pr, _ := bleeder.ParseRaw(content, 0)
+	p := player.NewWAVPlayer(44100, 1)
+	p.Play(pr, 0, pr.Length())
 }
+
+/*
+	>30 >42 >54
+
+	:e2
+	_/2
+	:a3 d/2
+	:e3 2 .9
+	:f4 |/2
+	:c3+2 4_+3 |+7
+	:e4 _4 >60 4 _+4 | +2
+*/
