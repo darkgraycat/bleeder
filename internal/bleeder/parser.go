@@ -21,7 +21,8 @@ const (
 const opSplitter = "\\"
 
 var replacer = strings.NewReplacer(
-	"\n", "", // trim newline
+	"\n", " ", // trim newline
+	"\t", " ", // trim tabchar
 	opMidi, opSplitter+opMidi,
 	opNote, opSplitter+opNote,
 	opFreq, opSplitter+opFreq,
@@ -30,16 +31,17 @@ var replacer = strings.NewReplacer(
 	opLast, opSplitter+opLast,
 )
 
-func ParseRaw(content string, t int) (*ir.Program, error) {
+// Get IR from raw sequence content
+func ParseContent(content string, t int) (*ir.Program, error) {
 	pr := ir.NewProgram()
 	replaced := replacer.Replace(content)
-	if len(replaced) < 2 {
+	if len(replaced) < 1 {
 		return pr, nil
 	}
 	lastOp := opWait
 	lastDelay := 0
-	in := &ir.Instruction{Info: "Start"}
-	for raw := range strings.SplitSeq(replaced[2:], opSplitter) {
+	in := &ir.Instruction{Info: "Noop"}
+	for raw := range strings.SplitSeq(replaced[1:], opSplitter) {
 		op := string(raw[0])
 		args := strings.Fields(raw[1:])
 		fmt.Printf("Line %s - %v\n", op, args) // TODO: remove log
@@ -90,6 +92,8 @@ func ParseRaw(content string, t int) (*ir.Program, error) {
 			t += lastDelay
 			pr.Add(in)
 		}
+		// TODO: check if I need to memorize it
+		// it we need to store last duration - we can acc it by getting sequence
 		lastOp = op
 	}
 

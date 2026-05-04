@@ -21,13 +21,11 @@ import (
 )
 
 func Run() {
-	logs.SetLogLevel(0) // debug
+	logs.SetLogLevel(2) // debug
 
-	content := `
-	:e3 2_1 |+7 |+5 |-5
-	`
+	content := `:e#4`
 	logs.Debug("parse raw")
-	pr, _ := bleeder.ParseRaw(content, 0)
+	pr, _ := bleeder.ParseContent(content, 0)
 
 	logs.Debug("new wav player")
 	p := player.NewWAVPlayer(44100, 1)
@@ -37,6 +35,8 @@ func Run() {
 }
 
 /*
+	:e3 2_1 |+7 |+5 |-5
+
 	_8
 	:e2 4 |+7
 	_4

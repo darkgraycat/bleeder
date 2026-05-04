@@ -26,3 +26,11 @@ a>---
 -b>b>
 --c>-
 '''
+
+[riff.test]
+a = 'e2'
+b = 'a+7'
+content = '''
+a-b-
+aa-a
+'''

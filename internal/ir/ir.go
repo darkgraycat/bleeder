@@ -102,5 +102,3 @@ type Instruction struct {
 	Time int     // start time
 	Info string  // additional information
 }
-
-// TODO: make Dur and Time ints
