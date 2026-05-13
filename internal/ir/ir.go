@@ -1,7 +1,10 @@
 package ir
 
+import "fmt"
+
 // Intermediate Representation Program
 type Program struct {
+	timeScale    float64
 	instructions []*Instruction       // instructions array
 	indexesCache map[*Instruction]int // instructions cache
 }
@@ -9,9 +12,15 @@ type Program struct {
 // Create new Program instance
 func NewProgram() *Program {
 	return &Program{
+		timeScale:    1,
 		instructions: make([]*Instruction, 0),
 		indexesCache: make(map[*Instruction]int),
 	}
+}
+
+// Get time scale
+func (p *Program) TimeScale() float64 {
+	return p.timeScale
 }
 
 // Get an array of instructions
@@ -20,18 +29,18 @@ func (p *Program) Instructions() []*Instruction {
 }
 
 // Add next Instruction pointer to the end
-func (p *Program) Add(in *Instruction) {
-	p.instructions = append(p.instructions, in)
-	p.indexesCache[in] = len(p.instructions) - 1
+func (p *Program) Add(ins *Instruction) {
+	p.instructions = append(p.instructions, ins)
+	p.indexesCache[ins] = len(p.instructions) - 1
 }
 
 // Cut Instructions into new Program
 func (p *Program) Cut(start, end int) *Program {
 	sliced := p.instructions[start:end]
 	np := NewProgram()
-	for i, in := range sliced {
-		np.instructions = append(np.instructions, in)
-		np.indexesCache[in] = i
+	for i, ins := range sliced {
+		np.instructions = append(np.instructions, ins)
+		np.indexesCache[ins] = i
 	}
 	return np
 }
@@ -40,8 +49,8 @@ func (p *Program) Cut(start, end int) *Program {
 func (p *Program) Merge(src *Program) {
 	offset := len(p.instructions)
 	p.instructions = append(p.instructions, src.instructions...)
-	for i, in := range src.instructions {
-		p.indexesCache[in] = offset + i
+	for i, ins := range src.instructions {
+		p.indexesCache[ins] = offset + i
 	}
 }
 
@@ -53,8 +62,8 @@ func (p *Program) Length() int {
 // Get duration of whole Program
 func (p *Program) Duration() int {
 	dur := 0
-	for _, in := range p.instructions {
-		end := in.Time + in.Dur
+	for _, ins := range p.instructions {
+		end := ins.Time + ins.Dur
 		if end > dur {
 			dur = end
 		}
@@ -79,16 +88,16 @@ func (p *Program) Last() *Instruction {
 }
 
 // Get next Instruction after provided one
-func (p *Program) Next(in *Instruction) *Instruction {
-	if idx, ok := p.indexesCache[in]; ok && idx+1 < len(p.instructions) {
+func (p *Program) Next(ins *Instruction) *Instruction {
+	if idx, ok := p.indexesCache[ins]; ok && idx+1 < len(p.instructions) {
 		return p.instructions[idx+1]
 	}
 	return nil
 }
 
 // Get previos Instruction after provided one
-func (p *Program) Prev(in *Instruction) *Instruction {
-	if idx, ok := p.indexesCache[in]; ok && idx-1 >= 0 {
+func (p *Program) Prev(ins *Instruction) *Instruction {
+	if idx, ok := p.indexesCache[ins]; ok && idx-1 >= 0 {
 		return p.instructions[idx-1]
 	}
 	return nil
@@ -96,9 +105,15 @@ func (p *Program) Prev(in *Instruction) *Instruction {
 
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
-	Freq float64 // frequence
-	Vol  float64 // volume
-	Dur  int     // duration
-	Time int     // start time
+	Freq float64 // frequence in Hz
+	Vol  float64 // volume 0.0 > 1.0
+	Dur  int     // duration in ticks
+	Time int     // start time in ticks
 	Info string  // additional information
+}
+
+// Format Instruction into string
+func (ins Instruction) String() string {
+	return fmt.Sprintf("Freq=%f Vol=%f Dur=%d Time=%d Info=%s",
+		ins.Freq, ins.Vol, ins.Dur, ins.Time, ins.Info)
 }

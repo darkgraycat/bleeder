@@ -121,7 +121,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 			continue
 		}
 		// split by instruction characters
-		in := &ir.Instruction{Info: "Start"}
+		ins := &ir.Instruction{Info: "Start"}
 		raw := strings.Split(b.replacer.Replace(line), REPLACER_CHAR)[1:]
 		for _, r := range raw {
 			v := strings.Fields(r)
@@ -129,25 +129,25 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 			// parse PLAY >
 			case b.cfg.Mapping.Play:
 				accDelay = 0
-				in = &ir.Instruction{
+				ins = &ir.Instruction{
 					Freq: parseNoteArg(v, 1, "c4"),
 					Dur:  int(parseFloatArg(v, 2, defDur)),
 					Vol:  parseFloatArg(v, 3, defVol),
 					Time: int(t),
 					Info: r, // Just for debug
 				}
-				pr.Add(in)
+				pr.Add(ins)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
 				accDelay = 0
-				in = &ir.Instruction{
+				ins = &ir.Instruction{
 					Freq: parseFloatArg(v, 1, 440),
 					Dur:  int(parseFloatArg(v, 2, defDur)),
 					Vol:  parseFloatArg(v, 3, defVol),
 					Time: int(t),
 					Info: r, // Just for debug
 				}
-				pr.Add(in)
+				pr.Add(ins)
 			// parse SEQ
 			case b.cfg.Mapping.Seq:
 				accDelay = 0
@@ -159,21 +159,21 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 				pr.Merge(pr2)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
-				w := parseFloatArg(v, 1, float64(in.Dur))
+				w := parseFloatArg(v, 1, float64(ins.Dur))
 				t += w
 				accDelay = +w
 			// parse REPEAT
 			case b.cfg.Mapping.Repeat:
 				_, mod := parseInstructionArg(v, 1, "")
-				in = &ir.Instruction{
-					Freq: audio.TransposeFreq(in.Freq, mod),
-					Dur:  in.Dur, // TODO
-					Vol:  in.Vol,
+				ins = &ir.Instruction{
+					Freq: audio.TransposeFreq(ins.Freq, mod),
+					Dur:  ins.Dur, // TODO
+					Vol:  ins.Vol,
 					Time: int(t),
 					Info: "REPEAT " + r,
 				}
 				t += accDelay
-				pr.Add(in)
+				pr.Add(ins)
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
 				return nil, t, fmt.Errorf("not implemented yet: %s", b.cfg.Mapping.RepeatLine)

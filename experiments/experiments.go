@@ -24,10 +24,10 @@ func Run() {
 	logs.SetLogLevel(2) // debug
 
 	content := `
-	~40_ |*2
+		~40_ |*2 |*2 |*2
 	`
 	logs.Debug("parse raw")
-	pr, _ := bleeder.ParseContent(content, 0)
+	pr, _ := bleeder.ParseRawContent(content, 0)
 
 	logs.Debug("new wav player")
 	p := player.NewWAVPlayer(44100, 1)
@@ -37,6 +37,7 @@ func Run() {
 }
 
 /*
+	~40_ |*2
 	:e3 2_1 |+7 |+5 |-5
 
 	_8

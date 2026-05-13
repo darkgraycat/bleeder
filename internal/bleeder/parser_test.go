@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestParseContentOperators(t *testing.T) {
+func TestParseContentRaw(t *testing.T) {
 	tests := []struct {
 		name         string
 		content      string
@@ -35,6 +35,16 @@ func TestParseContentOperators(t *testing.T) {
 			},
 		},
 		{
+			name:    "wait _ operator",
+			content: "~40_ ~60 2_ ~80 _3 ~100 4/2",
+			instructions: []string{
+				fmt.Sprintf("%fhz 0t 1d", 40.0),
+				fmt.Sprintf("%fhz 1t 2d", 60.0),
+				fmt.Sprintf("%fhz 3t 1d", 80.0),
+				fmt.Sprintf("%fhz 6t 2d", 100.0),
+			},
+		},
+		{
 			name:    "last | operator",
 			content: "~40 2_1 |*2 /2",
 			instructions: []string{
@@ -42,22 +52,71 @@ func TestParseContentOperators(t *testing.T) {
 				fmt.Sprintf("%fhz 1t 1d", 80.0),
 			},
 		},
+		{
+			name: "check >:~_| operators",
+			content: `
+				>40*2 3
+				:f#4-2 2_
+				~440 _4 |/2 *2
+			`,
+			instructions: []string{
+				fmt.Sprintf("%fhz 0t 3d", audio.MidiToFreq(80)),
+				fmt.Sprintf("%fhz 0t 2d", audio.NoteToFreq("e4")),
+				fmt.Sprintf("%fhz 2t 1d", 440.0),
+				fmt.Sprintf("%fhz 6t 2d", 220.0),
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			pr, err := ParseContent(tc.content, 0)
+			pr, err := ParseRawContent(tc.content, 0)
 			testutils.AssertErrNil(t, err)
 
 			instructions := pr.Instructions()
 			testutils.AssertInts(t, len(instructions), len(tc.instructions))
 
-			for i, in := range instructions {
+			for i, ins := range instructions {
 				exp := tc.instructions[i]
-				act := fmt.Sprintf("%fhz %vt %vd", in.Freq, in.Time, in.Dur)
+				act := fmt.Sprintf("%fhz %vt %vd", ins.Freq, ins.Time, ins.Dur)
 
 				testutils.AssertStrings(t, exp, act)
 			}
+		})
+	}
+}
+
+func TestExpandArgs(t *testing.T) {
+	tests := []struct {
+		name    string
+		argsRaw string
+		content string
+		result  string
+	}{
+		{
+			name:    "expand modified argument",
+			argsRaw: "a:60 b:a/2",
+			content: ">a_ >b_",
+			result:  ">60_ >30_",
+		},
+		// {
+		// 	name:    "expand two plain arguments",
+		// 	argsRaw: "note:e2 d:2",
+		// 	content: ":note d_",
+		// 	result:  ":e2 2_",
+		// },
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			args, err := ParseRawArgs(tc.argsRaw)
+			testutils.AssertErrNil(t, err)
+
+			exp := tc.result
+			act, err := ExpandArgs(tc.content, args)
+			testutils.AssertErrNil(t, err)
+
+			testutils.AssertStrings(t, exp, act)
 		})
 	}
 }

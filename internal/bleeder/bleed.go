@@ -1,4 +1,4 @@
-package cmd
+package bleeder
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// File-type parser
 type Bleed struct {
 	Meta      `toml:"meta"`
 	Sequences map[string]Seq `toml:"seq"`
@@ -24,6 +25,12 @@ type Seq struct {
 	Shape   string `toml:"shape"`   // shape of the wave (TODO)
 	Content string `toml:"content"` // sequence contents
 }
+
+type bleedRef struct {
+	*Bleed
+}
+
+type args []string
 
 func LoadBleed(path string) (*Bleed, error) {
 	var bleed Bleed
@@ -50,10 +57,6 @@ func (b Bleed) String() string {
 	return sb.String()
 }
 
-type bleedRef struct {
-	*Bleed
-}
-
 func (r *bleedRef) UnmarshalTOML(data any) error {
 	if s, ok := data.(string); ok {
 		bleed, err := LoadBleed(s)
@@ -65,8 +68,6 @@ func (r *bleedRef) UnmarshalTOML(data any) error {
 	}
 	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
 }
-
-type args []string
 
 func (a *args) UnmarshalTOML(data any) error {
 	s, ok := data.(string)

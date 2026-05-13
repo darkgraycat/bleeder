@@ -31,17 +31,47 @@ var replacer = strings.NewReplacer(
 	opLast, opSplitter+opLast,
 )
 
-// Get IR from raw sequence content
-func ParseContent(content string, t int) (*ir.Program, error) {
+type ParserContext struct {
+}
+
+// Expand sequence arguments to produce raw content
+func ExpandArgs(content string, args []string) (string, error) {
+	// TODO: anyway we need to understand how to implement @ in ParseContent first
+	// to do so, we need provide ParseContent with context of whole bleed + incuded
+	for i, arg := range args {
+		fmt.Printf("Arg %d - %s\n", i, arg)
+		lhs, rhs, op := splitOpArgs(arg)
+		fmt.Printf("L %s\top %s\tR %s\n", lhs, op, rhs)
+	}
+
+	// pairs := append([]string(nil), args...)
+	return "", nil
+}
+
+// Parse sequence raw arguments into []string
+func ParseRawArgs(s string) ([]string, error) {
+	args := make([]string, 0)
+	for part := range strings.FieldsSeq(s) {
+		k, v, ok := strings.Cut(part, ":")
+		if !ok {
+			return nil, fmt.Errorf("invalid arg: %q", part)
+		}
+		args = append(args, k, v)
+	}
+	return args, nil
+}
+
+// Parse sequence raw content into IR Program
+func ParseRawContent(s string, t int) (*ir.Program, error) {
 	pr := ir.NewProgram()
-	replaced := replacer.Replace(content)
+	replaced := replacer.Replace(s)
 	if len(replaced) < 1 {
 		return pr, nil
 	}
 
-	lastOp := opWait
+	lastInsOp := opWait
 	lastDelay := 0
-	in := &ir.Instruction{Info: "Noop"}
+	ins := &ir.Instruction{Info: "Noop"}
 
 	for raw := range strings.SplitSeq(replaced[1:], opSplitter) {
 		op := string(raw[0])
@@ -51,104 +81,120 @@ func ParseContent(content string, t int) (*ir.Program, error) {
 		switch op {
 		// >
 		case opMidi:
-			in = &ir.Instruction{
-				Freq: audio.MidiToFreq(int(getArg(args, 0, 60))),
-				Dur:  int(getArg(args, 1, 1)),
-				Vol:  getArg(args, 2, 1.0),
+			ins = &ir.Instruction{
+				Freq: audio.MidiToFreq(int(getOpArg(args, 0, 60))),
+				Dur:  int(getOpArg(args, 1, 1)),
+				Vol:  getOpArg(args, 2, 1.0),
 				Time: t,
 				Info: raw,
 			}
-			lastOp = op
+			lastInsOp = op
 			lastDelay = 0
-			pr.Add(in)
+			pr.Add(ins)
 		// :
 		case opNote:
-			in = &ir.Instruction{
-				Freq: audio.MidiToFreq(int(getNoteArg(args, 0, "c4"))),
-				Dur:  int(getArg(args, 1, 1)),
-				Vol:  getArg(args, 2, 1.0),
+			ins = &ir.Instruction{
+				Freq: audio.MidiToFreq(int(getOpNoteArg(args, 0, "c4"))),
+				Dur:  int(getOpArg(args, 1, 1)),
+				Vol:  getOpArg(args, 2, 1.0),
 				Time: t,
 				Info: raw,
 			}
-			lastOp = op
+			lastInsOp = op
 			lastDelay = 0
-			pr.Add(in)
+			pr.Add(ins)
 		// ~
 		case opFreq:
-			in = &ir.Instruction{
-				Freq: getArg(args, 0, audio.C4freq),
-				Dur:  int(getArg(args, 1, 1)),
-				Vol:  getArg(args, 2, 1.0),
+			ins = &ir.Instruction{
+				Freq: getOpArg(args, 0, audio.C4freq),
+				Dur:  int(getOpArg(args, 1, 1)),
+				Vol:  getOpArg(args, 2, 1.0),
 				Time: t,
 				Info: raw,
 			}
-			lastOp = op
+			lastInsOp = op
 			lastDelay = 0
-			pr.Add(in)
+			pr.Add(ins)
 		// @
 		case opLink:
-			lastOp = op
+			// Q: how to implement? we need to have a context here somehow
+			lastInsOp = op
 			return nil, fmt.Errorf("not implemented yet: %s", op)
 		// _
 		case opWait:
-			lastDelay = int(getArg(args, 0, float64(in.Dur)))
+			lastDelay = int(getOpArg(args, 0, float64(ins.Dur)))
 			t += lastDelay
 		// |
 		case opLast:
-			freq := in.Freq
-			switch lastOp {
+			freq := ins.Freq
+			switch lastInsOp {
 			case opMidi, opNote:
-				freq = audio.MidiToFreq(int(getArg(args, 0, freq)))
+				freq = audio.MidiToFreq(int(getOpArg(args, 0, freq)))
 			case opFreq:
-				freq = getArg(args, 0, freq)
+				freq = getOpArg(args, 0, freq)
 			}
-			in = &ir.Instruction{
+			ins = &ir.Instruction{
 				Freq: freq,
-				Dur:  int(getArg(args, 1, float64(in.Dur))),
-				Vol:  getArg(args, 2, in.Vol),
+				Dur:  int(getOpArg(args, 1, float64(ins.Dur))),
+				Vol:  getOpArg(args, 2, ins.Vol),
 				Time: t,
 				Info: "REPEAT" + raw,
 			}
 			t += lastDelay
-			pr.Add(in)
+			pr.Add(ins)
 		}
 	}
 
-	// TODO: remove logs
-	for i, in := range pr.Instructions() {
-		fmt.Printf("%d - %f hz\to: %v\td: %v\t %s\n", i, in.Freq, in.Time, in.Dur, in.Info)
+	for i, ins := range pr.Instructions() {
+		fmt.Printf("%d - %s\n", i, ins)
 	}
 
 	return pr, nil
 }
 
-func getArg(args []string, idx int, def float64) float64 {
+// helpers
+
+// get nth numeric argument as float64
+func getOpArg(args []string, idx int, def float64) float64 {
 	if idx >= len(args) {
 		return def
 	}
-	lhs, op, rhs := splitOpArgs(args[idx])
-	return getModArg(
+	lhs, rhs, op := splitOpArgs(args[idx])
+	return modOpArg(
 		shared.Str2Float(lhs, def),
 		shared.Str2Float(rhs, 0.0),
 		op,
 	)
 }
 
-func getNoteArg(args []string, idx int, def string) float64 {
+// get nth note argument as float64
+func getOpNoteArg(args []string, idx int, def string) float64 {
 	d := float64(audio.NoteToMidi(def))
 	if idx >= len(args) {
 		return d
 	}
-	lhs, op, rhs := splitOpArgs(args[idx])
+	lhs, rhs, op := splitOpArgs(args[idx])
 	midi := audio.NoteToMidi(lhs)
-	return getModArg(
+	return modOpArg(
 		shared.Str2Float(strconv.Itoa(midi), d),
 		shared.Str2Float(rhs, 0.0),
 		op,
 	)
 }
 
-func getModArg(a, b float64, op string) float64 {
+// split string by +-*/ operators
+func splitOpArgs(s string) (lhs, rhs, op string) {
+	for i := range s {
+		switch s[i] {
+		case '+', '-', '*', '/':
+			return s[:i], s[i+1:], s[i : i+1]
+		}
+	}
+	return s, "", ""
+}
+
+// apply modificator on two arguments
+func modOpArg(a, b float64, op string) float64 {
 	switch op {
 	case "+":
 		return a + b
@@ -161,14 +207,4 @@ func getModArg(a, b float64, op string) float64 {
 	default:
 		return a
 	}
-}
-
-func splitOpArgs(s string) (lhs, op, rhs string) {
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '+', '-', '*', '/':
-			return s[:i], s[i : i+1], s[i+1:]
-		}
-	}
-	return s, "", ""
 }
