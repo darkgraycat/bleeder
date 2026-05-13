@@ -385,3 +385,34 @@ x/2 - div x by 2 (x going to be substituted during seq arguments substitution)
 ## I want to have live-coding
 How can we do this?
 
+
+## Builing new parser dev-notes
+#### Current state
+helpers:
+    - modOpArg - apply op on a and b (floats)
+    - splitOpArgs - split string into lhs rhs and op, or return as it if no operators found
+    - getOpNoteArg - get freq where lhs is note
+    - getOpArg - get freq where lhs is freq
+and how freq is parsed:
+freq - getOpArg
+midi - MidiToFreq(int getOpArg)
+note - MidiToFreq(int getOpNoteArg)
+
+so expanded it looks like:
+- freq
+    getOpArg:
+        splitOpArgs
+        modOpArg (lhs, rhs, op)
+- midi
+    MidiToFreq(int of
+        getOpArg:
+            splitOpArgs
+            modOpArg (lhs, rhs, op)
+    )
+- note 
+    MidiToFreq(int of
+        getOpNoteArg:
+            splitOpArgs
+            NoteToMidi
+            modOpArg (lhs, rhs, op)
+    )
