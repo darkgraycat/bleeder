@@ -74,8 +74,8 @@ func (b *Bleeder) GenSeqIR(name string, args []string, t float64) (*ir.Program, 
 		key += ":" + strings.Join(args, ",")
 	}
 	fmt.Printf("LOOKING FOR %s\n", key)
-	if pr, ok := b.programs[key]; ok {
-		return pr, nil
+	if irp, ok := b.programs[key]; ok {
+		return irp, nil
 	}
 	// get sequence from bleed
 	seq, ok := b.bleed.Sequences[name]
@@ -89,7 +89,7 @@ func (b *Bleeder) GenSeqIR(name string, args []string, t float64) (*ir.Program, 
 		pairs[i*2+1] = arg
 	}
 	content := strings.NewReplacer(pairs...).Replace(seq.Content)
-	pr, t, err := b.GenRawIR(content, t)
+	irp, t, err := b.GenRawIR(content, t)
 	if err != nil {
 		return nil, err
 	}
@@ -99,11 +99,11 @@ func (b *Bleeder) GenSeqIR(name string, args []string, t float64) (*ir.Program, 
 			return nil, err
 		}
 		t += t2
-		pr.Merge(pr2)
+		irp.Merge(pr2)
 	}
 	// cache generated IR
-	b.programs[key] = pr
-	return pr, nil
+	b.programs[key] = irp
+	return irp, nil
 }
 
 // Get IR of raw DSL
@@ -112,7 +112,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 	lines := strings.Split(content, "\n")
 	defDur := b.cfg.Parser.DefaultDur
 	defVol := b.cfg.Parser.DefaultVol
-	pr := ir.NewProgram()
+	irp := ir.NewProgram()
 	accDelay := 0.0
 
 	for _, line := range lines {
@@ -136,7 +136,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 					Time: int(t),
 					Info: r, // Just for debug
 				}
-				pr.Add(ins)
+				irp.Add(ins)
 			// parse WAVE ~
 			case b.cfg.Mapping.Wave:
 				accDelay = 0
@@ -147,7 +147,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 					Time: int(t),
 					Info: r, // Just for debug
 				}
-				pr.Add(ins)
+				irp.Add(ins)
 			// parse SEQ
 			case b.cfg.Mapping.Seq:
 				accDelay = 0
@@ -156,7 +156,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 				if err != nil {
 					return nil, t, err
 				}
-				pr.Merge(pr2)
+				irp.Merge(pr2)
 			// parse WAIT
 			case b.cfg.Mapping.Wait:
 				w := parseFloatArg(v, 1, float64(ins.Dur))
@@ -173,7 +173,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 					Info: "REPEAT " + r,
 				}
 				t += accDelay
-				pr.Add(ins)
+				irp.Add(ins)
 			// parse REPEAT LINE
 			case b.cfg.Mapping.RepeatLine:
 				return nil, t, fmt.Errorf("not implemented yet: %s", b.cfg.Mapping.RepeatLine)
@@ -182,7 +182,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 			}
 		}
 	}
-	return pr, t, nil
+	return irp, t, nil
 }
 
 // private helpers

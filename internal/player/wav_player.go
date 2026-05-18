@@ -19,14 +19,14 @@ func NewWAVPlayer(sampleRate, channels int) *WAVPlayer {
 	}
 }
 
-func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
+func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Play")
 	sr := p.wav.SampleRate()
-	// ts := pr.TimeScale()
-	instructions := pr.Instructions()
-	duration := pr.Duration()
+	// ts := ipr.TimeScale()
+	instructions := irp.Instructions()
+	duration := irp.Duration()
 	totalSamples := duration * sr
-	logs.Info("Total instructions %d", pr.Length())
+	logs.Info("Total instructions %d", irp.Length())
 	logs.Info("Total samples %d", totalSamples)
 	logs.Info("Total duration %f", duration)
 

@@ -16,6 +16,7 @@ package experiments
 
 import (
 	"bleeder/internal/bleeder"
+	"bleeder/internal/ir"
 	"bleeder/internal/player"
 	"bleeder/internal/shared/logs"
 )
@@ -23,20 +24,29 @@ import (
 func Run() {
 	logs.SetLogLevel(2) // debug
 
+	context := &bleeder.ParserContext{
+		ResolveFunc: func(name string, args []string) (*ir.Program, error) {
+			return bleeder.ParseContent("> e2 2 |+7 |+7", nil)
+		},
+	}
+
 	content := `
-		~40_ |*2 |*2 |*2
+		:e3 2 |+7 |+4 |+3
 	`
+
 	logs.Debug("parse raw")
-	pr, _ := bleeder.ParseRawContent(content, 0)
+	irp, _ := bleeder.ParseContent(content, context)
 
 	logs.Debug("new wav player")
 	p := player.NewWAVPlayer(44100, 1)
 
 	logs.Debug("play IR")
-	p.Play(pr, 0, pr.Length())
+	p.Play(irp, 0, irp.Length())
 }
 
 /*
+		@ chord5 e2 2
+
 	~40_ |*2
 	:e3 2_1 |+7 |+5 |-5
 

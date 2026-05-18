@@ -1,44 +1,47 @@
 ## Bleed file format
 Example:
 ```toml
-[seq.riff_1]
-args = 'note:e2 vol:1.0'
-repeat = 4
-content = """
-> note 1 vol : 1
-> note+2 1 vol+0.1 | +2 : 1
-"""
+[meta]
+main = 'main'
+tempo = 128
 
 [seq.main]
-repeat = 2
-content = """
-> @riff_1 c3 0.5 : @riff_1
-> @riff_1 c4 0.5 : @riff_1
-"""
+content = '''
+@chord5 a3 8 _
+@chord5 f3 8 _
+@chord5 d3 8 _
+@chord5 d3 8 7 _
+'''
+
+[seq.chord5]
+args = 'note:e2 d:8 w:0 v:1.0'
+content = '''
+:note d v_w |+7 |+5
+'''
 ```
 
 ### Sequence content syntax
-`>`  Play note
-     Args: note, dur, vol
-     Example: `> c3 1 0.5`
+`>` Play midi
+    Args: midi, duration, volume
+    Example: `>60 2 .5`
 
-`~`  Play frequency
-     Args: freq, dur, vol
-     Example: `> c3 1 0.5`
+`:` Play note
+    Args: note, duration, volume
+    Example: `:c#3 2 .5`
 
-`@`  Play sequence
-     Args: name, ...sequence arguments
-     Example: `@ chord c5 0.5`
+`~` Play frequency
+    Args: freq, duration, volume
+    Example: `~440.17 2 .5`
 
-`:`  Wait command
-     Args: time
-     Example: `: 1.0`
+`_` Wait before next operation
+    Args: 
+    Examples: `>60_1`
 
-`|`  Repeat last Play instruction
-     Args: override args of previous instruction
-     Example: `> c3 1 0.5 | +2`
+`|` Repeat last operation
+    Args: modify/override args of previous operation
+    Examples: `>60 2 |*2 1`
 
-`||` Repeat whole line
-     Args: same as for `|`
-     Example: `> c3 0.5 | +4 : 1 || +7`
+`@` Play sequence by name
+    Args: name, arguments defined by sequence
+    Example `@chord c5 .5`
 

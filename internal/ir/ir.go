@@ -4,7 +4,7 @@ import "fmt"
 
 // Intermediate Representation Program
 type Program struct {
-	timeScale    float64
+	timeScale    float64              // multiplier applied to instruction tick values (Time, Dur) during playback; defaults to 1
 	instructions []*Instruction       // instructions array
 	indexesCache map[*Instruction]int // instructions cache
 }
@@ -12,7 +12,7 @@ type Program struct {
 // Create new Program instance
 func NewProgram() *Program {
 	return &Program{
-		timeScale:    1,
+		timeScale:    1, // TODO: i think I can remove it from IR and move into Bleeder itself
 		instructions: make([]*Instruction, 0),
 		indexesCache: make(map[*Instruction]int),
 	}
@@ -28,10 +28,23 @@ func (p *Program) Instructions() []*Instruction {
 	return p.instructions
 }
 
-// Add next Instruction pointer to the end
-func (p *Program) Add(ins *Instruction) {
-	p.instructions = append(p.instructions, ins)
-	p.indexesCache[ins] = len(p.instructions) - 1
+// Add next Instruction pointer(s) to the end
+func (p *Program) Add(ins ...*Instruction) {
+	offset := len(p.instructions)
+	p.instructions = append(p.instructions, ins...)
+	for i, ins := range ins {
+		p.indexesCache[ins] = offset + i
+	}
+}
+
+// Copy returns a deep copy of the Program with new Instruction pointers
+func (p *Program) Copy() *Program {
+	np := NewProgram()
+	for _, ins := range p.instructions {
+		cp := *ins
+		np.Add(&cp)
+	}
+	return np
 }
 
 // Cut Instructions into new Program
@@ -45,12 +58,14 @@ func (p *Program) Cut(start, end int) *Program {
 	return np
 }
 
-// Merge another Program into current one
-func (p *Program) Merge(src *Program) {
-	offset := len(p.instructions)
-	p.instructions = append(p.instructions, src.instructions...)
-	for i, ins := range src.instructions {
-		p.indexesCache[ins] = offset + i
+// Merge one or more Programs into current one
+func (p *Program) Merge(irp ...*Program) {
+	for _, src := range irp {
+		offset := len(p.instructions)
+		p.instructions = append(p.instructions, src.instructions...)
+		for i, ins := range src.instructions {
+			p.indexesCache[ins] = offset + i
+		}
 	}
 }
 
@@ -69,6 +84,16 @@ func (p *Program) Duration() int {
 		}
 	}
 	return dur
+}
+
+// Shift start time of each instruction
+func (p *Program) Shift(t int) {
+	if t <= 0 {
+		return
+	}
+	for _, ins := range p.instructions {
+		ins.Time += t
+	}
 }
 
 // Get first Instruction

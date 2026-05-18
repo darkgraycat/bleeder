@@ -38,14 +38,14 @@ func CmdPlay(args *CmdArgs) error {
 		return err
 	}
 
-	pr, err := bleeder.GenMainIR()
+	irp, err := bleeder.GenMainIR()
 	if err != nil {
 		return err
 	}
 
 	// TODO: define correct player by config or some
 	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
-	err = p.Play(pr, 0, pr.Length())
+	err = p.Play(irp, 0, irp.Length())
 	if err != nil {
 		return err
 	}

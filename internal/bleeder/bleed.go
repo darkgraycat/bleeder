@@ -7,79 +7,95 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// File-type parser
+// SequenceType describes how a sequence content should be parsed
+type SequenceType int
+
+// Sequence types enum
+const (
+	SEQ_UNKNOWN SequenceType = iota
+	SEQ_LANE
+	SEQ_RIFF
+)
+
+// Bleed is the top-level structure representing a parsed .bleed file.
 type Bleed struct {
-	Meta      `toml:"meta"`
-	Sequences map[string]Seq `toml:"seq"`
+	Meta  Meta                `toml:"meta"` // metadata
+	Lanes map[string]Sequence `toml:"lane"` // named lanes
+	Riffs map[string]Sequence `toml:"riff"` // named riffs
 }
 
+// Meta holds global playback settings for a bleed file.
 type Meta struct {
-	Main    string     `toml:"main"`    // main sequence name
-	Include []bleedRef `toml:"include"` // included bleeds
-	Tempo   int        `toml:"tempo"`   // beats per minute
+	Main    string   `toml:"main"`    // main sequence name
+	Include []string `toml:"include"` // included bleed file paths
+	Tempo   int      `toml:"tempo"`   // beats per minute
 }
 
-type Seq struct {
-	Args    args   `toml:"args"`    // sequence arguments
+// Sequence defines a named playback data using DSL
+type Sequence struct {
+	Args    string `toml:"args"`    // sequence arguments
 	Repeat  int    `toml:"repeat"`  // repeats count
-	Shape   string `toml:"shape"`   // shape of the wave (TODO)
-	Content string `toml:"content"` // sequence contents
+	Content string `toml:"content"` // sequence content
 }
-
-type bleedRef struct {
-	*Bleed
-}
-
-type args []string
 
 func LoadBleed(path string) (*Bleed, error) {
 	var bleed Bleed
 	if _, err := toml.DecodeFile(path, &bleed); err != nil {
 		return nil, err
 	}
+	for _, includePath := range bleed.Meta.Include {
+		included, err := LoadBleed(includePath)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range included.Lanes {
+			if _, exists := bleed.Lanes[k]; !exists {
+				return nil, fmt.Errorf("lane %q already defined, conflict with include %q", k, includePath)
+			}
+			bleed.Lanes[k] = v
+		}
+		for k, v := range included.Riffs {
+			if _, exists := bleed.Riffs[k]; !exists {
+				return nil, fmt.Errorf("riff %q already defined, conflict with include %q", k, includePath)
+			}
+			bleed.Riffs[k] = v
+		}
+	}
 	return &bleed, nil
 }
 
 func (b Bleed) String() string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "Main: %s\n", b.Meta.Main)
-	if len(b.Meta.Include) > 0 {
-		sb.WriteString("Includes:\n")
-		for i, ref := range b.Meta.Include {
-			fmt.Fprintf(&sb, "  [%d] %p\n", i, ref.Bleed)
-		}
+
+	sb.WriteString("Meta:\n")
+	fmt.Fprintf(&sb, "%s\n", b.Meta)
+
+	sb.WriteString("Lanes:\n")
+	for k, v := range b.Lanes {
+		fmt.Fprintf(&sb, "  %s: %s\n", k, v)
 	}
-	sb.WriteString("Sequences:\n")
-	for k, v := range b.Sequences {
-		fmt.Fprintf(&sb, "  %s: repeat=%d args=%v content=%v\n",
-			k, v.Repeat, v.Args, v.Content)
+
+	sb.WriteString("Riffs:\n")
+	for k, v := range b.Riffs {
+		fmt.Fprintf(&sb, "  %s: %s\n", k, v)
 	}
+
 	return sb.String()
 }
 
-func (r *bleedRef) UnmarshalTOML(data any) error {
-	if s, ok := data.(string); ok {
-		bleed, err := LoadBleed(s)
-		if err != nil {
-			return err
-		}
-		r.Bleed = bleed
-		return nil
-	}
-	return fmt.Errorf("bleeds should contain at filepath strings, got %T", data)
+func (s Sequence) String() string {
+	return fmt.Sprintf("args=%q repeat=%d content=%q", s.Args, s.Repeat, s.Content)
 }
 
-func (a *args) UnmarshalTOML(data any) error {
-	s, ok := data.(string)
-	if !ok {
-		return fmt.Errorf("args should be string, got %T", data)
-	}
-	for part := range strings.FieldsSeq(s) {
-		k, v, ok := strings.Cut(part, ":")
-		if !ok {
-			return fmt.Errorf("invalid arg: %q", part)
+func (m Meta) String() string {
+	var sb strings.Builder
+
+	fmt.Fprintf(&sb, "Main: %s\n", m.Main)
+	if len(m.Include) > 0 {
+		sb.WriteString("Includes:\n")
+		for _, path := range m.Include {
+			fmt.Fprintf(&sb, "  %s\n", path)
 		}
-		*a = append(*a, k, v)
 	}
-	return nil
+	return sb.String()
 }

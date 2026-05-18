@@ -5,7 +5,8 @@ import (
 	"strconv"
 )
 
-const C4freq = 261.6255653006 // base
+// base frequency of C4 (midi: 60)
+const BaseToneFreq float64 = 261.6255653006
 
 var noteToFreq = make(map[string]float64)
 var noteToMidi = make(map[string]int)
@@ -25,7 +26,7 @@ func init() {
 	for noteName, idx := range noteIndex {
 		for octave := 0; octave <= 9; octave++ {
 			semitones := (octave-4)*12 + idx
-			freq := C4freq * math.Pow(2, float64(semitones)/12)
+			freq := BaseToneFreq * math.Pow(2, float64(semitones)/12)
 			note := noteName + strconv.Itoa(octave)
 			midi := semitones + 60
 			noteToFreq[note] = freq
@@ -41,7 +42,7 @@ func NoteToFreq(note string) float64 {
 	if f, ok := noteToFreq[note]; ok {
 		return f
 	}
-	return C4freq
+	return BaseToneFreq
 }
 
 // Get midi number by note name
@@ -57,7 +58,7 @@ func MidiToFreq(idx int) float64 {
 	if f, ok := midiToFreq[idx]; ok {
 		return f
 	}
-	return C4freq
+	return BaseToneFreq
 }
 
 // Get note name by midi number
@@ -70,7 +71,7 @@ func MidiToNote(idx int) string {
 
 // Get midi float number by freq
 func FreqToMidi(freq float64) float64 {
-	return 60 + 12*math.Log2(freq/C4freq)
+	return 60 + 12*math.Log2(freq/BaseToneFreq)
 }
 
 // Transpose frequency by semitone steps
