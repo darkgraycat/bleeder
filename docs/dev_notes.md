@@ -416,3 +416,12 @@ so expanded it looks like:
             NoteToMidi
             modOpArg (lhs, rhs, op)
     )
+
+
+## Brainstorming unordered playback issue
+Background:
+    I wan Bleeder to support streaming into "ffplay"
+
+
+
+

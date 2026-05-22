@@ -9,29 +9,6 @@ import (
 	"strings"
 )
 
-const (
-	opNone = ""
-	opMidi = ">"
-	opNote = ":"
-	opFreq = "~"
-	opLink = "@"
-	opWait = "_"
-	opLast = "|"
-)
-
-const opSplitter = "\\"
-
-var replacer = strings.NewReplacer(
-	"\n", " ", // trim newline
-	"\t", " ", // trim tabchar
-	opMidi, opSplitter+opMidi,
-	opNote, opSplitter+opNote,
-	opFreq, opSplitter+opFreq,
-	opLink, opSplitter+opLink,
-	opWait, opSplitter+opWait,
-	opLast, opSplitter+opLast,
-)
-
 // Context required to parse content
 type ParserContext struct {
 	ResolveFunc func(name string, args []string) (*ir.Program, error)
@@ -40,22 +17,22 @@ type ParserContext struct {
 // Parse sequence content into IR Program
 func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 	irp := ir.NewProgram()
-	replaced := replacer.Replace(content)
+	replaced := lcFormatter.Replace(content)
 	if len(replaced) < 1 {
 		return irp, nil
 	}
 
 	offset := 0
 	lastDelay := 0
-	lastInsOp := opNone
+	lastInsOp := lcNone
 	ins := &ir.Instruction{Info: "None"}
 
-	for raw := range strings.SplitSeq(replaced[1:], opSplitter) {
+	for raw := range strings.SplitSeq(replaced[1:], splitChar) {
 		op := string(raw[0])
 		args := strings.Fields(raw[1:])
 
 		switch op {
-		case opMidi: // > midi operator
+		case lcMidi: // > midi operator
 			ins = &ir.Instruction{
 				Freq: audio.MidiToFreq(int(getOpArg(args, 0, 60))),
 				Dur:  int(getOpArg(args, 1, 1)),
@@ -67,7 +44,7 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 			lastDelay = 0
 			irp.Add(ins)
 
-		case opNote: // : note operator
+		case lcNote: // : note operator
 			ins = &ir.Instruction{
 				Freq: audio.MidiToFreq(int(getOpNoteArg(args, 0, "c4"))),
 				Dur:  int(getOpArg(args, 1, 1)),
@@ -79,7 +56,7 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 			lastDelay = 0
 			irp.Add(ins)
 
-		case opFreq: // ~ freq operator
+		case lcFreq: // ~ freq operator
 			ins = &ir.Instruction{
 				Freq: getOpArg(args, 0, audio.BaseToneFreq),
 				Dur:  int(getOpArg(args, 1, 1)),
@@ -91,7 +68,7 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 			lastDelay = 0
 			irp.Add(ins)
 
-		case opLink: // @ link operator
+		case lcLink: // @ link operator
 			if context == nil || context.ResolveFunc == nil {
 				return nil, fmt.Errorf("%s not supported without context", op)
 			}
@@ -107,19 +84,19 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 			lastInsOp = op
 			irp.Merge(irpNested)
 
-		case opWait: // _ wait operator
+		case lcWait: // _ wait operator
 			lastDelay = int(getOpArg(args, 0, float64(ins.Dur)))
 			offset += lastDelay
 
-		case opLast: // | last operator
+		case lcLast: // | last operator
 			freq := ins.Freq
 			switch lastInsOp {
-			case opMidi, opNote:
+			case lcMidi, lcNote:
 				freq = audio.MidiToFreq(int(getOpArg(args, 0, float64(audio.FreqToMidi(ins.Freq)))))
-			case opFreq:
+			case lcFreq:
 				freq = getOpArg(args, 0, freq)
-			case opLink:
-				return nil, fmt.Errorf("%s after %s is not implemented yet", opLast, lastInsOp)
+			case lcLink:
+				return nil, fmt.Errorf("%s after %s is not implemented yet", lcLast, lastInsOp)
 			}
 			ins = &ir.Instruction{
 				Freq: freq,
@@ -199,31 +176,3 @@ func getOpNoteArg(args []string, idx int, def string) float64 {
 		op,
 	)
 }
-
-// split string by +-*/ operators
-func splitOpArgs(s string) (lhs, rhs, op string) {
-	for i := range s {
-		switch s[i] {
-		case '+', '-', '*', '/':
-			return s[:i], s[i+1:], s[i : i+1]
-		}
-	}
-	return s, "", ""
-}
-
-// apply modificator on two arguments
-func modOpArg(a, b float64, op string) float64 {
-	switch op {
-	case "+":
-		return a + b
-	case "-":
-		return a - b
-	case "*":
-		return a * b
-	case "/":
-		return a / b
-	default:
-		return a
-	}
-}
-

@@ -16,35 +16,25 @@ type Bleeder struct {
 	main    string
 }
 
-// Create new Bleeder instance
-func NewBleeder() *Bleeder {
+// Create new Bleeder instance from a loaded Bleed
+func NewBleeder(bleed *Bleed) *Bleeder {
+	logs.Trace(logs.INFO, "called")
 	b := &Bleeder{
 		lanes: make(map[string]*Sequence),
 		riffs: make(map[string]*Sequence),
 		irps:  make(map[string]*ir.Program),
+		main:  bleed.Meta.Main,
 	}
-	b.context = &ParserContext{
-		ResolveFunc: b.GenSeqIR,
-	}
-	return b
-}
-
-// Load bleed into Bleeder
-func (b *Bleeder) Bleed(bleed *Bleed) (*Bleeder, error) {
-	logs.Trace(logs.INFO, "called")
-	// store contents
 	for key, lane := range bleed.Lanes {
 		b.lanes[key] = &lane
 	}
 	for key, riff := range bleed.Riffs {
 		b.riffs[key] = &riff
 	}
-
-	// store entrypoint
-	b.main = bleed.Meta.Main
-
-	// TODO: process and cache sequences
-	return b, nil
+	b.context = &ParserContext{
+		ResolveFunc: b.GenSeqIR,
+	}
+	return b
 }
 
 // Get IR of the main sequence
@@ -65,7 +55,20 @@ func (b *Bleeder) GenSeqIR(name string, args []string) (*ir.Program, error) {
 		return nil, fmt.Errorf("Sequence is not found: %s", name)
 	}
 
-	logs.Debug("---- %s", seqType)
+	// TODO: we need to know seqType to expand arguments
+	irp, err := b.GenIR("", seqType)
+
+	// var err error
+	switch seqType {
+	case SEQ_LANE:
+		irp, err = b.genLaneIR("") // TODO: use expanded content
+	case SEQ_RIFF:
+		irp, err = b.genRiffIR("") // TODO: use expanded content
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	// 1. parse sequence with args
 	//   - expand args
 	//   - replace content
@@ -74,17 +77,32 @@ func (b *Bleeder) GenSeqIR(name string, args []string) (*ir.Program, error) {
 	return nil, nil
 }
 
-// Get IR of raw DSL
-func (b *Bleeder) GenIR(content string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called")
-	return ParseContent(content, &ParserContext{
-		ResolveFunc: func(name string, args []string) (*ir.Program, error) {
-			// TODO
-			return nil, nil
-		},
-	})
+// Get IR of raw DSL by type
+func (b *Bleeder) GenIR(content string, seqType SequenceType) (*ir.Program, error) {
+	switch seqType {
+	case SEQ_LANE:
+		return b.genLaneIR(content)
+	case SEQ_RIFF:
+		return b.genRiffIR(content)
+	}
+	return nil, fmt.Errorf("Unknown sequence type: %d", seqType)
 }
 
+// Get IR from raw Lane-DSL
+func (b *Bleeder) genLaneIR(content string) (*ir.Program, error) {
+	logs.Trace(logs.INFO, "called with\n%s", content)
+	// irp := ir.NewProgram()
+
+	return ParseContent(content, b.context)
+}
+
+// Get IR from raw Riff-DSL
+func (b *Bleeder) genRiffIR(content string) (*ir.Program, error) {
+	logs.Trace(logs.INFO, "called with\n%s", content)
+	return nil, fmt.Errorf("Sequence riff type not implemented yet")
+}
+
+// get IR cached by name and args
 func (b *Bleeder) getCachedIR(name string, args []string) *ir.Program {
 	key := name
 	if len(args) > 0 {
@@ -96,6 +114,7 @@ func (b *Bleeder) getCachedIR(name string, args []string) *ir.Program {
 	return nil
 }
 
+// get Sequence with SequenceType cached by name
 func (b *Bleeder) getCachedSequence(name string) (*Sequence, SequenceType) {
 	if lane, ok := b.lanes[name]; ok {
 		return lane, SEQ_LANE

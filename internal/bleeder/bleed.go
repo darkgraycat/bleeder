@@ -27,14 +27,13 @@ type Bleed struct {
 // Meta holds global playback settings for a bleed file.
 type Meta struct {
 	Main    string   `toml:"main"`    // main sequence name
-	Include []string `toml:"include"` // included bleed file paths
 	Tempo   int      `toml:"tempo"`   // beats per minute
+	Include []string `toml:"include"` // included bleed file paths
 }
 
 // Sequence defines a named playback data using DSL
 type Sequence struct {
-	Args    string `toml:"args"`    // sequence arguments
-	Repeat  int    `toml:"repeat"`  // repeats count
+	Vars    string `toml:"vars"`    // sequence arguments
 	Content string `toml:"content"` // sequence content
 }
 
@@ -66,7 +65,6 @@ func LoadBleed(path string) (*Bleed, error) {
 
 func (b Bleed) String() string {
 	var sb strings.Builder
-
 	sb.WriteString("Meta:\n")
 	fmt.Fprintf(&sb, "%s\n", b.Meta)
 
@@ -74,22 +72,19 @@ func (b Bleed) String() string {
 	for k, v := range b.Lanes {
 		fmt.Fprintf(&sb, "  %s: %s\n", k, v)
 	}
-
 	sb.WriteString("Riffs:\n")
 	for k, v := range b.Riffs {
 		fmt.Fprintf(&sb, "  %s: %s\n", k, v)
 	}
-
 	return sb.String()
 }
 
 func (s Sequence) String() string {
-	return fmt.Sprintf("args=%q repeat=%d content=%q", s.Args, s.Repeat, s.Content)
+	return fmt.Sprintf("args=%q content=%q", s.Vars, s.Content)
 }
 
 func (m Meta) String() string {
 	var sb strings.Builder
-
 	fmt.Fprintf(&sb, "Main: %s\n", m.Main)
 	if len(m.Include) > 0 {
 		sb.WriteString("Includes:\n")

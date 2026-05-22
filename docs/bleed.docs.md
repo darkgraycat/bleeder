@@ -2,25 +2,57 @@
 Example:
 ```toml
 [meta]
-main = 'main'
+main = "main"
 tempo = 128
+include = ["./vibes.bleed.toml"]
 
-[seq.main]
-content = '''
+[vibe.synth1]
+// TODO
+content = """
+"""
+
+[lane.main]
+content = """
 @chord5 a3 8 _
 @chord5 f3 8 _
 @chord5 d3 8 _
 @chord5 d3 8 7 _
-'''
+"""
 
-[seq.chord5]
-args = 'note:e2 d:8 w:0 v:1.0'
-content = '''
+[lane.chord5]
+args = "note:e2 d:8 w:0 v:1.0"
+content = """
 :note d v_w |+7 |+5
-'''
+"""
+
+[riff.song1]
+// TODO
+content = """
+"""
 ```
 
-### Sequence content syntax
+### Meta section
+// TODO: description
+`main`      main sequence name
+`tempo`     beath per minute
+`include`   included bleed file paths
+
+### Vibe sections
+// TODO: description
+
+### Lane sections
+// TODO: description
+`args`      sequence arguments in format `key:val key2:val2`
+`content`   sequence content in LaneDSL format
+
+### Riff sections
+// TODO: description
+`args`      sequence arguments in format `a:val b:val2`
+`content`   sequence content in RiffDSL format
+
+## Content syntax
+
+### Lane section format
 `>` Play midi
     Args: midi, duration, volume
     Example: `>60 2 .5`
@@ -45,3 +77,12 @@ content = '''
     Args: name, arguments defined by sequence
     Example `@chord c5 .5`
 
+`$` Switch vibe (instrument)
+    Args: name, arguments defined by vibe
+    Example `$bass 1 :e3`
+
+### Riff section format
+// TODO
+
+### Vibe section format
+// TODO
