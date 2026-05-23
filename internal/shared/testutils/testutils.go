@@ -46,4 +46,5 @@ func AssertSlices[T comparable](t *testing.T, exp, act []T) {
 		if v != exp[i] {
 			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
 		}
-	}}
+	}
+}

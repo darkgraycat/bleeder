@@ -57,7 +57,7 @@ func (p *WAVPlayer) Stop() error {
 
 func (p *WAVPlayer) getSamples2(irp *ir.Program, wave audio.WaveFunc) []int16 {
 	sr := p.wav.SampleRate()
-	timeScale := irp.TimeScale()
+	timeScale := 2.0 // TODO
 	total := sr * irp.Duration()
 	buf := make([]float64, total)
 	out := make([]int16, total)
