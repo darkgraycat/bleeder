@@ -422,6 +422,113 @@ so expanded it looks like:
 Background:
     I wan Bleeder to support streaming into "ffplay"
 
+Here is my test input:
+```
+[lane.main] 
+>120
+@first 1 _1
+>180 _2 
+@second 80
+>220
+
+[lane.first]
+args d:1
+@second _d
+@second 
+
+[lane.second] 
+args m:60 
+>m _2 >m+10 
+```
+
+Using reverse shared buffer.
+processing main... 
+saving into buffer:
+midi    delta   note
+120     0
+180     1       because _1 after @first
+220     2       because _2 after >180
+
+processing first...     (line: @first 1 _1)
+nothing to save into buffer (and nothing to emmit yet, because no time advance "_")
+
+processing second...    (line: @second _d)
+saving into buffer:
+60  0
+"_2" found:
+    flush everything before advancing time by 2
+    flushed:
+    120 0
+    60  0
+    180 1
+advance time
+
+...hm, I think we cant flush it...
+What if we going to have:
+[lane.third]
+args d:1 m:60
+>m _d >m+10
+
+
+>120
+@third 2 100
+@third 1 200
+_1
+>300
+
+buffer gets
+120 0
+300 1
+
+going to third 2 100
+put 100 0
+see _d which is _0 - and that means that we are going to flush 120 and 100
+but there is 200 that needs to sound at the same time.
+argh!
+
+
+
+
+
+Output going to be according to Aelin:
+main parse loop:
+- >120 → emit t=0, midi=120 
+- @first 1 → buffer: {t=0,60}, {t=1,60}, {t=2,70}, {t=3,70} 
+- _1 → main_t=1, drain t≤1: emit {t=0,60}, {t=1,60}; buffer: {t=2,70}, {t=3,70} 
+- >180 → emit t=1, midi=180 
+- _2 → main_t=3, drain t≤3: emit {t=2,70}, {t=3,70}; buffer: empty
+- @second 80 → insert {t=3,80}, {t=5,90}; buffer: {t=3,80}, {t=5,90}
+- >220 → emit t=3, midi=220 
+- end → flush: {t=3,80}, {t=5,90}
+
+final table:
+
+┌─────┬──────┬──────┬─────┬──────┐
+│  #  │ midi │ absT │ dt  │ note │
+├─────┼──────┼──────┼─────┼──────┤
+│ 1   │ 120  │ 0    │ 0   │ C9   │
+├─────┼──────┼──────┼─────┼──────┤
+│ 2   │ 60   │ 0    │ 0   │ C4   │
+├─────┼──────┼──────┼─────┼──────┤
+│ 3   │ 60   │ 1    │ 1   │ C4   │
+├─────┼──────┼──────┼─────┼──────┤
+│ 4   │ 180  │ 1    │ 0   │ —    │
+├─────┼──────┼──────┼─────┼──────┤
+│ 5   │ 70   │ 2    │ 1   │ A#4  │
+├─────┼──────┼──────┼─────┼──────┤
+│ 6   │ 70   │ 3    │ 1   │ A#4  │
+├─────┼──────┼──────┼─────┼──────┤
+│ 7   │ 220  │ 3    │ 0   │ —    │
+├─────┼──────┼──────┼─────┼──────┤
+│ 8   │ 80   │ 3    │ 0   │ G#5  │
+├─────┼──────┼──────┼─────┼──────┤
+│ 9   │ 90   │ 5    │ 2   │ F#6  │
+└─────┴──────┴──────┴─────┴──────┘
+
+
+
+
+
 
 
 
