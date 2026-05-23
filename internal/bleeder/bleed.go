@@ -20,6 +20,7 @@ const (
 // Bleed is the top-level structure representing a parsed .bleed file.
 type Bleed struct {
 	Meta  Meta                `toml:"meta"` // metadata
+	Vibes map[string]Vibe     `toml:"vibe"` // named vibes
 	Lanes map[string]Sequence `toml:"lane"` // named lanes
 	Riffs map[string]Sequence `toml:"riff"` // named riffs
 }
@@ -31,8 +32,13 @@ type Meta struct {
 	Include []string `toml:"include"` // included bleed file paths
 }
 
+// Audio modification TODO:
+type Vibe struct {
+}
+
 // Sequence defines a named playback data using DSL
 type Sequence struct {
+	Type    SequenceType
 	Vars    string `toml:"vars"`    // sequence arguments
 	Content string `toml:"content"` // sequence content
 }
@@ -42,19 +48,45 @@ func LoadBleed(path string) (*Bleed, error) {
 	if _, err := toml.DecodeFile(path, &bleed); err != nil {
 		return nil, err
 	}
+	// assign lane type and validate naming
+	for k, v := range bleed.Lanes {
+		if _, exists := bleed.Lanes[k]; exists {
+			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
+		}
+		v.Type = SEQ_LANE
+		bleed.Lanes[k] = v
+	}
+	// assign riff type and validate naming
+	for k, v := range bleed.Riffs {
+		if _, exists := bleed.Lanes[k]; exists {
+			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
+		}
+		v.Type = SEQ_RIFF
+		bleed.Riffs[k] = v
+	}
+	// parse included bleeds
 	for _, includePath := range bleed.Meta.Include {
 		included, err := LoadBleed(includePath)
 		if err != nil {
 			return nil, err
 		}
+		// load vibes
+		for k, v := range included.Vibes {
+			if _, exists := bleed.Vibes[k]; exists {
+				return nil, fmt.Errorf("vibe %q already defined, conflict with include %q", k, includePath)
+			}
+			bleed.Vibes[k] = v
+		}
+		// load lanes
 		for k, v := range included.Lanes {
-			if _, exists := bleed.Lanes[k]; !exists {
+			if _, exists := bleed.Lanes[k]; exists {
 				return nil, fmt.Errorf("lane %q already defined, conflict with include %q", k, includePath)
 			}
 			bleed.Lanes[k] = v
 		}
+		// load riffs
 		for k, v := range included.Riffs {
-			if _, exists := bleed.Riffs[k]; !exists {
+			if _, exists := bleed.Riffs[k]; exists {
 				return nil, fmt.Errorf("riff %q already defined, conflict with include %q", k, includePath)
 			}
 			bleed.Riffs[k] = v
