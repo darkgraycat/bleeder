@@ -34,3 +34,11 @@ content = '''
 a-b-
 aa-a
 '''
+
+[riff.arpeg4]
+args = 'a:e2 b:a2 c:a+7'
+content = '''
+--c>>
+-b>b>
+a>>>>
+'''

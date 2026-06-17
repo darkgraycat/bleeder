@@ -24,17 +24,17 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 
 	offset := 0
 	lastDelay := 0
-	lastInsOp := lcNone
+	lastInsOp := ""
 	ins := &ir.Instruction{Info: "None"}
 
-	for raw := range strings.SplitSeq(replaced[1:], splitChar) {
+	for raw := range strings.SplitSeq(replaced[1:], lcSplit) {
 		op := string(raw[0])
 		args := strings.Fields(raw[1:])
 
 		switch op {
 		case lcMidi: // > midi operator
 			ins = &ir.Instruction{
-				Freq: audio.MidiToFreq(int(getOpArg(args, 0, 60))),
+				Midi: audio.MidiToFreq(int(getOpArg(args, 0, 60))),
 				Dur:  int(getOpArg(args, 1, 1)),
 				Vol:  getOpArg(args, 2, 1.0),
 				Time: offset,
@@ -46,7 +46,7 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 
 		case lcNote: // : note operator
 			ins = &ir.Instruction{
-				Freq: audio.MidiToFreq(int(getOpNoteArg(args, 0, "c4"))),
+				Midi: audio.MidiToFreq(int(getOpNoteArg(args, 0, "c4"))),
 				Dur:  int(getOpArg(args, 1, 1)),
 				Vol:  getOpArg(args, 2, 1.0),
 				Time: offset,
@@ -58,7 +58,7 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 
 		case lcFreq: // ~ freq operator
 			ins = &ir.Instruction{
-				Freq: getOpArg(args, 0, audio.BaseToneFreq),
+				Midi: getOpArg(args, 0, audio.BaseToneFreq),
 				Dur:  int(getOpArg(args, 1, 1)),
 				Vol:  getOpArg(args, 2, 1.0),
 				Time: offset,
@@ -89,17 +89,17 @@ func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
 			offset += lastDelay
 
 		case lcLast: // | last operator
-			freq := ins.Freq
+			freq := ins.Midi
 			switch lastInsOp {
 			case lcMidi, lcNote:
-				freq = audio.MidiToFreq(int(getOpArg(args, 0, float64(audio.FreqToMidi(ins.Freq)))))
+				freq = audio.MidiToFreq(int(getOpArg(args, 0, float64(audio.FreqToMidi(ins.Midi)))))
 			case lcFreq:
 				freq = getOpArg(args, 0, freq)
 			case lcLink:
 				return nil, fmt.Errorf("%s after %s is not implemented yet", lcLast, lastInsOp)
 			}
 			ins = &ir.Instruction{
-				Freq: freq,
+				Midi: freq,
 				Dur:  int(getOpArg(args, 1, float64(ins.Dur))),
 				Vol:  getOpArg(args, 2, ins.Vol),
 				Time: offset,
@@ -175,4 +175,63 @@ func getOpNoteArg(args []string, idx int, def string) float64 {
 		shared.Str2Float(rhs, 0.0),
 		op,
 	)
+}
+
+// produce content with applied sequence variables
+func applySeqVars(content string, vars string, values []string) string {
+	defs := strings.Fields(vars)
+	pairs := make([]string, 0, len(defs)*2)
+	// fill with defined values
+	for i, def := range defs[:min(len(values), len(defs))] {
+		name, _, _ := strings.Cut(def, "=")
+		pairs = append(pairs, name, values[i])
+	}
+	// fill with default values
+	for _, def := range defs[len(values):] {
+		name, defaultVal, _ := strings.Cut(def, "=")
+		pairs = append(pairs, name, defaultVal)
+	}
+	return strings.NewReplacer(pairs...).Replace(content)
+}
+
+// parse sequence variables and produce pairs for replacer
+func parseSeqVars(vars string, values []string) []string {
+	defs := strings.Fields(vars)
+	pairs := make([]string, len(defs)*2)
+	for i, def := range defs {
+		k, v, _ := strings.Cut(def, "=")
+		if len(values) < i {
+			v = values[i]
+		}
+		pairs[i*2] = k
+		pairs[i*2+1] = v
+	}
+	return pairs
+}
+
+// split string by +-*/ operators
+func splitOpArgs(s string) (lhs, rhs, op string) {
+	for i := range s {
+		switch s[i] {
+		case '+', '-', '*', '/':
+			return s[:i], s[i+1:], s[i : i+1]
+		}
+	}
+	return s, "", ""
+}
+
+// apply modificator on two arguments
+func modOpArg(a, b float64, op string) float64 {
+	switch op {
+	case "+":
+		return a + b
+	case "-":
+		return a - b
+	case "*":
+		return a * b
+	case "/":
+		return a / b
+	default:
+		return a
+	}
 }

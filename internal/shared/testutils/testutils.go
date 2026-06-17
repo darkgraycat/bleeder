@@ -2,10 +2,17 @@ package testutils
 
 import "testing"
 
+func AssertErr(t *testing.T, err error, message string) {
+	t.Helper()
+	if err == nil || err.Error() != message {
+		t.Fatalf("\nexpected error: `%s`", message)
+	}
+}
+
 func AssertErrNil(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
-		t.Fatalf("\nerror: `%v`", err)
+		t.Fatalf("\nexpected no error: `%v`", err)
 	}
 }
 
@@ -44,6 +51,18 @@ func AssertSlices[T comparable](t *testing.T, exp, act []T) {
 	}
 	for i, v := range act {
 		if v != exp[i] {
+			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
+		}
+	}
+}
+
+func AssertMaps[T comparable, K comparable](t *testing.T, exp, act map[K]T) {
+	t.Helper()
+	if len(exp) != len(act) {
+		t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
+	}
+	for k, v := range act {
+		if v != exp[k] {
 			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
 		}
 	}

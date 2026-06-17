@@ -66,7 +66,7 @@ func (p *WAVPlayer) getSamples2(irp *ir.Program, wave audio.WaveFunc) []int16 {
 	for _, ins := range irp.Instructions() {
 		offset := int(float64(ins.Time)*timeScale) * sr
 		samples := p.wav.GenerateSamplesEnvelope(
-			ins.Freq,
+			ins.Midi,
 			float64(ins.Dur)*timeScale,
 			ins.Vol,
 			0.03, 0.06,
@@ -94,7 +94,7 @@ func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave a
 		offset := ins.Time * sr
 		// TODO
 		// samples := p.wav.GenerateSamples(ins.Freq, ins.Dur, ins.Vol, wave)
-		samples := p.wav.GenerateSamplesEnvelope(ins.Freq, float64(ins.Dur), float64(ins.Vol), 0.03, 0.06, wave)
+		samples := p.wav.GenerateSamplesEnvelope(ins.Midi, float64(ins.Dur), float64(ins.Vol), 0.03, 0.06, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}

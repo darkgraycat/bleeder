@@ -130,7 +130,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 			case b.cfg.Mapping.Play:
 				accDelay = 0
 				ins = &ir.Instruction{
-					Freq: parseNoteArg(v, 1, "c4"),
+					Midi: parseNoteArg(v, 1, "c4"),
 					Dur:  int(parseFloatArg(v, 2, defDur)),
 					Vol:  parseFloatArg(v, 3, defVol),
 					Time: int(t),
@@ -141,7 +141,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 			case b.cfg.Mapping.Wave:
 				accDelay = 0
 				ins = &ir.Instruction{
-					Freq: parseFloatArg(v, 1, 440),
+					Midi: parseFloatArg(v, 1, 440),
 					Dur:  int(parseFloatArg(v, 2, defDur)),
 					Vol:  parseFloatArg(v, 3, defVol),
 					Time: int(t),
@@ -166,7 +166,7 @@ func (b *Bleeder) GenRawIR(content string, t float64) (*ir.Program, float64, err
 			case b.cfg.Mapping.Repeat:
 				_, mod := parseInstructionArg(v, 1, "")
 				ins = &ir.Instruction{
-					Freq: audio.TransposeFreq(ins.Freq, mod),
+					Midi: audio.TransposeFreq(ins.Midi, mod),
 					Dur:  ins.Dur, // TODO
 					Vol:  ins.Vol,
 					Time: int(t),

@@ -530,5 +530,26 @@ final table:
 
 
 
+## blabla about riff
+what if this
+```
+b>>-
+-a-a
+```
+split into:
+```
+line[0]=
+b
+>
+>
+-
+line[1]=
+-
+a
+-
+a
+```
+
+
 
 

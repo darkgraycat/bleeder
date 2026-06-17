@@ -43,3 +43,9 @@ args = 'note:e2 d:0.6 p:0.4'
 content = '''
 > note d : p | +7 | +5 | -5
 '''
+
+[lane.some]
+args = 'note=e2 d=2'
+content = '''
+>note,d 
+'''
