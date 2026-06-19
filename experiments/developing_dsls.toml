@@ -40,3 +40,10 @@ content = '''
 @chord:a:4 _ _ _
 @chord:b   _ < _
 '''
+
+[lane.with_seq]
+vars = 'a:e2 b:c2'
+content = '''
+@chord:a:4 |
+@chord:b _ <
+'''

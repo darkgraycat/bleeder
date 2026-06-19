@@ -1,6 +1,9 @@
 package testutils
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func AssertErr(t *testing.T, err error, message string) {
 	t.Helper()
@@ -65,5 +68,20 @@ func AssertMaps[T comparable, K comparable](t *testing.T, exp, act map[K]T) {
 		if v != exp[k] {
 			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
 		}
+	}
+}
+
+func CheckFlags(t *testing.T) {
+	t.Helper()
+	parts := strings.Split(t.Name(), "/")
+	name := parts[len(parts)-1]
+	if len(name) < 1 {
+		return
+	}
+	switch name[0] {
+	case '-':
+		t.SkipNow()
+	case '!':
+		t.FailNow()
 	}
 }

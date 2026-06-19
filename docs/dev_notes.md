@@ -553,3 +553,38 @@ a
 
 
 
+
+# Developing a final version (for now)
+Operators `> < @ $ _ | :`
+
+How it can be easy to convert into IR?
+Lane example:
+`>c4:2 |<+7:1 |<+5:1`
+Which can be formatted into set of:
+```
+>c4:2   // T=0 Ta=2
+|       // in case of | - do not advance time by Ta
+<+7:1   // >c4+7:1
+|
+<+5:1   // >c4+7+5:1
+```
+
+Riff example:
+```
+c4 >
+c4+7 _
+c4+12 _
+```
+Which can be formatted into set of:
+>c4:2
+|
+>c4+7
+|
+>c+12
+
+Or if we will have two parsers, it should just rotate the matrix into
+c4 c4+7 c+12
+> _ _
+
+But do we need to rotate? Because how can we know that c4 duration is 2?
+Also lets imaging using "<" operator in Riff. Its much easier to parse it sequentially cell by cell, then go to next row.

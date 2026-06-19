@@ -58,11 +58,11 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	fmt.Printf("VARS: %v\n", varsMap)
 
 	// 1. substitute "e2"-like notation with midi numbers for seq.Vars -> prepared vars ?
-		// note - we are not going to do pre-substution
+	// note - we are not going to do pre-substution
 	// 2. do all arithmetic modifications for prepared vars -> calculated vars
 	// Ex: a=e2 b=2 c=a+2.5 with a3 1	 ->  a=57 b=1 c=58.5
 	//	or a=e2 b=2 c=a+2.5 with a3 1 e2 ->  a=57 b=1 c=40 -- overrides "a+2.5" completelly
-		// note we cant do evalArg on content right now, because it depends on flow
+	// note we cant do evalArg on content right now, because it depends on flow
 
 	// 3. substitute seq.Content with calculated vars -> prepared content
 	// Note: prepared content still might have modifications that cant be calculated without actual parsing, ex: "|+7" for lane
@@ -86,21 +86,21 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(content string) (*ir.Program, error) {
 	logs.Trace(logs.INFO, "called with\n%s", content)
-	normalized := normalizeLaneContent(content)
-	if normalized == nil {
+	tokens := tokenizeContent(content)
+	if tokens == nil {
 		return nil, fmt.Errorf("sequence content is invalid or empty")
 	}
-	fmt.Printf("LANE %s\n", normalized)
+	fmt.Printf("LANE %s\n", tokens)
 	return nil, fmt.Errorf("sequence lane type not implemented yet")
 }
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(content string) (*ir.Program, error) {
 	logs.Trace(logs.INFO, "called with\n%s", content)
-	normalized := normalizeRiffContent(content)
-	if normalized == nil {
+	tokens := tokenizeContent(content)
+	if tokens == nil {
 		return nil, fmt.Errorf("sequence content is invalid or empty")
 	}
-	fmt.Printf("RIFF %s\n", normalized)
+	fmt.Printf("RIFF %s\n", tokens)
 	return nil, fmt.Errorf("sequence riff type not implemented yet")
 }
