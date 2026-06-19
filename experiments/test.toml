@@ -1,51 +1,44 @@
 [meta]
 main = 'main'
 
-[seq.main]
+[seq.song]
 content = '''
-@ heart-shaped : 8
-@ missile : 8
+@chord5 a2 8
+@arpeggio a3 8 3:
 '''
 
-[seq.missile]
-content = '''
-@ chord5 e2 2
-@ arpeggio e3 : 2
-@ chord5 g#2 2
-@ arpeggio g#2 : 2
-@ chord5 c#3 2
-@ arpeggio c#3 : 2
-@ chord5 a2 2
-@ arpeggio a3 : 2
-'''
-
-[seq.heart-shaped]
-content = '''
-@ arpeggio a3
-@ chord5 a2 1.6 : 1.6
-@ arpeggio f3
-@ chord5 f2 1.6 : 1.6
-@ arpeggio d3
-@ chord5 d2 1.6 : 1.6
-@ arpeggio d3
-@ chord5 d2 1.6 : 1.6
-'''
-
-# HELPERS
 [seq.chord5]
-args = 'note:e2 d:1.0'
+args = 'note:e2 d:8'
 content = '''
-> note d | +7
+note d |+7
 '''
 
 [seq.arpeggio]
-args = 'note:e2 d:0.6 p:0.4'
+args = 'note:e2 p:8/4 d:2'
 content = '''
-> note d : p | +7 | +5 | -5
+:note d_p |+7 |+5 |-5
 '''
 
-[lane.some]
-args = 'note=e2 d=2'
+[riff.arpeggio]
+args = 'a:e2 b:a+7 c:a+12'
 content = '''
->note,d 
+a>---
+-b>b>
+--c>-
+'''
+
+[riff.test]
+a = 'e2'
+b = 'a+7'
+content = '''
+a-b-
+aa-a
+'''
+
+[riff.arpeg4]
+args = 'a:e2 b:a2 c:a+7'
+content = '''
+--c>>
+-b>b>
+a>>>>
 '''

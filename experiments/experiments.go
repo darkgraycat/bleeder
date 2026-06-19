@@ -21,9 +21,17 @@ import (
 	"bleeder/internal/shared/logs"
 )
 
+type TestSeq struct {
+	Content string            `toml:"content"`
+	Vars    map[string]string `toml:???`
+}
+
 func Run() {
 	logs.SetLogLevel(2) // debug
 
+}
+
+func runExp1() {
 	context := &bleeder.ParserContext{
 		ResolveFunc: func(name string, args []string) (*ir.Program, error) {
 			return bleeder.ParseContent("> e2 2 |+7 |+7", nil)

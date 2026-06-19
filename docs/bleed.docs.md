@@ -86,3 +86,12 @@ content = """
 
 ### Vibe section format
 // TODO
+
+
+### Lane content characters
+`>` Play note or midi
+`@` Play nested sequence
+`_` Advance time (silence)
+`|` Repeat last play operation
+`&` Play in parallel with last one
+`$` Switch vibe

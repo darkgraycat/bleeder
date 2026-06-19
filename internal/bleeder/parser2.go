@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+// TODO its a new syntax I need to use - works well with Lane and Riff
+const (
+	// DSL characters
+	opPlay = ">"
+	opLast = "<"
+	opLink = "@"
+	opVibe = "$"
+	opRest = "_"
+	opWith = "|"
+	opArgs = ":"
+)
+
 const (
 	// Lane-DSL characters
 	lcMidi = ">"
@@ -94,7 +106,7 @@ func evalArg(s string) float64 {
 	case '/':
 		return lhs / rhs
 	}
-	return -1
+	return math.NaN()
 }
 
 // parse sequence variables into map

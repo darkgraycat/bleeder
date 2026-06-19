@@ -1,0 +1,32 @@
+[meta]
+main = 'main'
+
+[lane.main]
+content = '''
+>@chord5 a2 >@chord5 e3 >@chord5 d3
+'''
+
+[lane.chord5]
+args = 'note:e2 dur:8'
+content = '''
+>note dur |+7
+'''
+
+[lane.chord5full]
+args = 'note:e2 dur:8'
+content = '''
+>note dur |+7 |+12
+'''
+
+[lane.Lwith_seq_injection]
+args = 'a:e2 seq:chord5'
+content = '''
+@seq a
+'''
+
+[riff.Rwith_seq_injection]
+args = 'a:e2 seq:chord5'
+content = '''
+a      - a -
+@seq a - - - // how it going to know that "a" is argument for seq?
+'''
