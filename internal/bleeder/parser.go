@@ -39,38 +39,6 @@ func tokenizeContent(s string) [][]string {
 	return out
 }
 
-// parse string which represents tone. can be midi or note
-func parseTone(s string) float64 {
-	if m := audio.NoteToMidi(s); m >= 0 {
-		return float64(m)
-	}
-	if f, err := strconv.ParseFloat(s, 64); err == nil {
-		return f
-	}
-	return math.NaN()
-}
-
-// evaluate argument with short arithmetic expression
-func evalArg(s string) float64 {
-	i := strings.IndexAny(s, "+-*/")
-	if i < 0 {
-		return parseTone(s)
-	}
-	lhs := parseTone(s[:i])
-	rhs := parseTone(s[i+1:])
-	switch s[i] {
-	case '+':
-		return lhs + rhs
-	case '-':
-		return lhs - rhs
-	case '*':
-		return lhs * rhs
-	case '/':
-		return lhs / rhs
-	}
-	return math.NaN()
-}
-
 // parse sequence variables into map
 func parseVars(s string, values []string) map[string]float64 {
 	defs := strings.Fields(s)
@@ -105,9 +73,41 @@ func applyVars(s string, vars map[string]float64) string {
 	}
 	pairs := make([]string, 0, len(vars)*2)
 	for k, v := range vars {
-		pairs = append(pairs, k, strconv.FormatFloat(v, 'f', -1, 64))
+		pairs = append(pairs, k, strconv.FormatFloat(v, 'g', 2, 64))
 	}
 	return strings.NewReplacer(pairs...).Replace(s)
+}
+
+// evaluate argument with short arithmetic expression
+func evalArg(s string) float64 {
+	i := strings.IndexAny(s, "+-*/")
+	if i < 0 {
+		return parseTone(s)
+	}
+	lhs := parseTone(s[:i])
+	rhs := parseTone(s[i+1:])
+	switch s[i] {
+	case '+':
+		return lhs + rhs
+	case '-':
+		return lhs - rhs
+	case '*':
+		return lhs * rhs
+	case '/':
+		return lhs / rhs
+	}
+	return math.NaN()
+}
+
+// parse string which represents tone. can be midi or note
+func parseTone(s string) float64 {
+	if m := audio.NoteToMidi(s); m >= 0 {
+		return float64(m)
+	}
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		return f
+	}
+	return math.NaN()
 }
 
 // Parse sequence content into IR Program

@@ -83,5 +83,7 @@ func CheckFlags(t *testing.T) {
 		t.SkipNow()
 	case '!':
 		t.FailNow()
+	case '|':
+		t.Parallel()
 	}
 }
