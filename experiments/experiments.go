@@ -7,10 +7,10 @@ import (
 )
 
 func Run() {
-	logs.SetLogLevel(2) // debug
+	logs.SetLogLevel(0) // debug
 	err := runExp1()
 	if err != nil {
-		fmt.Printf("ERROR: %v", err)
+		logs.Error("Error: %v\n", err)
 	}
 }
 
@@ -28,7 +28,7 @@ func runExp1() error {
 		return fmt.Errorf("IR - %v", err)
 	}
 
-	fmt.Printf("IR - %v", irp)
+	fmt.Printf("IR - %v\n", irp)
 
 	return nil
 }

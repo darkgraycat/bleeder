@@ -4,6 +4,7 @@ import (
 	"bleeder/internal/ir"
 	"bleeder/internal/shared/logs"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 )
@@ -45,7 +46,7 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called")
+	logs.Trace(logs.INFO, "called with %v, %v", name, vars)
 	irp := b.cache.Get(name, vars)
 	if irp != nil {
 		return irp, nil
@@ -55,7 +56,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		return nil, fmt.Errorf("sequence is not exist: %s", name)
 	}
 	fmt.Printf("SEQ %s, %s\n", name, vars)
-	varsMap := parseVars(seq.Vars, strings.Split(vars, opArgs))
+	varsMap := parseVars(seq.Vars, strings.Split(vars, chArgs))
 	rawContent := applyVars(seq.Content, varsMap)
 	fmt.Printf("%v\n%v\n", varsMap, rawContent)
 
@@ -64,17 +65,6 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		return nil, fmt.Errorf("sequence content is invalid or empty")
 	}
 
-	// 1. substitute "e2"-like notation with midi numbers for seq.Vars -> prepared vars ?
-	// note - we are not going to do pre-substution
-	// 2. do all arithmetic modifications for prepared vars -> calculated vars
-	// Ex: a=e2 b=2 c=a+2.5 with a3 1	 ->  a=57 b=1 c=58.5
-	//	or a=e2 b=2 c=a+2.5 with a3 1 e2 ->  a=57 b=1 c=40 -- overrides "a+2.5" completelly
-	// note we cant do evalArg on content right now, because it depends on flow
-
-	// 3. substitute seq.Content with calculated vars -> prepared content
-	// Note: prepared content still might have modifications that cant be calculated without actual parsing, ex: "|+7" for lane
-
-	// 4. parse prepared content into IR
 	var err error
 	switch seq.Type {
 	case SEQ_LANE:
@@ -84,33 +74,54 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	default:
 		return nil, fmt.Errorf("unknown sequence type: %s", name)
 	}
-	if err == nil {
-		b.cache.Set(name, vars, irp)
+	if err != nil {
+		return nil, err
 	}
-	return irp, err
+	fmt.Printf("IR Len%d\n", irp.Length())
+	// TODO - remove
+	for i, ins := range irp.Instructions() {
+		fmt.Printf("INS [%d] - %s\n", i, ins)
+	}
+
+	b.cache.Set(name, vars, irp)
+	return irp, nil
 }
 
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called with\n%v", tokens)
+	logs.Trace(logs.INFO, "called with %v", tokens)
 	concated := slices.Concat(tokens...)
 	irp := ir.NewProgram()
 	ins := &ir.Instruction{Info: "None"}
+	prev := ""
+	t, ta := 0, 0
+	logs.Debug("Lane tokens %s\n", concated)
 
 	for _, raw := range concated {
-		op := string(raw[0])
-		args := strings.Split(raw[1:], opArgs)
-		fmt.Printf("OP %s - %v\n", op, args)
-		switch op {
-		case opPlay:
-			ins = &ir.Instruction{
-				Midi: evalArg(args[0]),
-				// TODO
+		ch := string(raw[0])
+		args := strings.Split(raw[1:], chArgs)
+		fmt.Printf("[OP] %s - %v\n", ch, args)
+		switch ch {
+		case chPlay:
+			midi := evalArg(getArg(args, 0, ""))
+			dur := evalArg(getArg(args, 1, "1"))
+			vol := evalArg(getArg(args, 2, "1"))
+			if math.IsNaN(midi) {
+				return nil, fmt.Errorf("cannot parse midi tone for %s", raw)
 			}
-			// TODO
+			ins = &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol, Time: t, Info: raw}
+			ta += int(dur)
 			irp.Add(ins)
-		case opLast:
-		case opLink:
+			prev = ch
+		case chPrev:
+			switch prev {
+			case chPlay:
+			case chLink:
+				return nil, fmt.Errorf("%s after %s is not implemented yet", chPrev, prev)
+			default:
+				return nil, fmt.Errorf("%s can't be used after %s", chPrev, prev)
+			}
+		case chLink:
 			irpNested, err := b.GenSeqIR(args[0], strings.Join(args[1:], ":"))
 			if err != nil {
 				return nil, err
@@ -119,18 +130,21 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			irpNested.Shift(0) // TODO
 			// lastInsOp = op
 			irp.Merge(irpNested)
-		case opVibe:
-		case opRest:
-		case opWith:
+		case chVibe:
+			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+		case chRest:
+			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+		case chWith:
+			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
 		}
 	}
-	fmt.Printf("LANE TOKENS %s\n", concated)
-	return irp, fmt.Errorf("sequence lane type not implemented yet")
+	return irp, nil
+	// return irp, fmt.Errorf("sequence lane type not implemented yet")
 }
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 	logs.Trace(logs.INFO, "called with\n%v", tokens)
-	fmt.Printf("RIFF TOKENS %s\n", tokens)
+	logs.Debug("Lane tokens %s\n", tokens)
 	return nil, fmt.Errorf("sequence riff type not implemented yet")
 }

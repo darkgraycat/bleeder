@@ -143,11 +143,11 @@ func BenchmarkParseVars(b *testing.B) {
 		s      string
 		values []string
 	}{
-		// 182.7 ns/op	     288 B/op	       3 allocs/op
+		// 172.8 ns/op	     288 B/op	       3 allocs/op
 		{s: "note:e2 dur:1", values: []string{"c#3", "2"}},
-		// 259.5 ns/op	     304 B/op	       3 allocs/op
+		// 242.6 ns/op	     304 B/op	       3 allocs/op
 		{s: "n:e2 m:60 d:2", values: []string{"a3"}},
-		// 470.7 ns/op	     304 B/op	       3 allocs/op
+		// 442.0 ns/op	     304 B/op	       3 allocs/op
 		{s: "a:20 b:a+10 c:b+20", values: []string{"40"}},
 	}
 

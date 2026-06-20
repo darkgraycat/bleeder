@@ -9,22 +9,22 @@ import (
 
 const (
 	// DSL characters
-	opPlay = ">"
-	opLast = "<"
-	opLink = "@"
-	opVibe = "$"
-	opRest = "_"
-	opWith = "|"
-	opArgs = ":"
+	chPlay = ">" // 3 args max
+	chPrev = "<" // 3-n args max
+	chLink = "@" // n args max
+	chVibe = "$" // ? args max
+	chRest = "_" // 1 arg max
+	chWith = "|" // no args
+	chArgs = ":" // no args
 )
 
 var replacer = strings.NewReplacer(
-	opPlay, " "+opPlay,
-	opLast, " "+opLast,
-	opLink, " "+opLink,
-	opVibe, " "+opVibe,
-	opRest, " "+opRest,
-	opWith, " "+opWith,
+	chPlay, " "+chPlay,
+	chPrev, " "+chPrev,
+	chLink, " "+chLink,
+	chVibe, " "+chVibe,
+	chRest, " "+chRest,
+	chWith, " "+chWith,
 )
 
 // tokenize sequence raw content
@@ -45,7 +45,7 @@ func parseVars(s string, values []string) map[string]float64 {
 	out := make(map[string]float64, len(defs))
 	for i, d := range defs {
 		k, v, _ := strings.Cut(d, ":")
-		if i < len(values) {
+		if i < len(values) && len(values[i]) > 0 {
 			out[k] = evalArg(values[i])
 			continue
 		}
@@ -59,7 +59,7 @@ func parseVars(s string, values []string) map[string]float64 {
 				out[k] = ref
 				continue
 			}
-			v = strconv.FormatFloat(ref, 'f', -1, 64) + v[pos:]
+			v = strconv.FormatFloat(ref, 'g', -1, 64) + v[pos:]
 		}
 		out[k] = evalArg(v)
 	}
@@ -108,6 +108,14 @@ func parseTone(s string) float64 {
 		return f
 	}
 	return math.NaN()
+}
+
+// get argument at position or fallback to default value
+func getArg(args []string, idx int, fallback string) string {
+	if idx >= len(args) {
+		return fallback
+	}
+	return args[idx]
 }
 
 // Parse sequence content into IR Program

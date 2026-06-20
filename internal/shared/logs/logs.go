@@ -3,6 +3,7 @@ package logs
 import (
 	"fmt"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -58,7 +59,7 @@ func Error(format string, a ...any) {
 
 // Allias to Log(level, format, a...) with timestamp and caller name
 func Trace(level LogLevel, format string, a ...any) {
-	Log(level, timeString()+" "+callerName()+": "+format, a...)
+	Log(level, timeString()+" "+callerName(2)+": "+format, a...)
 }
 
 // Log message to console
@@ -80,12 +81,13 @@ func Log(level LogLevel, format string, a ...any) {
 	fmt.Printf(prefix+format+"\n", a...)
 }
 
-func callerName() string {
-	pc, _, _, ok := runtime.Caller(1)
+func callerName(skip int) string {
+	pc, _, _, ok := runtime.Caller(skip)
 	if !ok {
 		return "unknown"
 	}
-	return runtime.FuncForPC(pc).Name()
+	_, name, _ := strings.Cut(runtime.FuncForPC(pc).Name(), ".")
+	return name
 }
 
 func timeString() string {

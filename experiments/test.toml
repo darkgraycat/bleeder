@@ -3,7 +3,13 @@ main = 'main'
 
 [lane.main]
 content = '''
-@part1:c4+5:5
+@test1 
+'''
+
+[lane.test1]
+vars = 'a:40 b:80'
+content = '''
+>a >b
 '''
 
 [lane.part1]
