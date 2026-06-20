@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"math"
 	"slices"
 )
 
@@ -51,14 +52,18 @@ func (p *Program) Length() int {
 
 // Get duration of whole Program
 func (p *Program) Duration() int {
-	dur := 0
+	minTime := math.MaxInt
+	maxTime := 0
 	for _, ins := range p.instructions {
+		if ins.Time < minTime {
+			minTime = ins.Time
+		}
 		end := ins.Time + ins.Dur
-		if end > dur {
-			dur = end
+		if end > maxTime {
+			maxTime = end
 		}
 	}
-	return dur
+	return maxTime - minTime
 }
 
 // Shift start time of each instruction

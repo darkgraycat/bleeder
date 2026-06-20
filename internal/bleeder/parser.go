@@ -45,8 +45,8 @@ func parseVars(s string, values []string) map[string]float64 {
 	out := make(map[string]float64, len(defs))
 	for i, d := range defs {
 		k, v, _ := strings.Cut(d, ":")
-		if i < len(values) && len(values[i]) > 0 {
-			out[k] = evalArg(values[i])
+		if i < len(values) {
+			out[k] = evalArg(getArg(values, i, v))
 			continue
 		}
 		pos := strings.IndexAny(v, "+-*/")
@@ -59,7 +59,7 @@ func parseVars(s string, values []string) map[string]float64 {
 				out[k] = ref
 				continue
 			}
-			v = strconv.FormatFloat(ref, 'g', -1, 64) + v[pos:]
+			v = strconv.FormatFloat(ref, 'g', 8, 64) + v[pos:]
 		}
 		out[k] = evalArg(v)
 	}
@@ -73,7 +73,7 @@ func applyVars(s string, vars map[string]float64) string {
 	}
 	pairs := make([]string, 0, len(vars)*2)
 	for k, v := range vars {
-		pairs = append(pairs, k, strconv.FormatFloat(v, 'g', 2, 64))
+		pairs = append(pairs, k, strconv.FormatFloat(v, 'g', 8, 64))
 	}
 	return strings.NewReplacer(pairs...).Replace(s)
 }
@@ -99,6 +99,18 @@ func evalArg(s string) float64 {
 	return math.NaN()
 }
 
+// get argument at position idx or fallback to prev value
+func getArg(args []string, idx int, prev string) string {
+	if idx >= len(args) {
+		return prev
+	}
+	v := args[idx]
+	if strings.IndexAny(v, "+-*/") == 0 {
+		return prev + v
+	}
+	return v
+}
+
 // parse string which represents tone. can be midi or note
 func parseTone(s string) float64 {
 	if m := audio.NoteToMidi(s); m >= 0 {
@@ -110,113 +122,10 @@ func parseTone(s string) float64 {
 	return math.NaN()
 }
 
-// get argument at position or fallback to default value
-func getArg(args []string, idx int, fallback string) string {
-	if idx >= len(args) {
-		return fallback
+// split raw arguments into slice
+func splitArgs(s string) []string {
+	if s == "" {
+		return []string{}
 	}
-	return args[idx]
+	return strings.Split(s, chArgs)
 }
-
-// Parse sequence content into IR Program
-// func ParseContent(content string, context *ParserContext) (*ir.Program, error) {
-// 	irp := ir.NewProgram()
-// 	replaced := lcFormatter.Replace(content)
-// 	if len(replaced) < 1 {
-// 		return irp, nil
-// 	}
-
-// 	offset := 0
-// 	lastDelay := 0
-// 	lastInsOp := ""
-// 	ins := &ir.Instruction{Info: "None"}
-
-// 	for raw := range strings.SplitSeq(replaced[1:], lcSplit) {
-// 		op := string(raw[0])
-// 		args := strings.Fields(raw[1:])
-
-// 		switch op {
-// 		case lcMidi: // > midi operator
-// 			ins = &ir.Instruction{
-// 				Midi: audio.MidiToFreq(int(getOpArg(args, 0, 60))),
-// 				Dur:  int(getOpArg(args, 1, 1)),
-// 				Vol:  getOpArg(args, 2, 1.0),
-// 				Time: offset,
-// 				Info: raw,
-// 			}
-// 			lastInsOp = op
-// 			lastDelay = 0
-// 			irp.Add(ins)
-
-// 		case lcNote: // : note operator
-// 			ins = &ir.Instruction{
-// 				Midi: audio.MidiToFreq(int(getOpNoteArg(args, 0, "c4"))),
-// 				Dur:  int(getOpArg(args, 1, 1)),
-// 				Vol:  getOpArg(args, 2, 1.0),
-// 				Time: offset,
-// 				Info: raw,
-// 			}
-// 			lastInsOp = op
-// 			lastDelay = 0
-// 			irp.Add(ins)
-
-// 		case lcFreq: // ~ freq operator
-// 			ins = &ir.Instruction{
-// 				Midi: getOpArg(args, 0, audio.BaseToneFreq),
-// 				Dur:  int(getOpArg(args, 1, 1)),
-// 				Vol:  getOpArg(args, 2, 1.0),
-// 				Time: offset,
-// 				Info: raw,
-// 			}
-// 			lastInsOp = op
-// 			lastDelay = 0
-// 			irp.Add(ins)
-
-// 		case lcLink: // @ link operator
-// 			if context == nil || context.ResolveFunc == nil {
-// 				return nil, fmt.Errorf("%s not supported without context", op)
-// 			}
-// 			if len(args) == 0 {
-// 				return nil, fmt.Errorf("%s requires a sequence name", op)
-// 			}
-// 			irpNested, err := context.ResolveFunc(args[0], args[1:])
-// 			if err != nil {
-// 				return nil, err
-// 			}
-// 			irpNested = irpNested.Copy()
-// 			irpNested.Shift(offset)
-// 			lastInsOp = op
-// 			irp.Merge(irpNested)
-
-// 		case lcWait: // _ wait operator
-// 			lastDelay = int(getOpArg(args, 0, float64(ins.Dur)))
-// 			offset += lastDelay
-
-// 		case lcLast: // | last operator
-// 			freq := ins.Midi
-// 			switch lastInsOp {
-// 			case lcMidi, lcNote:
-// 				freq = audio.MidiToFreq(int(getOpArg(args, 0, float64(audio.FreqToMidi(ins.Midi)))))
-// 			case lcFreq:
-// 				freq = getOpArg(args, 0, freq)
-// 			case lcLink:
-// 				return nil, fmt.Errorf("%s after %s is not implemented yet", lcLast, lastInsOp)
-// 			}
-// 			ins = &ir.Instruction{
-// 				Midi: freq,
-// 				Dur:  int(getOpArg(args, 1, float64(ins.Dur))),
-// 				Vol:  getOpArg(args, 2, ins.Vol),
-// 				Time: offset,
-// 				Info: "REPEAT" + raw,
-// 			}
-// 			offset += lastDelay
-// 			irp.Add(ins)
-// 		}
-// 	}
-
-// 	for i, ins := range irp.Instructions() {
-// 		fmt.Printf("%d - %s\n", i, ins)
-// 	}
-
-// 	return irp, nil
-// }

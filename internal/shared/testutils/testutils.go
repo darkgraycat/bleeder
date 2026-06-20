@@ -5,17 +5,16 @@ import (
 	"testing"
 )
 
-func AssertErr(t *testing.T, err error, message string) {
+func AssertErr(t *testing.T, err error, expMsg string) {
 	t.Helper()
-	if err == nil || err.Error() != message {
-		t.Fatalf("\nexpected error: `%s`", message)
-	}
-}
-
-func AssertErrNil(t *testing.T, err error) {
-	t.Helper()
-	if err != nil {
-		t.Fatalf("\nexpected no error: `%v`", err)
+	if expMsg == "" {
+		if err != nil {
+			t.Fatalf("\nexpected no error, got: %v", err)
+		}
+	} else {
+		if err == nil || err.Error() != expMsg {
+			t.Fatalf("\nexpected error: %q, got: %v", expMsg, err)
+		}
 	}
 }
 

@@ -588,3 +588,29 @@ c4 c4+7 c+12
 
 But do we need to rotate? Because how can we know that c4 duration is 2?
 Also lets imaging using "<" operator in Riff. Its much easier to parse it sequentially cell by cell, then go to next row.
+
+
+# Dev chPrev
+we have stringified varsions of previos ins properties
+we have getArg with fallback
+we have evalArg which calculates and returns number
+
+what we want
+`>40 <  ` - 40 40
+`>40 <+7` - 40 47
+`>40 <60` - 40 60
+
+so, we have stringified 40
+in case `<  ` - do 40
+in case `<+7` - do 40+7
+in case `<60` - do 60
+
+we can think of it like
+`<  ` - 40 + 0
+`<+7` - 40 + 7
+`<60` - 60
+
+or maybe
+`<  `
+`<+7`
+`<60`

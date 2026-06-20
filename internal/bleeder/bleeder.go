@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -56,7 +57,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		return nil, fmt.Errorf("sequence is not exist: %s", name)
 	}
 	fmt.Printf("SEQ %s, %s\n", name, vars)
-	varsMap := parseVars(seq.Vars, strings.Split(vars, chArgs))
+	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	rawContent := applyVars(seq.Content, varsMap)
 	fmt.Printf("%v\n%v\n", varsMap, rawContent)
 
@@ -77,7 +78,6 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("IR Len%d\n", irp.Length())
 	// TODO - remove
 	for i, ins := range irp.Instructions() {
 		fmt.Printf("INS [%d] - %s\n", i, ins)
@@ -93,53 +93,89 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	concated := slices.Concat(tokens...)
 	irp := ir.NewProgram()
 	ins := &ir.Instruction{Info: "None"}
-	prev := ""
-	t, ta := 0, 0
+	t, ta := 0, 0             // time and additional time
+	var prev string           // previos operation character
+	var prevLinkName string   // previos link name
+	var prevLinkArgs []string // previos link args
 	logs.Debug("Lane tokens %s\n", concated)
 
 	for _, raw := range concated {
 		ch := string(raw[0])
-		args := strings.Split(raw[1:], chArgs)
-		fmt.Printf("[OP] %s - %v\n", ch, args)
+		args := splitArgs(raw[1:])
 		switch ch {
 		case chPlay:
+			t += ta
+			prev = ch
 			midi := evalArg(getArg(args, 0, ""))
 			dur := evalArg(getArg(args, 1, "1"))
 			vol := evalArg(getArg(args, 2, "1"))
-			if math.IsNaN(midi) {
-				return nil, fmt.Errorf("cannot parse midi tone for %s", raw)
+			if math.IsNaN(midi + dur + vol) {
+				return nil, fmt.Errorf("cannot parse arguments for %s", raw)
 			}
 			ins = &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol, Time: t, Info: raw}
-			ta += int(dur)
 			irp.Add(ins)
-			prev = ch
-		case chPrev:
-			switch prev {
-			case chPlay:
-			case chLink:
-				return nil, fmt.Errorf("%s after %s is not implemented yet", chPrev, prev)
-			default:
-				return nil, fmt.Errorf("%s can't be used after %s", chPrev, prev)
-			}
+			ta = int(dur)
+
 		case chLink:
-			irpNested, err := b.GenSeqIR(args[0], strings.Join(args[1:], ":"))
+			t += ta
+			prev = ch
+			prevLinkName = getArg(args, 0, "")
+			if prevLinkName == "" {
+				return nil, fmt.Errorf("%s requires a sequence name", ch)
+			}
+			prevLinkArgs = args[1:]
+			irpNested, err := b.GenSeqIR(prevLinkName, strings.Join(prevLinkArgs, ":"))
 			if err != nil {
 				return nil, err
 			}
 			irpNested = irpNested.Copy()
-			irpNested.Shift(0) // TODO
-			// lastInsOp = op
+			irpNested.Shift(t)
 			irp.Merge(irpNested)
+			ta = irpNested.Duration()
+
+		case chPrev:
+			t += ta
+			switch prev {
+			case chPlay:
+				midi := evalArg(getArg(args, 0, strconv.FormatFloat(ins.Midi, 'g', 8, 64)))
+				dur := evalArg(getArg(args, 1, strconv.FormatInt(int64(ins.Dur), 10)))
+				vol := evalArg(getArg(args, 2, strconv.FormatFloat(ins.Vol, 'g', 8, 64)))
+				if math.IsNaN(midi + dur + vol) {
+					return nil, fmt.Errorf("cannot parse arguments for %s", raw)
+				}
+				ins = &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol, Time: t, Info: raw}
+				irp.Add(ins)
+				ta = int(dur)
+			case chLink:
+				newArgs := make([]string, max(len(prevLinkArgs), len(args)))
+				for i := range newArgs {
+					newArgs[i] = getArg(args, i, getArg(prevLinkArgs, i, ""))
+				}
+				irpNested, err := b.GenSeqIR(prevLinkName, strings.Join(newArgs, ":"))
+				if err != nil {
+					return nil, err
+				}
+				irpNested = irpNested.Copy()
+				irpNested.Shift(t)
+				irp.Merge(irpNested)
+				ta = irpNested.Duration()
+			default:
+				return nil, fmt.Errorf("%s can't be used after %s", chPrev, prev)
+			}
+
 		case chVibe:
 			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+
 		case chRest:
-			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+			t += ta
+			ta = int(evalArg(getArg(args, 0, "1")))
+
 		case chWith:
-			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+			ta = 0
 		}
 	}
+	irp.Sort()
 	return irp, nil
-	// return irp, fmt.Errorf("sequence lane type not implemented yet")
 }
 
 // Get IR from raw Riff-DSL

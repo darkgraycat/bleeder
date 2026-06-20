@@ -1,7 +1,9 @@
 package experiments
 
 import (
+	"bleeder/cmd"
 	"bleeder/internal/bleeder"
+	"bleeder/internal/player"
 	"bleeder/internal/shared/logs"
 	"fmt"
 )
@@ -16,6 +18,10 @@ func Run() {
 
 func runExp1() error {
 	fmt.Printf("Experiment 1\n")
+	cfg, err := cmd.LoadConfig("./config.toml")
+	if err != nil {
+		return fmt.Errorf("config - %v", err)
+	}
 	bleed, err := bleeder.LoadBleed("./experiments/test.toml")
 	if err != nil {
 		return fmt.Errorf("bleed - %v", err)
@@ -30,5 +36,14 @@ func runExp1() error {
 
 	fmt.Printf("IR - %v\n", irp)
 
+	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
+	err = p.Play(irp, 0, irp.Length())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func runExp2() error {
 	return nil
 }

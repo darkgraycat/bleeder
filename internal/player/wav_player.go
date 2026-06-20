@@ -28,10 +28,10 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	totalSamples := duration * sr
 	logs.Info("Total instructions %d", irp.Length())
 	logs.Info("Total samples %d", totalSamples)
-	logs.Info("Total duration %f", duration)
+	logs.Info("Total duration %d", duration)
 
 	logs.Debug("get samples")
-	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
+	out := p.getSamples(instructions, totalSamples, audio.WaveTriangle)
 
 	logs.Debug("append samples")
 	p.wav.Append(out)
@@ -94,7 +94,7 @@ func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave a
 		offset := ins.Time * sr
 		// TODO
 		// samples := p.wav.GenerateSamples(ins.Freq, ins.Dur, ins.Vol, wave)
-		samples := p.wav.GenerateSamplesEnvelope(ins.Midi, float64(ins.Dur), float64(ins.Vol), 0.03, 0.06, wave)
+		samples := p.wav.GenerateSamplesEnvelope(audio.MidiToFreq(int(ins.Midi)), float64(ins.Dur), ins.Vol, 0.03, 0.06, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}

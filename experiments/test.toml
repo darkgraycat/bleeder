@@ -3,7 +3,35 @@ main = 'main'
 
 [lane.main]
 content = '''
-@test1 
+@track1:a3 |<+12
+'''
+
+[lane.track1]
+vars = 'tone:a3 bass:tone-12'
+content = '''
+>bass+0:4 | >tone <+2 <+1 <+2
+>bass-4:4 | >tone <+2 <+1 <+2
+>bass-7:4 | >tone <+2 <+1 <+2
+>bass-5:4 | >tone <+2 <+5 <-5
+'''
+
+[lane.main2]
+content = '''
+@chord:a2:4 | @arpeg:a3:1
+@chord:f2:4 | @arpeg:f3:1
+@chord:d2:4 | @arpeg:d3:1
+@chord:d2:4 | @arpeg:d3:1
+'''
+
+[lane.chord]
+vars = 'note:e3 d:1'
+content = '>note:d | <+7'
+
+
+[lane.arpeg]
+vars = 'note:e3 d:1 p:1'
+content = '''
+>note:d | _p<+7 | _p<+5 | _p<-5
 '''
 
 [lane.test1]
