@@ -4,6 +4,7 @@ import (
 	"bleeder/internal/ir"
 	"bleeder/internal/shared/logs"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -53,9 +54,15 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	if !ok {
 		return nil, fmt.Errorf("sequence is not exist: %s", name)
 	}
+	fmt.Printf("SEQ %s, %s\n", name, vars)
+	varsMap := parseVars(seq.Vars, strings.Split(vars, opArgs))
+	rawContent := applyVars(seq.Content, varsMap)
+	fmt.Printf("%v\n%v\n", varsMap, rawContent)
 
-	varsMap := parseVars(seq.Vars, strings.Split(vars, ","))
-	fmt.Printf("VARS: %v\n", varsMap)
+	tokens := tokenizeContent(rawContent)
+	if tokens == nil {
+		return nil, fmt.Errorf("sequence content is invalid or empty")
+	}
 
 	// 1. substitute "e2"-like notation with midi numbers for seq.Vars -> prepared vars ?
 	// note - we are not going to do pre-substution
@@ -71,9 +78,9 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	var err error
 	switch seq.Type {
 	case SEQ_LANE:
-		irp, err = b.genLaneIR("TODO")
+		irp, err = b.genLaneIR(tokens)
 	case SEQ_RIFF:
-		irp, err = b.genRiffIR("TODO")
+		irp, err = b.genRiffIR(tokens)
 	default:
 		return nil, fmt.Errorf("unknown sequence type: %s", name)
 	}
@@ -84,23 +91,46 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 }
 
 // Get IR from raw Lane-DSL
-func (b *Bleeder) genLaneIR(content string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called with\n%s", content)
-	tokens := tokenizeContent(content)
-	if tokens == nil {
-		return nil, fmt.Errorf("sequence content is invalid or empty")
+func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
+	logs.Trace(logs.INFO, "called with\n%v", tokens)
+	concated := slices.Concat(tokens...)
+	irp := ir.NewProgram()
+	ins := &ir.Instruction{Info: "None"}
+
+	for _, raw := range concated {
+		op := string(raw[0])
+		args := strings.Split(raw[1:], opArgs)
+		fmt.Printf("OP %s - %v\n", op, args)
+		switch op {
+		case opPlay:
+			ins = &ir.Instruction{
+				Midi: evalArg(args[0]),
+				// TODO
+			}
+			// TODO
+			irp.Add(ins)
+		case opLast:
+		case opLink:
+			irpNested, err := b.GenSeqIR(args[0], strings.Join(args[1:], ":"))
+			if err != nil {
+				return nil, err
+			}
+			irpNested = irpNested.Copy()
+			irpNested.Shift(0) // TODO
+			// lastInsOp = op
+			irp.Merge(irpNested)
+		case opVibe:
+		case opRest:
+		case opWith:
+		}
 	}
-	fmt.Printf("LANE %s\n", tokens)
-	return nil, fmt.Errorf("sequence lane type not implemented yet")
+	fmt.Printf("LANE TOKENS %s\n", concated)
+	return irp, fmt.Errorf("sequence lane type not implemented yet")
 }
 
 // Get IR from raw Riff-DSL
-func (b *Bleeder) genRiffIR(content string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called with\n%s", content)
-	tokens := tokenizeContent(content)
-	if tokens == nil {
-		return nil, fmt.Errorf("sequence content is invalid or empty")
-	}
-	fmt.Printf("RIFF %s\n", tokens)
+func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
+	logs.Trace(logs.INFO, "called with\n%v", tokens)
+	fmt.Printf("RIFF TOKENS %s\n", tokens)
 	return nil, fmt.Errorf("sequence riff type not implemented yet")
 }

@@ -111,7 +111,7 @@ func TestParseVars(t *testing.T) {
 		{
 			name:   "parse dependent vars with default fallback",
 			given:  "a:20 b:a+10 c:b+20",
-			values: nil,
+			values: []string{},
 			expected: map[string]float64{
 				"a": 20,
 				"b": 30,

@@ -50,7 +50,7 @@ func LoadBleed(path string) (*Bleed, error) {
 	}
 	// assign lane type and validate naming
 	for k, v := range bleed.Lanes {
-		if _, exists := bleed.Lanes[k]; exists {
+		if _, exists := bleed.Riffs[k]; exists {
 			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
 		}
 		v.Type = SEQ_LANE

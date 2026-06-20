@@ -1,44 +1,20 @@
 [meta]
 main = 'main'
 
-[seq.song]
+[lane.main]
 content = '''
-@chord5 a2 8
-@arpeggio a3 8 3:
+@part1:c4+5:5
 '''
 
-[seq.chord5]
-args = 'note:e2 d:8'
+[lane.part1]
+vars = 'note:e2 d:8'
 content = '''
-note d |+7
+>note:d |<+7
 '''
 
-[seq.arpeggio]
-args = 'note:e2 p:8/4 d:2'
+[riff.part2]
+vars = 'a:e2 b:a+7'
 content = '''
-:note d_p |+7 |+5 |-5
-'''
-
-[riff.arpeggio]
-args = 'a:e2 b:a+7 c:a+12'
-content = '''
-a>---
--b>b>
---c>-
-'''
-
-[riff.test]
-a = 'e2'
-b = 'a+7'
-content = '''
-a-b-
-aa-a
-'''
-
-[riff.arpeg4]
-args = 'a:e2 b:a2 c:a+7'
-content = '''
---c>>
--b>b>
-a>>>>
+a _
+b _
 '''
