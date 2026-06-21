@@ -85,20 +85,24 @@ func BenchmarkGenLaneIR(b *testing.B) {
 		given [][]string
 	}{
 		{
+			// 910.8 ns/op	     444 B/op	      15 allocs/op
 			given: [][]string{{">40", ">80", ">c4"}},
 		},
 		{
+			// 1226 ns/op	     584 B/op	      20 allocs/op
 			given: [][]string{
 				{">40", "|", ">80"},
 				{">c4", "|", ">d4"},
 			},
 		},
 		{
+			// 1005 ns/op	     500 B/op	      17 allocs/op
 			given: [][]string{
 				{">40", ">60:2", "|", "_", ">80"},
 			},
 		},
 		{
+			// 1717 ns/op	     612 B/op	      23 allocs/op
 			given: [][]string{
 				{">40:3", "<+8:-1"},
 				{">40", "|", "<60+8"},
