@@ -44,7 +44,7 @@ func parseVars(s string, values []string) map[string]float64 {
 	defs := strings.Fields(s)
 	out := make(map[string]float64, len(defs))
 	for i, d := range defs {
-		k, v, _ := strings.Cut(d, ":")
+		k, v, _ := strings.Cut(d, chArgs)
 		if i < len(values) {
 			out[k] = evalArg(getArg(values, i, v))
 			continue

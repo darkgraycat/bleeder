@@ -194,7 +194,7 @@ func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot eval sequence without a name")
 	}
-	irp, err := b.GenSeqIR(name, strings.Join(args, ":"))
+	irp, err := b.GenSeqIR(name, strings.Join(args, chArgs))
 	if err != nil {
 		return nil, err
 	}

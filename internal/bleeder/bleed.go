@@ -50,6 +50,9 @@ func LoadBleed(path string) (*Bleed, error) {
 	}
 	// assign lane type and validate naming
 	for k, v := range bleed.Lanes {
+		if strings.ContainsAny(k, chRest) {
+			return nil, fmt.Errorf("sequence %q name cannot contain %s", k, chRest)
+		}
 		if _, exists := bleed.Riffs[k]; exists {
 			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
 		}
@@ -58,11 +61,20 @@ func LoadBleed(path string) (*Bleed, error) {
 	}
 	// assign riff type and validate naming
 	for k, v := range bleed.Riffs {
+		if strings.ContainsAny(k, chRest) {
+			return nil, fmt.Errorf("sequence %q name cannot contain %s", k, chRest)
+		}
 		if _, exists := bleed.Lanes[k]; exists {
 			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
 		}
 		v.Type = SEQ_RIFF
 		bleed.Riffs[k] = v
+	}
+	// validate vibe naming
+	for k := range bleed.Vibes {
+		if strings.ContainsAny(k, chRest) {
+			return nil, fmt.Errorf("vibe %q name cannot contain %s", k, chRest)
+		}
 	}
 	// parse included bleeds
 	for _, includePath := range bleed.Meta.Include {

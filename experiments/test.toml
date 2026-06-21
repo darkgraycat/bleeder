@@ -3,7 +3,7 @@ main = 'main'
 
 [lane.main]
 content = '''
-@track1:a3 |<+12
+@track1:a2 |<+12
 '''
 
 [lane.track1]
@@ -12,7 +12,7 @@ content = '''
 >bass+0:4 | >tone <+2 <+1 <+2
 >bass-4:4 | >tone <+2 <+1 <+2
 >bass-7:4 | >tone <+2 <+1 <+2
->bass-5:4 | >tone <+2 <+5 <-5
+>bass-5:4 | >tone <+2 <+3 <-3
 '''
 
 [lane.main2]
@@ -32,6 +32,9 @@ content = '>note:d | <+7'
 vars = 'note:e3 d:1 p:1'
 content = '''
 >note:d | _p<+7 | _p<+5 | _p<-5
+
+
+>note:d |_p <+7 |_p <+5 |_p <-5
 '''
 
 [lane.test1]

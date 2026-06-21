@@ -31,7 +31,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Total duration %d", duration)
 
 	logs.Debug("get samples")
-	out := p.getSamples(instructions, totalSamples, audio.WaveTriangle)
+	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
 
 	logs.Debug("append samples")
 	p.wav.Append(out)
