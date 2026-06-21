@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	// DSL characters
 	chPlay = ">" // 3 args max
 	chPrev = "<" // 3-n args max
 	chLink = "@" // n args max

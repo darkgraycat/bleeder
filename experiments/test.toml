@@ -1,9 +1,12 @@
 [meta]
 main = 'main'
+include = ['test_nested.toml']
 
 [lane.main]
 content = '''
 @track1:a2 |<+12
+_10
+@track2
 '''
 
 [lane.track1]
@@ -15,38 +18,12 @@ content = '''
 >bass-5:4 | >tone <+2 <+3 <-3
 '''
 
-[lane.main2]
+[lane.track2]
 content = '''
 @chord:a2:4 | @arpeg:a3:1
 @chord:f2:4 | @arpeg:f3:1
 @chord:d2:4 | @arpeg:d3:1
 @chord:d2:4 | @arpeg:d3:1
-'''
-
-[lane.chord]
-vars = 'note:e3 d:1'
-content = '>note:d | <+7'
-
-
-[lane.arpeg]
-vars = 'note:e3 d:1 p:1'
-content = '''
->note:d | _p<+7 | _p<+5 | _p<-5
-
-
->note:d |_p <+7 |_p <+5 |_p <-5
-'''
-
-[lane.test1]
-vars = 'a:40 b:80'
-content = '''
->a >b
-'''
-
-[lane.part1]
-vars = 'note:e2 d:8'
-content = '''
->note:d |<+7
 '''
 
 [riff.part2]

@@ -2,6 +2,7 @@ package bleeder
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -77,8 +78,9 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 	}
 	// parse included bleeds
+	baseDir := filepath.Dir(path)
 	for _, includePath := range bleed.Meta.Include {
-		included, err := LoadBleed(includePath)
+		included, err := LoadBleed(filepath.Join(baseDir, includePath))
 		if err != nil {
 			return nil, err
 		}

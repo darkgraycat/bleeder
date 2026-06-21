@@ -1,0 +1,10 @@
+[lane.chord]
+vars = 'note:e3 d:1'
+content = '>note:d | <+7'
+
+
+[lane.arpeg]
+vars = 'note:e3 d:1 p:1'
+content = '''
+>note:d | _p<+7 | _p<+5 | _p<-5
+'''

@@ -105,7 +105,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				getArg(args, 2, "1"),
 			)
 			if err != nil {
-				return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+				return nil, fmt.Errorf("%w in %s", err, raw)
 			}
 			ins.Time, ins.Info = cT, raw
 			seqIrp.Add(ins)
@@ -119,7 +119,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			prevLinkArgs = args[1:]
 			irp, err := b.evalLink(prevLinkName, prevLinkArgs)
 			if err != nil {
-				return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+				return nil, fmt.Errorf("%w in %s", err, raw)
 			}
 			irp.Shift(cT)
 			seqIrp.Merge(irp)
@@ -135,7 +135,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					getArg(args, 2, strconv.FormatFloat(prevIns.Vol, 'g', 8, 64)),
 				)
 				if err != nil {
-					return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+					return nil, fmt.Errorf("%w in %s", err, raw)
 				}
 				ins.Time, ins.Info = cT, raw
 				seqIrp.Add(ins)
@@ -148,7 +148,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				}
 				irp, err := b.evalLink(prevLinkName, newArgs)
 				if err != nil {
-					return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+					return nil, fmt.Errorf("%w in %s", err, raw)
 				}
 				irp.Shift(cT)
 				seqIrp.Merge(irp)
