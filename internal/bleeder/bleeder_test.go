@@ -80,29 +80,30 @@ func TestGenLaneIR(t *testing.T) {
 	}
 }
 
+// NOTE: before run - comment all stdout operations (logs.Trace for ex)
 func BenchmarkGenLaneIR(b *testing.B) {
 	tests := []struct {
 		given [][]string
 	}{
 		{
-			// 910.8 ns/op	     444 B/op	      15 allocs/op
+			// 890.3 ns/op	     380 B/op	      14 allocs/op
 			given: [][]string{{">40", ">80", ">c4"}},
 		},
 		{
-			// 1226 ns/op	     584 B/op	      20 allocs/op
+			// 1203 ns/op	     520 B/op	      19 allocs/op
 			given: [][]string{
 				{">40", "|", ">80"},
 				{">c4", "|", ">d4"},
 			},
 		},
 		{
-			// 1005 ns/op	     500 B/op	      17 allocs/op
+			// 998.4 ns/op	     436 B/op	      16 allocs/op
 			given: [][]string{
 				{">40", ">60:2", "|", "_", ">80"},
 			},
 		},
 		{
-			// 1717 ns/op	     612 B/op	      23 allocs/op
+			// 1687 ns/op	     548 B/op	      22 allocs/op
 			given: [][]string{
 				{">40:3", "<+8:-1"},
 				{">40", "|", "<60+8"},

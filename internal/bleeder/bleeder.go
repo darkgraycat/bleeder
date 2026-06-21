@@ -2,6 +2,7 @@ package bleeder
 
 import (
 	"bleeder/internal/ir"
+	"bleeder/internal/shared/logs"
 	"fmt"
 	"math"
 	"slices"
@@ -19,7 +20,7 @@ type Bleeder struct {
 
 // Create new Bleeder instance
 func NewBleeder(bleed *Bleed) *Bleeder {
-	// logs.Trace(logs.INFO, "called")
+	logs.Trace(logs.INFO, "called")
 	b := &Bleeder{
 		main:  bleed.Meta.Main,
 		cache: NewCache[*ir.Program](),
@@ -40,13 +41,13 @@ func NewBleeder(bleed *Bleed) *Bleeder {
 
 // Get IR of the main sequence
 func (b *Bleeder) GenMainIR() (*ir.Program, error) {
-	// logs.Trace(logs.INFO, "called")
+	logs.Trace(logs.INFO, "called")
 	return b.GenSeqIR(b.main, "")
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
-	// logs.Trace(logs.INFO, "called with %v, %v", name, vars)
+	logs.Trace(logs.INFO, "called with %v, %v", name, vars)
 	irp := b.cache.Get(name, vars)
 	if irp != nil {
 		return irp, nil
@@ -82,7 +83,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
-	// logs.Trace(logs.INFO, "called with %v", tokens)
+	logs.Trace(logs.INFO, "called with %v", tokens)
 	concated := slices.Concat(tokens...)
 	seqIrp := ir.NewProgram()
 	cT, aT := 0, 0              // current time, advance time
@@ -90,7 +91,6 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	var prevIns *ir.Instruction // previos instruction
 	var prevLinkName string     // previos link name
 	var prevLinkArgs []string   // previos link args
-	// logs.Debug("Lane tokens %s\n", concated)
 
 	for _, raw := range concated {
 		ch := string(raw[0])
@@ -174,8 +174,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
-	// logs.Trace(logs.INFO, "called with\n%v", tokens)
-	// logs.Debug("Lane tokens %s\n", tokens)
+	logs.Trace(logs.INFO, "called with\n%v", tokens)
 	return nil, fmt.Errorf("sequence riff type not implemented yet")
 }
 
