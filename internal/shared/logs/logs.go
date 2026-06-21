@@ -16,6 +16,7 @@ const (
 	INFO
 	WARN
 	ERROR
+	DISABLED
 )
 
 const (
@@ -35,6 +36,11 @@ var loglevel = DEBUG
 // Set application log level
 func SetLogLevel(level LogLevel) {
 	loglevel = level
+}
+
+// Get application log level
+func GetLogLevel() LogLevel {
+	return loglevel
 }
 
 // Allias to Log(DEBUG, format, a...) with timestamp

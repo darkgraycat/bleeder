@@ -16,11 +16,11 @@ var cmds = map[string]cmd.Cmd{
 }
 
 func main() {
-	logs.SetLogLevel(1)
+	logs.SetLogLevel(logs.INFO)
 
 	// TODO remove
-	experiments.Run()
-	if 2 > 1 {
+	if 2 > 9 {
+		experiments.Run()
 		logs.Info("Exit")
 		return
 	}

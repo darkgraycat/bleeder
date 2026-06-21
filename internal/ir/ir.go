@@ -102,16 +102,16 @@ func (p *Program) Last() *Instruction {
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
 	Midi  float64           // fractional midi
-	Time  int               // absolute time in ticks
-	Vol   float64           // volume 0.0..1.0
 	Dur   int               // duration in ticks
+	Vol   float64           // volume 0.0..1.0
+	Time  int               // absolute time in ticks
 	Info  string            // debug information
 	Patch *InstructionPatch // patch to use
 }
 
 // Format Instruction into string
 func (ins Instruction) String() string {
-	return fmt.Sprintf("Midi=%f Vol=%f Dur=%d Time=%d Info=%s",
+	return fmt.Sprintf("Midi=%f Vol=%d Dur=%d Time=%d Info=%s",
 		ins.Midi, ins.Vol, ins.Dur, ins.Time, ins.Info)
 }
 

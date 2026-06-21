@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bleeder/internal/bleeder"
 	"bleeder/internal/player"
 	"bleeder/internal/shared/logs"
 	"fmt"
@@ -27,18 +28,14 @@ func CmdPlay(args *CmdArgs) error {
 	logs.Debug("config loaded")
 
 	logs.Debug("loading bleed")
-	bleed, err := LoadBleed(args.BleedPath)
+	bleed, err := bleeder.LoadBleed(args.BleedPath)
 	if err != nil {
 		return fmt.Errorf("bleed - %v", err)
 	}
 	logs.Debug("bleed loaded")
 
-	bleeder, err := NewBleeder(cfg).Bleed(bleed)
-	if err != nil {
-		return err
-	}
-
-	irp, err := bleeder.GenMainIR()
+	b := bleeder.NewBleeder(bleed)
+	irp, err := b.GenMainIR()
 	if err != nil {
 		return err
 	}

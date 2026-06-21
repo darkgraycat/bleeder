@@ -56,10 +56,8 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	if !ok {
 		return nil, fmt.Errorf("sequence is not exist: %s", name)
 	}
-	fmt.Printf("SEQ %s, %s\n", name, vars)
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	rawContent := applyVars(seq.Content, varsMap)
-	fmt.Printf("%v\n%v\n", varsMap, rawContent)
 
 	tokens := tokenizeContent(rawContent)
 	if tokens == nil {
@@ -78,10 +76,6 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO - remove
-	for i, ins := range irp.Instructions() {
-		fmt.Printf("INS [%d] - %s\n", i, ins)
-	}
 
 	b.cache.Set(name, vars, irp)
 	return irp, nil
@@ -97,6 +91,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	var prev string           // previos operation character
 	var prevLinkName string   // previos link name
 	var prevLinkArgs []string // previos link args
+	// var err error
 	logs.Debug("Lane tokens %s\n", concated)
 
 	for _, raw := range concated {
@@ -106,6 +101,8 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 		case chPlay:
 			t += ta
 			prev = ch
+
+			// inline
 			midi := evalArg(getArg(args, 0, ""))
 			dur := evalArg(getArg(args, 1, "1"))
 			vol := evalArg(getArg(args, 2, "1"))
@@ -113,22 +110,44 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				return nil, fmt.Errorf("cannot parse arguments for %s", raw)
 			}
 			ins = &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol, Time: t, Info: raw}
+
+			// with helper
+			// ins, err = b.evalPlay(
+			// 	getArg(args, 0, ""),
+			// 	getArg(args, 1, "1"),
+			// 	getArg(args, 2, "1"),
+			// )
+			// if err != nil {
+			// 	return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+			// }
+			// ins.Time, ins.Info = t, raw
+			//
 			irp.Add(ins)
-			ta = int(dur)
+			ta = ins.Dur
 
 		case chLink:
 			t += ta
 			prev = ch
 			prevLinkName = getArg(args, 0, "")
+			prevLinkArgs = args[1:]
+
+			// inline
 			if prevLinkName == "" {
 				return nil, fmt.Errorf("%s requires a sequence name", ch)
 			}
-			prevLinkArgs = args[1:]
 			irpNested, err := b.GenSeqIR(prevLinkName, strings.Join(prevLinkArgs, ":"))
 			if err != nil {
 				return nil, err
 			}
+
 			irpNested = irpNested.Copy()
+
+			// with helper
+			// irpNested, err := b.evalLink(prevLinkName, prevLinkArgs)
+			// if err != nil {
+			// 	return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+			// }
+			//
 			irpNested.Shift(t)
 			irp.Merge(irpNested)
 			ta = irpNested.Duration()
@@ -137,6 +156,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			t += ta
 			switch prev {
 			case chPlay:
+				// old
 				midi := evalArg(getArg(args, 0, strconv.FormatFloat(ins.Midi, 'g', 8, 64)))
 				dur := evalArg(getArg(args, 1, strconv.FormatInt(int64(ins.Dur), 10)))
 				vol := evalArg(getArg(args, 2, strconv.FormatFloat(ins.Vol, 'g', 8, 64)))
@@ -144,8 +164,21 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					return nil, fmt.Errorf("cannot parse arguments for %s", raw)
 				}
 				ins = &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol, Time: t, Info: raw}
+
+				// new with helper
+				// ins, err = b.evalPlay(
+				// 	getArg(args, 0, strconv.FormatFloat(ins.Midi, 'g', 8, 64)),
+				// 	getArg(args, 1, strconv.FormatInt(int64(ins.Dur), 10)),
+				// 	getArg(args, 2, strconv.FormatFloat(ins.Vol, 'g', 8, 64)),
+				// )
+				// if err != nil {
+				// 	return nil, fmt.Errorf("parsing error %v for %s", err, raw)
+				// }
+				// ins.Time, ins.Info = t, raw
+
+				//
 				irp.Add(ins)
-				ta = int(dur)
+				ta = ins.Dur
 			case chLink:
 				newArgs := make([]string, max(len(prevLinkArgs), len(args)))
 				for i := range newArgs {
@@ -183,4 +216,27 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 	logs.Trace(logs.INFO, "called with\n%v", tokens)
 	logs.Debug("Lane tokens %s\n", tokens)
 	return nil, fmt.Errorf("sequence riff type not implemented yet")
+}
+
+// evaluate args and produce play instruction
+func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, error) {
+	midi := evalArg(midiArg)
+	dur := evalArg(durArg)
+	vol := evalArg(volArg)
+	if math.IsNaN(midi + dur + vol) {
+		return nil, fmt.Errorf("cannot eval %s %s %s", midiArg, durArg, volArg)
+	}
+	return &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol}, nil
+}
+
+// avaluate args and produce linked program
+func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
+	if name == "" {
+		return nil, fmt.Errorf("cannot eval sequence without a name")
+	}
+	irp, err := b.GenSeqIR(name, strings.Join(args, ":"))
+	if err != nil {
+		return nil, err
+	}
+	return irp.Copy(), nil
 }

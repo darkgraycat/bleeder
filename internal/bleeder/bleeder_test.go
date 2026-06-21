@@ -1,6 +1,7 @@
 package bleeder
 
 import (
+	"bleeder/internal/shared/logs"
 	"bleeder/internal/shared/testutils"
 	"fmt"
 	"testing"
@@ -14,7 +15,7 @@ func TestGenLaneIR(t *testing.T) {
 		errMsg   string
 	}{
 		{
-			name:  "-simple sequential melody",
+			name:  "simple sequential melody",
 			given: [][]string{{">40", ">80", ">c4"}},
 			expected: []string{
 				"m40.0 v1.0 d1 t0",
@@ -23,7 +24,7 @@ func TestGenLaneIR(t *testing.T) {
 			},
 		},
 		{
-			name: "-chord after chord",
+			name: "chord after chord",
 			given: [][]string{
 				{">40", "|", ">80"},
 				{">c4", "|", ">d4"},
@@ -36,7 +37,7 @@ func TestGenLaneIR(t *testing.T) {
 			},
 		},
 		{
-			name: "-time manipulations",
+			name: "time manipulations",
 			given: [][]string{
 				{">40", ">60:2", "|", "_", ">80"},
 			},
@@ -77,4 +78,43 @@ func TestGenLaneIR(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkGenLaneIR(b *testing.B) {
+	tests := []struct {
+		given [][]string
+	}{
+		{
+			given: [][]string{{">40", ">80", ">c4"}},
+		},
+		{
+			given: [][]string{
+				{">40", "|", ">80"},
+				{">c4", "|", ">d4"},
+			},
+		},
+		{
+			given: [][]string{
+				{">40", ">60:2", "|", "_", ">80"},
+			},
+		},
+		{
+			given: [][]string{
+				{">40:3", "<+8:-1"},
+				{">40", "|", "<60+8"},
+			},
+		},
+	}
+
+	logLevel := logs.GetLogLevel()
+	logs.SetLogLevel(logs.DISABLED)
+	bl := NewBleeder(&Bleed{})
+	for i, tc := range tests {
+		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
+			for b.Loop() {
+				bl.genLaneIR(tc.given)
+			}
+		})
+	}
+	logs.SetLogLevel(logLevel)
 }

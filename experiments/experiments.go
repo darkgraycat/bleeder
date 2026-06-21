@@ -9,7 +9,7 @@ import (
 )
 
 func Run() {
-	logs.SetLogLevel(0) // debug
+	logs.SetLogLevel(logs.DEBUG) // debug
 	err := runExp1()
 	if err != nil {
 		logs.Error("Error: %v\n", err)
