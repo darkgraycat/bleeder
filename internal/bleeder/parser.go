@@ -8,15 +8,17 @@ import (
 )
 
 const (
-	chPlay = ">" // 3 args max
-	chPrev = "<" // 3-n args max
-	chLink = "@" // n args max
-	chVibe = "$" // ? args max
-	chRest = "_" // 1 arg max
-	chWith = "|" // no args
-	chArgs = ":" // no args
+	chPlay = ">" // play note or midi
+	chPrev = "<" // repeat last note or sequence
+	chLink = "@" // play sequence
+	chVibe = "$" // switch vibe
+	chRest = "_" // delay next operation
+	chWith = "|" // play operations in parallel
+	chArgs = ":" // operation arguments separator
+	chSkip = "#" // skip entire line
 )
 
+// helper replacer to format sequence content
 var replacer = strings.NewReplacer(
 	chPlay, " "+chPlay,
 	chPrev, " "+chPrev,
@@ -31,7 +33,7 @@ func tokenizeContent(s string) [][]string {
 	out := make([][]string, 0, 4)
 	pre := strings.TrimSpace(replacer.Replace(s))
 	for row := range strings.SplitSeq(pre, "\n") {
-		if ts := strings.Fields(row); len(ts) > 0 {
+		if ts := strings.Fields(row); len(ts) > 0 && ts[0] != chSkip {
 			out = append(out, ts)
 		}
 	}

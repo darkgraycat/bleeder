@@ -24,6 +24,15 @@ func TestTokenizeContent(t *testing.T) {
 			},
 		},
 		{
+			name: "Commented multiline Lane",
+			given: `
+			#>c4|>e4 >60:2 <+8
+			@chord:a2 | >a2 >g2`,
+			expected: [][]string{
+				{"@chord:a2", "|", ">a2", ">g2"},
+			},
+		},
+		{
 			name: "Simple multiline Riff",
 			given: `
 			c4        e4 60 68

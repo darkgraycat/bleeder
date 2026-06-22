@@ -38,6 +38,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 
 	logs.Debug("create file")
 	f, err := os.CreateTemp("", "out*.wav")
+	// f, err := os.Create("out_test.wav")
 	if err != nil {
 		return err
 	}
@@ -90,11 +91,13 @@ func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave a
 	clip := float64(math.MaxInt16)
 	logs.Debug("geting samples")
 
+	forDebugTimeTempVariableAtAll := 4.0
 	for _, ins := range instructions {
-		offset := ins.Time * sr
+		offset := ins.Time * sr / int(forDebugTimeTempVariableAtAll)
+		dur := float64(ins.Dur) / forDebugTimeTempVariableAtAll
 		// TODO
 		// samples := p.wav.GenerateSamples(ins.Freq, ins.Dur, ins.Vol, wave)
-		samples := p.wav.GenerateSamplesEnvelope(audio.MidiToFreq(int(ins.Midi)), float64(ins.Dur), float64(ins.Vol), 0.03, 0.06, wave)
+		samples := p.wav.GenerateSamplesEnvelope(audio.MidiToFreq(int(ins.Midi)), dur, ins.Vol, 0.03, 0.06, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}

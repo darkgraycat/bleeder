@@ -614,3 +614,32 @@ or maybe
 `<  `
 `<+7`
 `<60`
+
+
+# Developing live-coding
+
+## Ideas for live-coding feel
+1.  Repeat updated
+    `@seq1 < < <` - user updates seq1 - repeat updated
+2.  Live audition
+    `send seq2` - user sends seq2 - seq2 is played in parallel with current track
+### AI ideas
+1.  Multi track 
+    `play mute solo stop` - similar to Live audition - dont think we need it
+2.  Quantized triggering
+    `play lead --on-beat` - we can have Live audition work this was too
+3.  Pattern queueing
+    `next chorus` - replace next sequence with chorus
+4.  Live parameter tweaks
+    `set bass volume` - going to be hard to implement, can be done through file edits
+### AI TUI idea
+┌─ bleeder live ─────────────────────┐
+│ ● main    @intro      [====----]   │
+│ ● bass    @bassline   [========]   │
+│ ○ drums   (muted)     [====----]   │
+│                                    │
+│ BPM: 120  Time: 0:32  CPU: 12%     │
+└────────────────────────────────────┘
+Kinda interesting. But we need to make app aware of boundaries
+
+## How can we know boundaries
