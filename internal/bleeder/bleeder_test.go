@@ -18,9 +18,9 @@ func TestGenLaneIR(t *testing.T) {
 			name:  "simple sequential melody",
 			given: [][]string{{">40", ">80", ">c4"}},
 			expected: []string{
-				"m40.0 v1.0 d1 t0",
-				"m80.0 v1.0 d1 t1",
-				"m60.0 v1.0 d1 t2",
+				"m40.0 v1.0 d1.0 t0.0",
+				"m80.0 v1.0 d1.0 t1.0",
+				"m60.0 v1.0 d1.0 t2.0",
 			},
 		},
 		{
@@ -30,10 +30,10 @@ func TestGenLaneIR(t *testing.T) {
 				{">c4", "|", ">d4"},
 			},
 			expected: []string{
-				"m40.0 v1.0 d1 t0",
-				"m80.0 v1.0 d1 t0",
-				"m60.0 v1.0 d1 t1",
-				"m62.0 v1.0 d1 t1",
+				"m40.0 v1.0 d1.0 t0.0",
+				"m80.0 v1.0 d1.0 t0.0",
+				"m60.0 v1.0 d1.0 t1.0",
+				"m62.0 v1.0 d1.0 t1.0",
 			},
 		},
 		{
@@ -42,9 +42,9 @@ func TestGenLaneIR(t *testing.T) {
 				{">40", ">60:2", "|", "_", ">80"},
 			},
 			expected: []string{
-				"m40.0 v1.0 d1 t0",
-				"m60.0 v1.0 d2 t1",
-				"m80.0 v1.0 d1 t2",
+				"m40.0 v1.0 d1.0 t0.0",
+				"m60.0 v1.0 d2.0 t1.0",
+				"m80.0 v1.0 d1.0 t2.0",
 			},
 		},
 		{
@@ -54,10 +54,10 @@ func TestGenLaneIR(t *testing.T) {
 				{">40", "|", "<60+8"},
 			},
 			expected: []string{
-				"m40.0 v1.0 d3 t0",
-				"m48.0 v1.0 d2 t3",
-				"m40.0 v1.0 d1 t5",
-				"m68.0 v1.0 d1 t5",
+				"m40.0 v1.0 d3.0 t0.0",
+				"m48.0 v1.0 d2.0 t3.0",
+				"m40.0 v1.0 d1.0 t5.0",
+				"m68.0 v1.0 d1.0 t5.0",
 			},
 		},
 	}
@@ -72,7 +72,7 @@ func TestGenLaneIR(t *testing.T) {
 			testutils.AssertInts(t, len(tc.expected), irp.Length())
 
 			for i, ins := range irp.Instructions() {
-				act := fmt.Sprintf("m%.1f v%.1f d%d t%d", ins.Midi, ins.Vol, ins.Dur, ins.Time)
+				act := fmt.Sprintf("m%.1f v%.1f d%.1f t%.1f", ins.Midi, ins.Vol, ins.Dur, ins.Time)
 				exp := tc.expected[i]
 				testutils.AssertStrings(t, exp, act)
 			}

@@ -51,9 +51,9 @@ func (p *Program) Length() int {
 }
 
 // Get duration of whole Program
-func (p *Program) Duration() int {
-	minTime := math.MaxInt
-	maxTime := 0
+func (p *Program) Duration() float64 {
+	minTime := math.MaxFloat64
+	maxTime := 0.0
 	for _, ins := range p.instructions {
 		if ins.Time < minTime {
 			minTime = ins.Time
@@ -67,7 +67,7 @@ func (p *Program) Duration() int {
 }
 
 // Shift start time of each instruction
-func (p *Program) Shift(t int) {
+func (p *Program) Shift(t float64) {
 	if t <= 0 {
 		return
 	}
@@ -79,7 +79,13 @@ func (p *Program) Shift(t int) {
 // Sort instructions by absolute time
 func (p *Program) Sort() {
 	slices.SortFunc(p.instructions, func(a, b *Instruction) int {
-		return a.Time - b.Time
+		if a.Time < b.Time {
+			return -1
+		}
+		if a.Time > b.Time {
+			return 1
+		}
+		return 0
 	})
 }
 
@@ -102,16 +108,16 @@ func (p *Program) Last() *Instruction {
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
 	Midi  float64           // fractional midi
-	Dur   int               // duration in ticks
+	Dur   float64           // duration in ticks (fractional)
 	Vol   float64           // volume 0.0..1.0
-	Time  int               // absolute time in ticks
+	Time  float64           // absolute time in ticks (fractional)
 	Info  string            // debug information
 	Patch *InstructionPatch // patch to use
 }
 
 // Format Instruction into string
 func (ins Instruction) String() string {
-	return fmt.Sprintf("Midi=%f Vol=%d Dur=%d Time=%d Info=%s",
+	return fmt.Sprintf("Midi=%f Vol=%f Dur=%f Time=%f Info=%s",
 		ins.Midi, ins.Vol, ins.Dur, ins.Time, ins.Info)
 }
 

@@ -4,6 +4,11 @@ include = ['test_nested.toml']
 
 [lane.main]
 content = '''
+>c3 <*.95 <*.95 <*.95 <*.95
+>d3 <*.95 <*.95 <*.95 <*.95
+>e3 <*.95 <*.95 <*.95 <*.95
+
+_2
 @my-song:a3:e4
 @my-song:a4:e4
 '''

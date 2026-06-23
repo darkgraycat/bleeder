@@ -86,7 +86,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	logs.Trace(logs.INFO, "called with %v", tokens)
 	concated := slices.Concat(tokens...)
 	seqIrp := ir.NewProgram()
-	cT, aT := 0, 0              // current time, advance time
+	cT, aT := 0.0, 0.0          // current time, advance time
 	var prev string             // previos operation character
 	var prevIns *ir.Instruction // previos instruction
 	var prevLinkName string     // previos link name
@@ -131,7 +131,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			case chPlay:
 				ins, err := b.evalPlay(
 					getArg(args, 0, strconv.FormatFloat(prevIns.Midi, 'g', 8, 64)),
-					getArg(args, 1, strconv.FormatInt(int64(prevIns.Dur), 10)),
+					getArg(args, 1, strconv.FormatFloat(prevIns.Dur, 'g', 8, 64)),
 					getArg(args, 2, strconv.FormatFloat(prevIns.Vol, 'g', 8, 64)),
 				)
 				if err != nil {
@@ -162,7 +162,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 		case chRest:
 			cT += aT
-			aT = int(evalArg(getArg(args, 0, "1")))
+			aT = evalArg(getArg(args, 0, "1"))
 
 		case chWith:
 			aT = 0
@@ -186,7 +186,7 @@ func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, err
 	if math.IsNaN(midi + dur + vol) {
 		return nil, fmt.Errorf("cannot eval %s %s %s", midiArg, durArg, volArg)
 	}
-	return &ir.Instruction{Midi: midi, Dur: int(dur), Vol: vol}, nil
+	return &ir.Instruction{Midi: midi, Dur: dur, Vol: vol}, nil
 }
 
 // evaluate args and produce linked program
