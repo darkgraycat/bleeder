@@ -1,3 +1,15 @@
+# TODO
+1. Rethink DSL + timing approach with relative integer beats instead of float seconds 
+2. Rewrite parser to have better error handling for better user expirience
+3. Rethink output approach - output should be in stdout
+4. Develop tablike grid sequencer DLS addition (we will keep both)
+5. Parser should now duration of last played sequence as well
+6. Do we need so many commands like '>' '~' '@', or we can use '~' and '@' to tell its type isnt a note
+
+--- questions
+do I really need repeat line operation?
+
+
 ## DSL development
 As a reference I am going to use SonicPI API
 https://gist.github.com/carltesta/424cc9e42f4de2ed52a41a612e22dc69
@@ -361,7 +373,273 @@ or even
 Rule
 same as in Take 2 but we can mod it by using + and - sign
 
+#### Take 4 - extended math with defaults
+Make math work not only in sequences but in seq args list
+Allow all 4 operators +-/*
+Rule
+8/2 - div 8 by 2
+x/2 - div x by 2 (x going to be substituted during seq arguments substitution)
+/2 - div prev op nth arg by 2
+
 
 ## I want to have live-coding
 How can we do this?
 
+
+## Builing new parser dev-notes
+#### Current state
+helpers:
+    - modOpArg - apply op on a and b (floats)
+    - splitOpArgs - split string into lhs rhs and op, or return as it if no operators found
+    - getOpNoteArg - get freq where lhs is note
+    - getOpArg - get freq where lhs is freq
+and how freq is parsed:
+freq - getOpArg
+midi - MidiToFreq(int getOpArg)
+note - MidiToFreq(int getOpNoteArg)
+
+so expanded it looks like:
+- freq
+    getOpArg:
+        splitOpArgs
+        modOpArg (lhs, rhs, op)
+- midi
+    MidiToFreq(int of
+        getOpArg:
+            splitOpArgs
+            modOpArg (lhs, rhs, op)
+    )
+- note 
+    MidiToFreq(int of
+        getOpNoteArg:
+            splitOpArgs
+            NoteToMidi
+            modOpArg (lhs, rhs, op)
+    )
+
+
+## Brainstorming unordered playback issue
+Background:
+    I wan Bleeder to support streaming into "ffplay"
+
+Here is my test input:
+```
+[lane.main] 
+>120
+@first 1 _1
+>180 _2 
+@second 80
+>220
+
+[lane.first]
+args d:1
+@second _d
+@second 
+
+[lane.second] 
+args m:60 
+>m _2 >m+10 
+```
+
+Using reverse shared buffer.
+processing main... 
+saving into buffer:
+midi    delta   note
+120     0
+180     1       because _1 after @first
+220     2       because _2 after >180
+
+processing first...     (line: @first 1 _1)
+nothing to save into buffer (and nothing to emmit yet, because no time advance "_")
+
+processing second...    (line: @second _d)
+saving into buffer:
+60  0
+"_2" found:
+    flush everything before advancing time by 2
+    flushed:
+    120 0
+    60  0
+    180 1
+advance time
+
+...hm, I think we cant flush it...
+What if we going to have:
+[lane.third]
+args d:1 m:60
+>m _d >m+10
+
+
+>120
+@third 2 100
+@third 1 200
+_1
+>300
+
+buffer gets
+120 0
+300 1
+
+going to third 2 100
+put 100 0
+see _d which is _0 - and that means that we are going to flush 120 and 100
+but there is 200 that needs to sound at the same time.
+argh!
+
+
+
+
+
+Output going to be according to Aelin:
+main parse loop:
+- >120 → emit t=0, midi=120 
+- @first 1 → buffer: {t=0,60}, {t=1,60}, {t=2,70}, {t=3,70} 
+- _1 → main_t=1, drain t≤1: emit {t=0,60}, {t=1,60}; buffer: {t=2,70}, {t=3,70} 
+- >180 → emit t=1, midi=180 
+- _2 → main_t=3, drain t≤3: emit {t=2,70}, {t=3,70}; buffer: empty
+- @second 80 → insert {t=3,80}, {t=5,90}; buffer: {t=3,80}, {t=5,90}
+- >220 → emit t=3, midi=220 
+- end → flush: {t=3,80}, {t=5,90}
+
+final table:
+
+┌─────┬──────┬──────┬─────┬──────┐
+│  #  │ midi │ absT │ dt  │ note │
+├─────┼──────┼──────┼─────┼──────┤
+│ 1   │ 120  │ 0    │ 0   │ C9   │
+├─────┼──────┼──────┼─────┼──────┤
+│ 2   │ 60   │ 0    │ 0   │ C4   │
+├─────┼──────┼──────┼─────┼──────┤
+│ 3   │ 60   │ 1    │ 1   │ C4   │
+├─────┼──────┼──────┼─────┼──────┤
+│ 4   │ 180  │ 1    │ 0   │ —    │
+├─────┼──────┼──────┼─────┼──────┤
+│ 5   │ 70   │ 2    │ 1   │ A#4  │
+├─────┼──────┼──────┼─────┼──────┤
+│ 6   │ 70   │ 3    │ 1   │ A#4  │
+├─────┼──────┼──────┼─────┼──────┤
+│ 7   │ 220  │ 3    │ 0   │ —    │
+├─────┼──────┼──────┼─────┼──────┤
+│ 8   │ 80   │ 3    │ 0   │ G#5  │
+├─────┼──────┼──────┼─────┼──────┤
+│ 9   │ 90   │ 5    │ 2   │ F#6  │
+└─────┴──────┴──────┴─────┴──────┘
+
+
+
+
+
+
+## blabla about riff
+what if this
+```
+b>>-
+-a-a
+```
+split into:
+```
+line[0]=
+b
+>
+>
+-
+line[1]=
+-
+a
+-
+a
+```
+
+
+
+
+
+# Developing a final version (for now)
+Operators `> < @ $ _ | :`
+
+How it can be easy to convert into IR?
+Lane example:
+`>c4:2 |<+7:1 |<+5:1`
+Which can be formatted into set of:
+```
+>c4:2   // T=0 Ta=2
+|       // in case of | - do not advance time by Ta
+<+7:1   // >c4+7:1
+|
+<+5:1   // >c4+7+5:1
+```
+
+Riff example:
+```
+c4 >
+c4+7 _
+c4+12 _
+```
+Which can be formatted into set of:
+>c4:2
+|
+>c4+7
+|
+>c+12
+
+Or if we will have two parsers, it should just rotate the matrix into
+c4 c4+7 c+12
+> _ _
+
+But do we need to rotate? Because how can we know that c4 duration is 2?
+Also lets imaging using "<" operator in Riff. Its much easier to parse it sequentially cell by cell, then go to next row.
+
+
+# Dev chPrev
+we have stringified varsions of previos ins properties
+we have getArg with fallback
+we have evalArg which calculates and returns number
+
+what we want
+`>40 <  ` - 40 40
+`>40 <+7` - 40 47
+`>40 <60` - 40 60
+
+so, we have stringified 40
+in case `<  ` - do 40
+in case `<+7` - do 40+7
+in case `<60` - do 60
+
+we can think of it like
+`<  ` - 40 + 0
+`<+7` - 40 + 7
+`<60` - 60
+
+or maybe
+`<  `
+`<+7`
+`<60`
+
+
+# Developing live-coding
+
+## Ideas for live-coding feel
+1.  Repeat updated
+    `@seq1 < < <` - user updates seq1 - repeat updated
+2.  Live audition
+    `send seq2` - user sends seq2 - seq2 is played in parallel with current track
+### AI ideas
+1.  Multi track 
+    `play mute solo stop` - similar to Live audition - dont think we need it
+2.  Quantized triggering
+    `play lead --on-beat` - we can have Live audition work this was too
+3.  Pattern queueing
+    `next chorus` - replace next sequence with chorus
+4.  Live parameter tweaks
+    `set bass volume` - going to be hard to implement, can be done through file edits
+### AI TUI idea
+┌─ bleeder live ─────────────────────┐
+│ ● main    @intro      [====----]   │
+│ ● bass    @bassline   [========]   │
+│ ○ drums   (muted)     [====----]   │
+│                                    │
+│ BPM: 120  Time: 0:32  CPU: 12%     │
+└────────────────────────────────────┘
+Kinda interesting. But we need to make app aware of boundaries
+
+## How can we know boundaries

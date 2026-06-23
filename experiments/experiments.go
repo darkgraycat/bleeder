@@ -1,19 +1,49 @@
-// TODO:
-// Add property Mark int (public)
-// Add method SetMark() int
-// Add method GetMark() *Instruction
-//
-// BUT: I should then INSERT elements
-// bcause with current implementation its just for read
-// SO:
-// I can try implementing Cursor instead
-// and keep track of current program state
-//
-// BTW:
-// Do we really need mark functionality?
-
 package experiments
 
-func Run() {
+import (
+	"bleeder/cmd"
+	"bleeder/internal/bleeder"
+	"bleeder/internal/player"
+	"bleeder/internal/shared/logs"
+	"fmt"
+)
 
+func Run() {
+	logs.SetLogLevel(logs.DEBUG) // debug
+	err := runExp1()
+	if err != nil {
+		logs.Error("Error: %v\n", err)
+	}
+}
+
+func runExp1() error {
+	fmt.Printf("Experiment 1\n")
+	cfg, err := cmd.LoadConfig("./config.toml")
+	if err != nil {
+		return fmt.Errorf("config - %v", err)
+	}
+	bleed, err := bleeder.LoadBleed("./experiments/test.toml")
+	if err != nil {
+		return fmt.Errorf("bleed - %v", err)
+	}
+
+	b := bleeder.NewBleeder(bleed)
+
+	irp, err := b.GenMainIR()
+	if err != nil {
+		return fmt.Errorf("IR - %v", err)
+	}
+
+	fmt.Printf("IR - %v\n", irp)
+
+	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
+	err = p.Play(irp, 0, irp.Length())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func runExp2() error {
+	return nil
 }

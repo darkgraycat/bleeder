@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bleeder/internal/bleeder"
 	"bleeder/internal/player"
 	"bleeder/internal/shared/logs"
 	"fmt"
@@ -18,27 +19,30 @@ type Cmd func(args *CmdArgs) error
 // Command to play specified .bleed.toml file
 func CmdPlay(args *CmdArgs) error {
 	logs.Info("PLAY %v", args)
+
+	logs.Debug("loading config")
 	cfg, err := LoadConfig(args.CfgPath)
 	if err != nil {
 		return fmt.Errorf("config - %v", err)
 	}
-	bleed, err := LoadBleed(args.BleedPath)
+	logs.Debug("config loaded")
+
+	logs.Debug("loading bleed")
+	bleed, err := bleeder.LoadBleed(args.BleedPath)
 	if err != nil {
 		return fmt.Errorf("bleed - %v", err)
 	}
-	bleeder, err := NewBleeder(cfg).Bleed(bleed)
-	if err != nil {
-		return err
-	}
+	logs.Debug("bleed loaded")
 
-	pr, err := bleeder.GenMainIR()
+	b := bleeder.NewBleeder(bleed)
+	irp, err := b.GenMainIR()
 	if err != nil {
 		return err
 	}
 
 	// TODO: define correct player by config or some
 	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
-	err = p.Play(pr, 0, pr.Length())
+	err = p.Play(irp, 0, irp.Length())
 	if err != nil {
 		return err
 	}

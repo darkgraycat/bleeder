@@ -1,44 +1,33 @@
 [meta]
 main = 'main'
+include = ['test_nested.toml']
 
-[seq.main]
+[lane.main]
 content = '''
-@ missile : 8
-@ heart-shaped : 8
+@my-song:a3:e4
+@my-song:a4:e4
 '''
 
-[seq.missile]
+[lane.track1]
+vars = 'tone:a3 bass:tone-12'
 content = '''
-@ chord5 e2 2
-@ arpeggio e3 : 2
-@ chord5 g#2 2
-@ arpeggio g#2 : 2
-@ chord5 c#3 2
-@ arpeggio c#3 : 2
-@ chord5 a2 2
-@ arpeggio a3 : 2
+>bass+0:4 | >tone <+2 <+1 <+2
+>bass-4:4 | >tone <+2 <+1 <+2
+>bass-7:4 | >tone <+2 <+1 <+2
+>bass-5:4 | >tone <+2 <+3 <-3
 '''
 
-[seq.heart-shaped]
+[lane.track2]
 content = '''
-@ chord5 a2 1.6
-@ arpeggio a3 : 1.6
-@ chord5 f2 1.6
-@ arpeggio f3 : 1.6
-@ chord5 d2 3.2
-@ arpeggio d3 : 1.6
-@ arpeggio d3 : 1.6
+@chord:a2:4 | @arpeg:a3:1
+@chord:f2:4 | @arpeg:f3:1
+@chord:d2:4 | @arpeg:d3:1
+@chord:d2:4 | @arpeg:d3:1
 '''
 
-# HELPERS
-[seq.chord5]
-args = 'note:e2 d:1.0'
+[riff.part2]
+vars = 'a:e2 b:a+7'
 content = '''
-> note d | +7
-'''
-
-[seq.arpeggio]
-args = 'note:e2 d:0.6 p:0.4'
-content = '''
-> note d : p | +7 | +5 | -5
+a _
+b _
 '''

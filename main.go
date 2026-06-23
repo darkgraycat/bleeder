@@ -15,7 +15,15 @@ var cmds = map[string]cmd.Cmd{
 }
 
 func main() {
-	logs.SetLogLevel(1)
+	logs.SetLogLevel(logs.DEBUG)
+
+	// TODO remove
+	// if 2 > 9 {
+	// 	experiments.Run()
+	// 	logs.Info("Exit")
+	// 	return
+	// }
+
 	// parse CLI flags
 	cmdMode := ""
 	cmdArgs := cmd.CmdArgs{}
@@ -34,9 +42,12 @@ func main() {
 	}
 
 	// run selected cmd
+	logs.Info("executing")
 	err := exec(&cmdArgs)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error in", err)
 		os.Exit(1)
 	}
+
+	logs.Info("finish")
 }

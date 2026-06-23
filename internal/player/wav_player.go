@@ -19,19 +19,16 @@ func NewWAVPlayer(sampleRate, channels int) *WAVPlayer {
 	}
 }
 
-func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
+func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Play")
 	sr := p.wav.SampleRate()
-	instructions := pr.Instructions()
-	duration := pr.Duration()
-	totalSamples := int(duration * float64(sr))
-	logs.Info("Total instructions %d", pr.Length())
+	// ts := ipr.TimeScale()
+	instructions := irp.Instructions()
+	duration := irp.Duration()
+	totalSamples := duration * sr
+	logs.Info("Total instructions %d", irp.Length())
 	logs.Info("Total samples %d", totalSamples)
-	logs.Info("Total duration %f", duration)
-
-	for i, in := range instructions {
-		logs.Debug("%d - %f\t%f %f\t%s", i, in.Freq, in.Dur, in.Time, in.Info)
-	}
+	logs.Info("Total duration %d", duration)
 
 	logs.Debug("get samples")
 	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
@@ -41,6 +38,7 @@ func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 
 	logs.Debug("create file")
 	f, err := os.CreateTemp("", "out*.wav")
+	// f, err := os.Create("out_test.wav")
 	if err != nil {
 		return err
 	}
@@ -50,6 +48,7 @@ func (p *WAVPlayer) Play(pr *ir.Program, start, end int) error {
 	logs.Debug("write file")
 	p.wav.Write(f)
 
+	// TODO: fix bug - it not exiting when its done
 	logs.Debug("execute")
 	return exec.Command("afplay", "-v", "0.5", f.Name()).Run()
 }
@@ -58,18 +57,48 @@ func (p *WAVPlayer) Stop() error {
 	return nil
 }
 
+func (p *WAVPlayer) getSamples2(irp *ir.Program, wave audio.WaveFunc) []int16 {
+	sr := p.wav.SampleRate()
+	timeScale := 2.0 // TODO
+	total := sr * irp.Duration()
+	buf := make([]float64, total)
+	out := make([]int16, total)
+	clip := float64(math.MaxInt16)
+
+	for _, ins := range irp.Instructions() {
+		offset := int(float64(ins.Time)*timeScale) * sr
+		samples := p.wav.GenerateSamplesEnvelope(
+			ins.Midi,
+			float64(ins.Dur)*timeScale,
+			float64(ins.Vol),
+			0.03, 0.06,
+			wave,
+		)
+		for i, s := range samples {
+			buf[offset+i] += float64(s)
+		}
+	}
+	for i, s := range buf {
+		s = math.Tanh(s/clip) * clip // soft-clipping
+		out[i] = int16(s)
+	}
+	return out
+}
+
 func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
-	sr := float64(p.wav.SampleRate())
+	sr := p.wav.SampleRate()
 	buf := make([]float64, total)
 	out := make([]int16, total)
 	clip := float64(math.MaxInt16)
 	logs.Debug("geting samples")
 
-	for _, in := range instructions {
-		offset := int(in.Time * sr)
+	forDebugTimeTempVariableAtAll := 4.0
+	for _, ins := range instructions {
+		offset := ins.Time * sr / int(forDebugTimeTempVariableAtAll)
+		dur := float64(ins.Dur) / forDebugTimeTempVariableAtAll
 		// TODO
-		// samples := p.wav.GenerateSamples(in.Freq, in.Dur, in.Vol, wave)
-		samples := p.wav.GenerateSamplesEnvelope(in.Freq, in.Dur, in.Vol, 0.03, 0.06, wave)
+		// samples := p.wav.GenerateSamples(ins.Freq, ins.Dur, ins.Vol, wave)
+		samples := p.wav.GenerateSamplesEnvelope(audio.MidiToFreq(int(ins.Midi)), dur, ins.Vol, 0.03, 0.06, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}

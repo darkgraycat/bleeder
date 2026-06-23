@@ -1,16 +1,20 @@
 package ir
 
+import (
+	"fmt"
+	"math"
+	"slices"
+)
+
 // Intermediate Representation Program
 type Program struct {
-	instructions []*Instruction       // instructions array
-	indexesCache map[*Instruction]int // instructions cache
+	instructions []*Instruction // instructions array
 }
 
 // Create new Program instance
 func NewProgram() *Program {
 	return &Program{
 		instructions: make([]*Instruction, 0),
-		indexesCache: make(map[*Instruction]int),
 	}
 }
 
@@ -19,29 +23,25 @@ func (p *Program) Instructions() []*Instruction {
 	return p.instructions
 }
 
-// Add next Instruction pointer to the end
-func (p *Program) Add(in *Instruction) {
-	p.instructions = append(p.instructions, in)
-	p.indexesCache[in] = len(p.instructions) - 1
+// Add next Instruction pointer(s) to the end
+func (p *Program) Add(ins ...*Instruction) {
+	p.instructions = append(p.instructions, ins...)
 }
 
-// Cut Instructions into new Program
-func (p *Program) Cut(start, end int) *Program {
-	sliced := p.instructions[start:end]
+// Copy returns a deep copy of the Program with new Instruction pointers
+func (p *Program) Copy() *Program {
 	np := NewProgram()
-	for i, in := range sliced {
-		np.instructions = append(np.instructions, in)
-		np.indexesCache[in] = i
+	for _, ins := range p.instructions {
+		cp := *ins
+		np.Add(&cp)
 	}
 	return np
 }
 
-// Merge another Program into current one
-func (p *Program) Merge(src *Program) {
-	offset := len(p.instructions)
-	p.instructions = append(p.instructions, src.instructions...)
-	for i, in := range src.instructions {
-		p.indexesCache[in] = offset + i
+// Merge one or more Programs into current one
+func (p *Program) Merge(irp ...*Program) {
+	for _, src := range irp {
+		p.instructions = append(p.instructions, src.instructions...)
 	}
 }
 
@@ -51,54 +51,71 @@ func (p *Program) Length() int {
 }
 
 // Get duration of whole Program
-func (p *Program) Duration() float64 {
-	dur := 0.0
-	for _, in := range p.instructions {
-		end := in.Time + in.Dur
-		if end > dur {
-			dur = end
+func (p *Program) Duration() int {
+	minTime := math.MaxInt
+	maxTime := 0
+	for _, ins := range p.instructions {
+		if ins.Time < minTime {
+			minTime = ins.Time
+		}
+		end := ins.Time + ins.Dur
+		if end > maxTime {
+			maxTime = end
 		}
 	}
-	return dur
+	return maxTime - minTime
+}
+
+// Shift start time of each instruction
+func (p *Program) Shift(t int) {
+	if t <= 0 {
+		return
+	}
+	for _, ins := range p.instructions {
+		ins.Time += t
+	}
+}
+
+// Sort instructions by absolute time
+func (p *Program) Sort() {
+	slices.SortFunc(p.instructions, func(a, b *Instruction) int {
+		return a.Time - b.Time
+	})
 }
 
 // Get first Instruction
 func (p *Program) First() *Instruction {
-	if len(p.instructions) == 0 {
-		return nil
-	}
-	return p.instructions[0]
-}
-
-// Get last Instruction
-func (p *Program) Last() *Instruction {
-	if len(p.instructions) == 0 {
-		return nil
-	}
-	return p.instructions[len(p.instructions)-1]
-}
-
-// Get next Instruction after provided one
-func (p *Program) Next(in *Instruction) *Instruction {
-	if idx, ok := p.indexesCache[in]; ok && idx+1 < len(p.instructions) {
-		return p.instructions[idx+1]
+	if l := len(p.instructions); l > 0 {
+		return p.instructions[0]
 	}
 	return nil
 }
 
-// Get previos Instruction after provided one
-func (p *Program) Prev(in *Instruction) *Instruction {
-	if idx, ok := p.indexesCache[in]; ok && idx-1 >= 0 {
-		return p.instructions[idx-1]
+// Get last Instruction
+func (p *Program) Last() *Instruction {
+	if l := len(p.instructions); l > 0 {
+		return p.instructions[l-1]
 	}
 	return nil
 }
 
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
-	Freq float64 // frequence
-	Dur  float64 // duration
-	Vol  float64 // volume
-	Time float64 // start time
-	Info string  // additional information
+	Midi  float64           // fractional midi
+	Dur   int               // duration in ticks
+	Vol   float64           // volume 0.0..1.0
+	Time  int               // absolute time in ticks
+	Info  string            // debug information
+	Patch *InstructionPatch // patch to use
+}
+
+// Format Instruction into string
+func (ins Instruction) String() string {
+	return fmt.Sprintf("Midi=%f Vol=%d Dur=%d Time=%d Info=%s",
+		ins.Midi, ins.Vol, ins.Dur, ins.Time, ins.Info)
+}
+
+// Instruction shape of the sound
+type InstructionPatch struct {
+	Name string // patch name
 }
