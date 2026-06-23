@@ -2,7 +2,6 @@ package main
 
 import (
 	"bleeder/cmd"
-	"bleeder/experiments"
 	"bleeder/internal/shared/logs"
 	"flag"
 	"fmt"
@@ -16,14 +15,14 @@ var cmds = map[string]cmd.Cmd{
 }
 
 func main() {
-	logs.SetLogLevel(logs.INFO)
+	logs.SetLogLevel(logs.DEBUG)
 
 	// TODO remove
-	if 2 > 9 {
-		experiments.Run()
-		logs.Info("Exit")
-		return
-	}
+	// if 2 > 9 {
+	// 	experiments.Run()
+	// 	logs.Info("Exit")
+	// 	return
+	// }
 
 	// parse CLI flags
 	cmdMode := ""
@@ -43,9 +42,12 @@ func main() {
 	}
 
 	// run selected cmd
+	logs.Info("executing")
 	err := exec(&cmdArgs)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error in", err)
 		os.Exit(1)
 	}
+
+	logs.Info("finish")
 }

@@ -16,20 +16,20 @@ func TestTokenizeContent(t *testing.T) {
 		{
 			name: "Simple multiline Lane",
 			given: `
-			>c4|>e4 >60:2 <+8
-			@chord:a2 | >a2 >g2`,
+			>c4|>eb4 >60:2 <+8
+			@chord:as2 | >a2 >gs2`,
 			expected: [][]string{
-				{">c4", "|", ">e4", ">60:2", "<+8"},
-				{"@chord:a2", "|", ">a2", ">g2"},
+				{">c4", "|", ">eb4", ">60:2", "<+8"},
+				{"@chord:as2", "|", ">a2", ">gs2"},
 			},
 		},
 		{
 			name: "Commented multiline Lane",
 			given: `
 			#>c4|>e4 >60:2 <+8
-			@chord:a2 | >a2 >g2`,
+			@chord:a2 | >a2 #>g2`,
 			expected: [][]string{
-				{"@chord:a2", "|", ">a2", ">g2"},
+				{"@chord:a2", "|", ">a2"},
 			},
 		},
 		{
@@ -60,16 +60,19 @@ func TestTokenizeContent(t *testing.T) {
 
 func BenchmarkTokenizeContent(b *testing.B) {
 	tests := []string{
-		// 3634864	       296.3 ns/op	     368 B/op	       5 allocs/op
+		// 274.5 ns/op	     368 B/op	       5 allocs/op
 		`
-			>c4 |>e4 >60:2 <+8
-			@chord:a2 | >a2 >g2
-		`,
-		// 5028037	       238.1 ns/op	     352 B/op	       5 allocs/op
+			>c4|>eb4 >60:2 <+8
+			@chord:as2 | >a2 >gs2`,
+		// 223.4 ns/op	     272 B/op	       4 allocs/op
+		`
+			#>c4|>e4 >60:2 <+8
+			@chord:a2 | >a2 #>g2`,
+
+		// 235.8 ns/op	     320 B/op	       5 allocs/op
 		`
 			c4        e4 60 68
-			@chord:a2 _  a2 g2
-		`,
+			@chord:a2 _  a2 g2`,
 	}
 
 	for i, tc := range tests {
@@ -91,9 +94,9 @@ func TestParseVars(t *testing.T) {
 		{
 			name:   "parse simple vars",
 			given:  "note:e2 dur:1",
-			values: []string{"c#3", "2"},
+			values: []string{"cs3", "2"},
 			expected: map[string]float64{
-				"note": float64(audio.NoteToMidi("c#3")),
+				"note": float64(audio.NoteToMidi("cs3")),
 				"dur":  2,
 			},
 		},
@@ -169,7 +172,7 @@ func BenchmarkParseVars(b *testing.B) {
 		values []string
 	}{
 		// 172.8 ns/op	     288 B/op	       3 allocs/op
-		{s: "note:e2 dur:1", values: []string{"c#3", "2"}},
+		{s: "note:e2 dur:1", values: []string{"cs3", "2"}},
 		// 242.6 ns/op	     304 B/op	       3 allocs/op
 		{s: "n:e2 m:60 d:2", values: []string{"a3"}},
 		// 442.0 ns/op	     304 B/op	       3 allocs/op
@@ -274,8 +277,8 @@ func TestEvalArg(t *testing.T) {
 		},
 		{
 			name:     "evaluate sum for note",
-			given:    "c#2+7",
-			expected: float64(audio.NoteToMidi("c#2")) + 7,
+			given:    "cs2+7",
+			expected: float64(audio.NoteToMidi("cs2")) + 7,
 		},
 	}
 
@@ -295,7 +298,7 @@ func BenchmarkEvalArg(b *testing.B) {
 		// 53.73 ns/op	       0 B/op	       0 allocs/op
 		"60+4",
 		// 44.81 ns/op	       0 B/op	       0 allocs/op
-		"c#2+7",
+		"cs2+7",
 	}
 
 	for i, tc := range tests {

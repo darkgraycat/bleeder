@@ -4,8 +4,8 @@ include = ['test_nested.toml']
 
 [lane.main]
 content = '''
-@my-song
-@my-song | <+12
+@my-song:a3:e4
+@my-song:a4:e4
 '''
 
 [lane.track1]

@@ -48,6 +48,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Debug("write file")
 	p.wav.Write(f)
 
+	// TODO: fix bug - it not exiting when its done
 	logs.Debug("execute")
 	return exec.Command("afplay", "-v", "0.5", f.Name()).Run()
 }

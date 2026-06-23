@@ -15,7 +15,7 @@ const (
 	chRest = "_" // delay next operation
 	chWith = "|" // play operations in parallel
 	chArgs = ":" // operation arguments separator
-	chSkip = "#" // skip entire line
+	chSkip = "#" // skip next operations in line
 )
 
 // helper replacer to format sequence content
@@ -26,6 +26,7 @@ var replacer = strings.NewReplacer(
 	chVibe, " "+chVibe,
 	chRest, " "+chRest,
 	chWith, " "+chWith,
+	chSkip, " "+chSkip,
 )
 
 // tokenize sequence raw content
@@ -33,7 +34,10 @@ func tokenizeContent(s string) [][]string {
 	out := make([][]string, 0, 4)
 	pre := strings.TrimSpace(replacer.Replace(s))
 	for row := range strings.SplitSeq(pre, "\n") {
-		if ts := strings.Fields(row); len(ts) > 0 && ts[0] != chSkip {
+		if idx := strings.IndexByte(row, chSkip[0]); idx >= 0 {
+			row = row[:idx]
+		}
+		if ts := strings.Fields(row); len(ts) > 0 {
 			out = append(out, ts)
 		}
 	}
