@@ -1,16 +1,23 @@
 [meta]
 main = 'main'
-include = ['test_nested.toml']
+include = [
+	'test_nested.toml',
+	'dev_log_bleeds.toml'
+]
 
 [lane.main]
 content = '''
->c3 <*.95 <*.95 <*.95 <*.95
->d3 <*.95 <*.95 <*.95 <*.95
->e3 <*.95 <*.95 <*.95 <*.95
+@track2 <
+# @standNbleed:a3:e4
+# @standNbleed:a4:e4
+'''
 
-_2
-@my-song:a3:e4
-@my-song:a4:e4
+[lane.track2]
+content = '''
+@chord:a2:4 | @arpeg:a3:1
+@chord:f2:4 | @arpeg:f3:1
+@chord:d2:4 | @arpeg:d3:1
+@chord:d2:4 | @arpeg:d3:1
 '''
 
 [lane.track1]
@@ -20,14 +27,6 @@ content = '''
 >bass-4:4 | >tone <+2 <+1 <+2
 >bass-7:4 | >tone <+2 <+1 <+2
 >bass-5:4 | >tone <+2 <+3 <-3
-'''
-
-[lane.track2]
-content = '''
-@chord:a2:4 | @arpeg:a3:1
-@chord:f2:4 | @arpeg:f3:1
-@chord:d2:4 | @arpeg:d3:1
-@chord:d2:4 | @arpeg:d3:1
 '''
 
 [riff.part2]

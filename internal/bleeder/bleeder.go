@@ -20,7 +20,7 @@ type Bleeder struct {
 
 // Create new Bleeder instance
 func NewBleeder(bleed *Bleed) *Bleeder {
-	logs.Trace(logs.INFO, "called")
+	logs.TraceFrom(logs.INFO, "called")
 	b := &Bleeder{
 		main:  bleed.Meta.Main,
 		cache: NewCache[*ir.Program](),
@@ -41,20 +41,20 @@ func NewBleeder(bleed *Bleed) *Bleeder {
 
 // Get IR of the main sequence
 func (b *Bleeder) GenMainIR() (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called")
+	logs.TraceFrom(logs.INFO, "called")
 	return b.GenSeqIR(b.main, "")
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called with %v, %v", name, vars)
+	logs.TraceFrom(logs.INFO, "called with %v, %v", name, vars)
 	irp := b.cache.Get(name, vars)
 	if irp != nil {
 		return irp, nil
 	}
 	seq, ok := b.sqncs[name]
 	if !ok {
-		return nil, fmt.Errorf("sequence does not exist: %s", name)
+		return nil, fmt.Errorf("%s sequence does not exist", name)
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	rawContent := applyVars(seq.Content, varsMap)
@@ -71,7 +71,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	case SEQ_RIFF:
 		irp, err = b.genRiffIR(tokens)
 	default:
-		return nil, fmt.Errorf("unknown sequence type: %s", name)
+		return nil, fmt.Errorf("%s is unknown sequence type", name)
 	}
 	if err != nil {
 		return nil, err
@@ -83,7 +83,6 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called with %v", tokens)
 	concated := slices.Concat(tokens...)
 	seqIrp := ir.NewProgram()
 	cT, aT := 0.0, 0.0          // current time, advance time
@@ -146,6 +145,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				for i := range newArgs {
 					newArgs[i] = getArg(args, i, getArg(prevLinkArgs, i, ""))
 				}
+				prevLinkArgs = newArgs
 				irp, err := b.evalLink(prevLinkName, newArgs)
 				if err != nil {
 					return nil, fmt.Errorf("%w in %s", err, raw)
@@ -174,7 +174,6 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
-	logs.Trace(logs.INFO, "called with\n%v", tokens)
 	return nil, fmt.Errorf("sequence riff type not implemented yet")
 }
 
@@ -184,7 +183,7 @@ func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, err
 	dur := evalArg(durArg)
 	vol := evalArg(volArg)
 	if math.IsNaN(midi + dur + vol) {
-		return nil, fmt.Errorf("cannot eval %s %s %s", midiArg, durArg, volArg)
+		return nil, fmt.Errorf("eval >%.1f:%.1f:%.1f failed", midi, dur, vol)
 	}
 	return &ir.Instruction{Midi: midi, Dur: dur, Vol: vol}, nil
 }
@@ -192,7 +191,7 @@ func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, err
 // evaluate args and produce linked program
 func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 	if name == "" {
-		return nil, fmt.Errorf("cannot eval sequence without a name")
+		return nil, fmt.Errorf("eval with no sequence name failed")
 	}
 	irp, err := b.GenSeqIR(name, strings.Join(args, chArgs))
 	if err != nil {

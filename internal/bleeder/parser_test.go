@@ -4,6 +4,7 @@ import (
 	"bleeder/internal/audio"
 	"bleeder/internal/shared/testutils"
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -280,12 +281,25 @@ func TestEvalArg(t *testing.T) {
 			given:    "cs2+7",
 			expected: float64(audio.NoteToMidi("cs2")) + 7,
 		},
+		{
+			name:     "evaluate complex in order",
+			given:    "6*2-2/5*3+10/4",
+			expected: 4,
+		},
+		{
+			name:     "evaluate into NaN",
+			given:    "cf2+9",
+			expected: math.NaN(),
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
 			actual := evalArg(tc.given)
+			if math.IsNaN(tc.expected) && math.IsNaN(actual) {
+				return
+			}
 			testutils.AssertFloats(t, tc.expected, actual)
 		})
 	}
@@ -293,12 +307,18 @@ func TestEvalArg(t *testing.T) {
 
 func BenchmarkEvalArg(b *testing.B) {
 	tests := []string{
-		// 42.76 ns/op	       0 B/op	       0 allocs/op
+		// 46.87 ns/op	       0 B/op	       0 allocs/op
 		"65.0",
-		// 53.73 ns/op	       0 B/op	       0 allocs/op
+		// 60.89 ns/op	       0 B/op	       0 allocs/op
 		"60+4",
-		// 44.81 ns/op	       0 B/op	       0 allocs/op
+		// 54.57 ns/op	       0 B/op	       0 allocs/op
 		"cs2+7",
+		// 54.40 ns/op	       0 B/op	       0 allocs/op
+		"cs2+7",
+		// 197.0 ns/op	       0 B/op	       0 allocs/op
+		"6*2-2/5*3+10/4",
+		// 96.10 ns/op	      51 B/op	       2 allocs/op
+		"cf2+9",
 	}
 
 	for i, tc := range tests {

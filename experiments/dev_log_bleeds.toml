@@ -1,0 +1,12 @@
+[lane.standNbleed]
+# Tue 23 Jun - parser for Lane is done, starting musical dev log
+# Better to be called as
+# @standNbleed:a3:e4
+# @standNbleed:a4:e4
+vars = 'b:c3 o3:g3 o2:o3+4'
+content = '''
+>b-12:8 | >b   <+4 >o3 >o2:5
+>b-10:8 | >b+2 <+4 >o3 >o2 <+3 <-3 >b+6 >o3
+>b-8:8  | >b+4 <+2 >o3 >o2:5
+>b-10:8 | >b+2 <+4 >o3 >b+6 <+1 <-5 <+4 <-4
+'''

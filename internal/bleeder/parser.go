@@ -85,11 +85,11 @@ func applyVars(s string, vars map[string]float64) string {
 
 // evaluate argument with short arithmetic expression
 func evalArg(s string) float64 {
-	i := strings.IndexAny(s, "+-*/")
+	i := strings.LastIndexAny(s, "+-*/")
 	if i < 0 {
 		return parseTone(s)
 	}
-	lhs := parseTone(s[:i])
+	lhs := evalArg(s[:i])
 	rhs := parseTone(s[i+1:])
 	switch s[i] {
 	case '+':

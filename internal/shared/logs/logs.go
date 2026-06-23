@@ -68,6 +68,11 @@ func Trace(level LogLevel, format string, a ...any) {
 	Log(level, timeString()+" "+callerName(2)+": "+format, a...)
 }
 
+// Allias to Log(level, format, a...) with timestamp and caller names
+func TraceFrom(level LogLevel, format string, a ...any) {
+	Log(level, timeString()+" "+callerName(3)+" > "+callerName(2)+": "+format, a...)
+}
+
 // Log message to console
 func Log(level LogLevel, format string, a ...any) {
 	if loglevel > level {

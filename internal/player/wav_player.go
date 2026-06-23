@@ -4,6 +4,7 @@ import (
 	"bleeder/internal/audio"
 	"bleeder/internal/ir"
 	"bleeder/internal/shared/logs"
+	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -29,6 +30,10 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Total instructions %d", irp.Length())
 	logs.Info("Total samples %d", totalSamples)
 	logs.Info("Total duration %f", duration)
+
+	for i, ins := range irp.Instructions() {
+		fmt.Printf("[%d] \t%.1f : %.1f : %.1f\n", i, ins.Midi, ins.Dur, ins.Vol)
+	}
 
 	logs.Debug("get samples")
 	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
