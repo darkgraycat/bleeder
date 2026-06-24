@@ -15,6 +15,13 @@ As a reference I am going to use SonicPI API
 https://gist.github.com/carltesta/424cc9e42f4de2ed52a41a612e22dc69
 Combining with what I learned about using GuitarPro 5
 
+
+### List of special characters appear on keyboard
+§±!@#$%^&*()-_=+
+[]{}
+;:'"\|
+`~,<.>/?
+
 ### User scenarios
 1. Play file
 `bleeder play song.toml`
@@ -615,6 +622,33 @@ or maybe
 `<+7`
 `<60`
 
+# Developing Riff syntax
+We got tokens
+```
+{"40", "_", "c4", "_"},
+{"80", "88", "_", "68"},
+```
+We expect
+```
+"m40.0 v1.0 d1.0 t0.0",
+"m80.0 v1.0 d1.0 t0.0",
+"m88.0 v1.0 d1.0 t1.0",
+"m60.0 v1.0 d1.0 t2.0",
+"m68.0 v1.0 d1.0 t3.0",
+```
+So, to generate it correctly, we need to read by columns
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Developing live-coding
 
@@ -641,5 +675,90 @@ or maybe
 │ BPM: 120  Time: 0:32  CPU: 12%     │
 └────────────────────────────────────┘
 Kinda interesting. But we need to make app aware of boundaries
+
+## What I saw during live-loop using Strudel
+- Multiple tracks (called orbits I guess)
+- Updates happens on repeats
+- Tweak params like patch, volume, ADSR etc in the real time
+- What else? Dont know yet
+
+So in Bleeder its like:
+```
+# in main
+@track1 |
+@track2
+
+# in tracks
+@seq1 < < <
+```
+And thats it, I feel like Bleeder can do this all.
+As for tweaking params in real-time - we can do it with Vibe - no time tracking needed here, only fast parser
+
+Here is what I "composed" in Strudel:
+```js
+const lpf = slider(2755.6,400,3000)
+const tr = slider(6,0,12,2)
+
+$: note("b3 c4 a3 e4 d4 a3 e3 <<g4 f3> <d5 e5>>").decay(0.2)
+  .delay(0.7).sound("saw")
+  .lpf(lpf.add(100))
+  .transpose(tr)
+
+$: note("b2 <c3 d3>").decay(0.3).delay(1.2)
+  .sound("square")
+  .lpf(lpf.add(20))
+  .transpose(tr)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+And how bleed analog going to look like
+```toml
+[vibe.lead]
+transpose = 6
+lpf = 2855
+delay = 0.7
+decay = 0.2
+patch = 'saw'
+
+[vibe.bass]
+transpose = 6
+lpf = 2775
+delay = 1.2
+decay = 0.3
+patch = 'square'
+
+[lane.main]
+content = '''
+$lead @track1:g4 | $bass @track2:c3 <d3 <c3 <d3
+$lead @track1:d5 | $bass @track2:c3 <d3 <c3 <d3
+$lead @track1:f3 | $bass @track2:c3 <d3 <c3 <d3
+$lead @track1:e5 | $bass @track2:c3 <d3 <c3 <d3
+'''
+
+[lane.track1]
+vars = 'end:g4'
+content = '>b3 >c4 >a3 >e4 >d4 >a3 >end'
+
+[lane.track2]
+vars = 'end:c3'
+content = '>b2 >end'
+```
+
 
 ## How can we know boundaries

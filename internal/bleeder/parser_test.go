@@ -43,6 +43,15 @@ func TestTokenizeContent(t *testing.T) {
 				{"@chord:a2", "_", "a2", "g2"},
 			},
 		},
+		{
+			name: "Commented multiline Riff",
+			given: `
+			c4        e4 60 68
+			# @chord:a2 _  a2 g2`,
+			expected: [][]string{
+				{"c4", "e4", "60", "68"},
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -74,6 +83,10 @@ func BenchmarkTokenizeContent(b *testing.B) {
 		`
 			c4        e4 60 68
 			@chord:a2 _  a2 g2`,
+		// 217.8 ns/op	     288 B/op	       4 allocs/op
+		`
+			c4        e4 60 68
+			# @chord:a2 _  a2 g2`,
 	}
 
 	for i, tc := range tests {
@@ -366,6 +379,13 @@ func TestGetArg(t *testing.T) {
 			prev:     "60",
 			expected: "c4",
 		},
+		{
+			name:     "fallback to prev on empty",
+			given:    []string{"60", ""},
+			idx:      1,
+			prev:     "12",
+			expected: "12",
+		},
 	}
 
 	for _, tc := range tests {
@@ -406,6 +426,12 @@ func BenchmarkGetArg(b *testing.B) {
 			given: []string{"c4"},
 			idx:   0,
 			prev:  "60",
+		},
+		{
+			// 2.088 ns/op	       0 B/op	       0 allocs/op
+			given: []string{"60", ""},
+			idx:   1,
+			prev:  "12",
 		},
 	}
 

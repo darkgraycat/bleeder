@@ -15,8 +15,10 @@ func TestGenLaneIR(t *testing.T) {
 		errMsg   string
 	}{
 		{
-			name:  "simple sequential melody",
-			given: [][]string{{">40", ">80", ">c4"}},
+			name: "simple melody",
+			given: [][]string{
+				{">40", ">80", ">c4"},
+			},
 			expected: []string{
 				"m40.0 v1.0 d1.0 t0.0",
 				"m80.0 v1.0 d1.0 t1.0",
@@ -58,6 +60,17 @@ func TestGenLaneIR(t *testing.T) {
 				"m48.0 v1.0 d2.0 t3.0",
 				"m40.0 v1.0 d1.0 t5.0",
 				"m68.0 v1.0 d1.0 t5.0",
+			},
+		},
+		{
+			name: "skip empty arguments",
+			given: [][]string{
+				{">40:4", "<:2", "<:*3"},
+			},
+			expected: []string{
+				"m40.0 v1.0 d4.0 t0.0",
+				"m40.0 v1.0 d2.0 t4.0",
+				"m40.0 v1.0 d6.0 t6.0",
 			},
 		},
 	}
@@ -122,4 +135,72 @@ func BenchmarkGenLaneIR(b *testing.B) {
 		})
 	}
 	logs.SetLogLevel(logLevel)
+}
+
+func TestGenRiffIR(t *testing.T) {
+	tests := []struct {
+		name     string
+		given    [][]string
+		expected []string
+		errMsg   string
+	}{
+		{
+			name: "simple melody",
+			given: [][]string{
+				{"40", "_", "c4", "_"},
+				{"80", "88", "_", "68"},
+			},
+			expected: []string{
+				"m40.0 v1.0 d1.0 t0.0",
+				"m80.0 v1.0 d1.0 t0.0",
+				"m88.0 v1.0 d1.0 t1.0",
+				"m60.0 v1.0 d1.0 t2.0",
+				"m68.0 v1.0 d1.0 t3.0",
+			},
+		},
+		{
+			name: "simple melody with arguments",
+			given: [][]string{
+				{"40:4:2", "_"},
+				{"80", "88+2"},
+			},
+			expected: []string{
+				"m40.0 v2.0 d4.0 t0.0",
+				"m80.0 v1.0 d1.0 t0.0",
+				"m90.0 v1.0 d1.0 t1.0",
+			},
+		},
+		{
+			name: "time manipulations",
+			given: [][]string{
+				{"40", ">", ">", ">"},
+				{"80", "_", "<", "_"},
+				{"_", "60", "60", "_"},
+			},
+			expected: []string{
+				"m40.0 v1.0 d4.0 t0.0",
+				"m80.0 v1.0 d1.0 t0.0",
+				"m60.0 v1.0 d1.0 t1.0",
+				"m80.0 v1.0 d1.0 t2.0",
+				"m60.0 v1.0 d1.0 t2.0",
+			},
+		},
+	}
+
+	b := NewBleeder(&Bleed{})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.CheckFlags(t)
+			irp, err := b.genRiffIR(tc.given)
+
+			testutils.AssertErr(t, err, tc.errMsg)
+			testutils.AssertInts(t, len(tc.expected), irp.Length())
+
+			for i, ins := range irp.Instructions() {
+				act := fmt.Sprintf("m%.1f v%.1f d%.1f t%.1f", ins.Midi, ins.Vol, ins.Dur, ins.Time)
+				exp := tc.expected[i]
+				testutils.AssertStrings(t, exp, act)
+			}
+		})
+	}
 }

@@ -106,7 +106,7 @@ func evalArg(s string) float64 {
 
 // get argument at position idx or fallback to prev value
 func getArg(args []string, idx int, prev string) string {
-	if idx >= len(args) {
+	if idx >= len(args) || args[idx] == "" {
 		return prev
 	}
 	v := args[idx]
