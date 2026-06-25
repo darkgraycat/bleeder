@@ -36,7 +36,8 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	}
 
 	logs.Debug("get samples")
-	out := p.getSamples(instructions, totalSamples, audio.WaveSaw)
+	wave := audio.WaveFuncMix(audio.WaveSine, audio.WaveSaw, audio.WaveSoftSquare)
+	out := p.getSamples(instructions, totalSamples, wave)
 
 	logs.Debug("append samples")
 	p.wav.Append(out)

@@ -7,10 +7,25 @@ include = [
 
 [lane.main]
 content = '''
-@track2 <
-# @standNbleed:a3:e4
-# @standNbleed:a4:e4
+#@song3:60:8:+2
+#@song3:g3:2 < <+4 <::+2 # fix, make sure I can pass -2
+
+#@track2 <
+@standNbleed:a3:e4
+@standNbleed:a4:e4
 '''
+
+[lane.song3]
+vars = 'a:e2 T:8 b:a'
+content = '''
+>a-12:T |
+>a:T/2 <:T/4 <+1 <-1:T/2
+
+>b-12:T |
+>b:T/2 <:T/4 <+1 <-1:T/2
+>b-5:T
+'''
+
 
 [lane.track2]
 content = '''

@@ -1,6 +1,7 @@
 package ir
 
 import (
+	"bleeder/internal/audio"
 	"fmt"
 	"math"
 	"slices"
@@ -123,5 +124,6 @@ func (ins Instruction) String() string {
 
 // Instruction shape of the sound
 type InstructionPatch struct {
-	Name string // patch name
+	Name string         // patch name
+	Wave audio.WaveFunc // wave function to use
 }
