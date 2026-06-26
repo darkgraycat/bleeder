@@ -100,10 +100,12 @@ func BenchmarkGenLaneIR(b *testing.B) {
 	}{
 		{
 			// 890.3 ns/op	     380 B/op	      14 allocs/op
+			// 517.7 ns/op	     380 B/op	      14 allocs/op
 			given: [][]string{{">40", ">80", ">c4"}},
 		},
 		{
 			// 1203 ns/op	     520 B/op	      19 allocs/op
+			// 691.3 ns/op	     520 B/op	      19 allocs/op
 			given: [][]string{
 				{">40", "|", ">80"},
 				{">c4", "|", ">d4"},
@@ -111,12 +113,14 @@ func BenchmarkGenLaneIR(b *testing.B) {
 		},
 		{
 			// 998.4 ns/op	     436 B/op	      16 allocs/op
+			// 584.2 ns/op	     436 B/op	      16 allocs/op
 			given: [][]string{
 				{">40", ">60:2", "|", "_", ">80"},
 			},
 		},
 		{
 			// 1687 ns/op	     548 B/op	      22 allocs/op
+			// 987.4 ns/op	     532 B/op	      18 allocs/op
 			given: [][]string{
 				{">40:3", "<+8:-1"},
 				{">40", "|", "<60+8"},

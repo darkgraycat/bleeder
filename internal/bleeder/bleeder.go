@@ -2,7 +2,7 @@ package bleeder
 
 import (
 	"bleeder/internal/ir"
-	"bleeder/internal/shared/logs"
+	// "bleeder/internal/shared/logs"
 	"fmt"
 	"math"
 	"slices"
@@ -20,7 +20,7 @@ type Bleeder struct {
 
 // Create new Bleeder instance
 func NewBleeder(bleed *Bleed) *Bleeder {
-	logs.TraceFrom(logs.INFO, "called")
+	// logs.TraceFrom(logs.INFO, "called")
 	b := &Bleeder{
 		main:  bleed.Meta.Main,
 		cache: NewCache[*ir.Program](),
@@ -41,13 +41,13 @@ func NewBleeder(bleed *Bleed) *Bleeder {
 
 // Get IR of the main sequence
 func (b *Bleeder) GenMainIR() (*ir.Program, error) {
-	logs.TraceFrom(logs.INFO, "called")
+	// logs.TraceFrom(logs.INFO, "called")
 	return b.GenSeqIR(b.main, "")
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
-	logs.TraceFrom(logs.INFO, "called with %v, %v", name, vars)
+	// logs.TraceFrom(logs.INFO, "called with %v, %v", name, vars)
 	irp := b.cache.Get(name, vars)
 	if irp != nil {
 		return irp, nil
@@ -248,7 +248,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 // evaluate args and produce play instruction
 func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, error) {
-	fmt.Printf("evaluating m `%s`, d `%s`, v `%s`\n", midiArg, durArg, volArg)
+	// fmt.Printf("evaluating m `%s`, d `%s`, v `%s`\n", midiArg, durArg, volArg)
 	midi := evalArg(midiArg)
 	dur := evalArg(durArg)
 	vol := evalArg(volArg)
