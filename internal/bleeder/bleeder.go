@@ -5,7 +5,6 @@ import (
 	// "bleeder/internal/shared/logs"
 	"fmt"
 	"math"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -70,57 +69,25 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
+	var cT, aT float64          // current time, advance time
 	var prev string             // previos operation character
 	var prevIns *ir.Instruction // previos instruction
 	var prevLinkName string     // previos link name
 	var prevLinkArgs []string   // previos link args
+	outIrp := ir.NewProgram()   // generated IR Program
 
-	concated := slices.Concat(tokens...) // TODO: think about passing it directry into loop
-	outIrp := ir.NewProgram()            // generated IR Program
-	cT, aT := 0.0, 0.0                   // current time, advance time
-
-	// TODO: maybe its even better to do for-for loop - better error messages btw(line number)
-	for _, cell := range concated {
-		ch := string(cell[0])
-		args := splitArgs(cell[1:])
-		switch ch {
-		case chPlay:
-			cT += aT
-			prev = ch
-			ins, err := b.evalPlay(
-				getArg(args, 0, ""),
-				getArg(args, 1, "1"),
-				getArg(args, 2, "1"),
-			)
-			if err != nil {
-				return nil, fmt.Errorf("%w in %s", err, cell)
-			}
-			ins.Time, ins.Info = cT, cell
-			outIrp.Add(ins)
-			aT = ins.Dur
-			prevIns = ins
-
-		case chLink:
-			cT += aT
-			prev = ch
-			prevLinkName = getArg(args, 0, "")
-			prevLinkArgs = args[1:]
-			irp, err := b.evalLink(prevLinkName, prevLinkArgs)
-			if err != nil {
-				return nil, fmt.Errorf("%w in %s", err, cell)
-			}
-			irp.Shift(cT)
-			outIrp.Merge(irp)
-			aT = irp.Duration()
-
-		case chPrev:
-			cT += aT
-			switch prev {
+	for _, line := range tokens {
+		for _, cell := range line {
+			ch := string(cell[0])
+			args := splitArgs(cell[1:])
+			switch ch {
 			case chPlay:
+				cT += aT
+				prev = ch
 				ins, err := b.evalPlay(
-					getArg(args, 0, strconv.FormatFloat(prevIns.Midi, 'g', 8, 64)),
-					getArg(args, 1, strconv.FormatFloat(prevIns.Dur, 'g', 8, 64)),
-					getArg(args, 2, strconv.FormatFloat(prevIns.Vol, 'g', 8, 64)),
+					getArg(args, 0, ""),
+					getArg(args, 1, "1"),
+					getArg(args, 2, "1"),
 				)
 				if err != nil {
 					return nil, fmt.Errorf("%w in %s", err, cell)
@@ -129,32 +96,63 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				outIrp.Add(ins)
 				aT = ins.Dur
 				prevIns = ins
+
 			case chLink:
-				newArgs := make([]string, max(len(prevLinkArgs), len(args)))
-				for i := range newArgs {
-					newArgs[i] = getArg(args, i, getArg(prevLinkArgs, i, ""))
-				}
-				prevLinkArgs = newArgs
-				irp, err := b.evalLink(prevLinkName, newArgs)
+				cT += aT
+				prev = ch
+				prevLinkName = getArg(args, 0, "")
+				prevLinkArgs = args[1:]
+				irp, err := b.evalLink(prevLinkName, prevLinkArgs)
 				if err != nil {
 					return nil, fmt.Errorf("%w in %s", err, cell)
 				}
 				irp.Shift(cT)
 				outIrp.Merge(irp)
 				aT = irp.Duration()
-			default:
-				return nil, fmt.Errorf("%s can't be used after `%s`", chPrev, prev)
+
+			case chPrev:
+				cT += aT
+				switch prev {
+				case chPlay:
+					ins, err := b.evalPlay(
+						getArg(args, 0, strconv.FormatFloat(prevIns.Midi, 'g', 8, 64)),
+						getArg(args, 1, strconv.FormatFloat(prevIns.Dur, 'g', 8, 64)),
+						getArg(args, 2, strconv.FormatFloat(prevIns.Vol, 'g', 8, 64)),
+					)
+					if err != nil {
+						return nil, fmt.Errorf("%w in %s", err, cell)
+					}
+					ins.Time, ins.Info = cT, cell
+					outIrp.Add(ins)
+					aT = ins.Dur
+					prevIns = ins
+				case chLink:
+					newArgs := make([]string, max(len(prevLinkArgs), len(args)))
+					for i := range newArgs {
+						newArgs[i] = getArg(args, i, getArg(prevLinkArgs, i, ""))
+					}
+					prevLinkArgs = newArgs
+					irp, err := b.evalLink(prevLinkName, newArgs)
+					if err != nil {
+						return nil, fmt.Errorf("%w in %s", err, cell)
+					}
+					irp.Shift(cT)
+					outIrp.Merge(irp)
+					aT = irp.Duration()
+				default:
+					return nil, fmt.Errorf("%s can't be used after `%s`", chPrev, prev)
+				}
+
+			case chVibe:
+				return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+
+			case chRest:
+				cT += aT
+				aT = evalArg(getArg(args, 0, "1"))
+
+			case chWith:
+				aT = 0
 			}
-
-		case chVibe:
-			return nil, fmt.Errorf("%s operator is not implemented yet", ch)
-
-		case chRest:
-			cT += aT
-			aT = evalArg(getArg(args, 0, "1"))
-
-		case chWith:
-			aT = 0
 		}
 	}
 	outIrp.Sort()
