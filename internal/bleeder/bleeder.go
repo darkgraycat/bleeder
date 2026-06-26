@@ -15,7 +15,6 @@ type Bleeder struct {
 	main  string
 	vibes map[string]*Vibe
 	sqncs map[string]*Sequence
-	cache *Cache[*ir.Program]
 }
 
 // Create new Bleeder instance
@@ -23,7 +22,6 @@ func NewBleeder(bleed *Bleed) *Bleeder {
 	// logs.TraceFrom(logs.INFO, "called")
 	b := &Bleeder{
 		main:  bleed.Meta.Main,
-		cache: NewCache[*ir.Program](),
 		vibes: make(map[string]*Vibe, len(bleed.Vibes)),
 		sqncs: make(map[string]*Sequence, len(bleed.Lanes)+len(bleed.Riffs)),
 	}
@@ -48,10 +46,6 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	// logs.TraceFrom(logs.INFO, "called with %v, %v", name, vars)
-	irp := b.cache.Get(name, vars)
-	if irp != nil {
-		return irp, nil
-	}
 	seq, ok := b.sqncs[name]
 	if !ok {
 		return nil, fmt.Errorf("%s sequence does not exist", name)
@@ -64,21 +58,14 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		return nil, fmt.Errorf("sequence content is invalid or empty")
 	}
 
-	var err error
 	switch seq.Type {
 	case SEQ_LANE:
-		irp, err = b.genLaneIR(tokens)
+		return b.genLaneIR(tokens)
 	case SEQ_RIFF:
-		irp, err = b.genRiffIR(tokens)
+		return b.genRiffIR(tokens)
 	default:
 		return nil, fmt.Errorf("%s is unknown sequence type", name)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	b.cache.Set(name, vars, irp)
-	return irp, nil
 }
 
 // Get IR from raw Lane-DSL
