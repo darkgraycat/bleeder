@@ -48,23 +48,24 @@ func tokenizeContent(s string) [][]string {
 func parseVars(s string, values []string) map[string]float64 {
 	defs := strings.Fields(s)
 	out := make(map[string]float64, len(defs))
-	for i, d := range defs {
-		k, v, _ := strings.Cut(d, chArgs)
-		if i < len(values) {
-			out[k] = evalArg(getArg(values, i, v))
-			continue
+	for i, def := range defs {
+		k, v, _ := strings.Cut(def, chArgs)
+		if i < len(values) && values[i] != "" {
+			if isModCh(values[i][0]) {
+				v += values[i]
+			} else {
+				v = values[i]
+			}
 		}
 		pos := strings.IndexAny(v, "+-*/")
-		lhs := v
-		if pos >= 0 {
-			lhs = v[:pos]
-		}
-		if ref, ok := out[lhs]; ok {
-			if pos < 0 {
-				out[k] = ref
-				continue
+		if pos < 0 {
+			if ref, ok := out[v]; ok {
+				v = strconv.FormatFloat(ref, 'g', -1, 64)
 			}
-			v = strconv.FormatFloat(ref, 'g', 8, 64) + v[pos:]
+		} else {
+			if ref, ok := out[v[:pos]]; ok {
+				v = strconv.FormatFloat(ref, 'g', -1, 64) + v[pos:]
+			}
 		}
 		out[k] = evalArg(v)
 	}
@@ -110,7 +111,7 @@ func getArg(args []string, idx int, prev string) string {
 		return prev
 	}
 	v := args[idx]
-	if strings.IndexAny(v, "+-*/") == 0 {
+	if isModCh(v[0]) {
 		return prev + v
 	}
 	return v
@@ -133,4 +134,13 @@ func splitArgs(s string) []string {
 		return []string{}
 	}
 	return strings.Split(s, chArgs)
+}
+
+// checks if character is one of +-*/
+func isModCh(c byte) bool {
+	switch c {
+	case '+', '-', '*', '/':
+		return true
+	}
+	return false
 }

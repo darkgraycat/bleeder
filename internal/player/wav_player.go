@@ -36,7 +36,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	}
 
 	logs.Debug("get samples")
-	wave := audio.WaveFuncMix(audio.WaveSine, audio.WaveSaw, audio.WaveSoftSquare)
+	wave := audio.WaveFuncMix(audio.WaveParabola, audio.WaveSoftSquare)
 	out := p.getSamples(instructions, totalSamples, wave)
 
 	logs.Debug("append samples")
@@ -92,13 +92,17 @@ func (p *WAVPlayer) getSamples2(irp *ir.Program, wave audio.WaveFunc) []int16 {
 }
 
 func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {
+	forDebugTimeTempVariableAtAll := 4.0
+
 	sr := p.wav.SampleRate()
+
+	total = total / int(forDebugTimeTempVariableAtAll)
+
 	buf := make([]float64, total)
 	out := make([]int16, total)
 	clip := float64(math.MaxInt16)
 	logs.Debug("geting samples")
 
-	forDebugTimeTempVariableAtAll := 4.0
 	for _, ins := range instructions {
 		offset := int(ins.Time * float64(sr) / forDebugTimeTempVariableAtAll)
 		dur := ins.Dur / forDebugTimeTempVariableAtAll

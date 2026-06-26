@@ -15,7 +15,6 @@ As a reference I am going to use SonicPI API
 https://gist.github.com/carltesta/424cc9e42f4de2ed52a41a612e22dc69
 Combining with what I learned about using GuitarPro 5
 
-
 ### List of special characters appear on keyboard
 §±!@#$%^&*()-_=+
 []{}
@@ -699,33 +698,20 @@ Here is what I "composed" in Strudel:
 const lpf = slider(2755.6,400,3000)
 const tr = slider(6,0,12,2)
 
-$: note("b3 c4 a3 e4 d4 a3 e3 <<g4 f3> <d5 e5>>").decay(0.2)
-  .delay(0.7).sound("saw")
-  .lpf(lpf.add(100))
-  .transpose(tr)
+$: note("b3 c4 a3 e4 d4 a3 e3 <<g4 f3> <d5 e5>>")
+    .decay(0.2)
+    .delay(0.7)
+    .sound("saw")
+    .lpf(lpf.add(100))
+    .transpose(tr)
 
-$: note("b2 <c3 d3>").decay(0.3).delay(1.2)
-  .sound("square")
-  .lpf(lpf.add(20))
-  .transpose(tr)
+$: note("b2 <c3 d3>")
+    .decay(0.3)
+    .delay(1.2)
+    .sound("square")
+    .lpf(lpf.add(20))
+    .transpose(tr)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 And how bleed analog going to look like
 ```toml
@@ -759,6 +745,12 @@ content = '>b3 >c4 >a3 >e4 >d4 >a3 >end'
 vars = 'end:c3'
 content = '>b2 >end'
 ```
+
+## How Bleeder live-coding going to work
+On every update - reparse whole IR
+Before update we played Instruction with idx 20
+Q: where to put idx after update?
+
 
 
 ## How can we know boundaries

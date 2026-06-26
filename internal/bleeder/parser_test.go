@@ -70,20 +70,20 @@ func TestTokenizeContent(t *testing.T) {
 
 func BenchmarkTokenizeContent(b *testing.B) {
 	tests := []string{
-		// 274.5 ns/op	     368 B/op	       5 allocs/op
+		// 273.4 ns/op	     368 B/op	       5 allocs/op
 		`
 			>c4|>eb4 >60:2 <+8
 			@chord:as2 | >a2 >gs2`,
-		// 223.4 ns/op	     272 B/op	       4 allocs/op
+		// 222.3 ns/op	     272 B/op	       4 allocs/op
 		`
 			#>c4|>e4 >60:2 <+8
 			@chord:a2 | >a2 #>g2`,
 
-		// 235.8 ns/op	     320 B/op	       5 allocs/op
+		// 236.2 ns/op	     320 B/op	       5 allocs/op
 		`
 			c4        e4 60 68
 			@chord:a2 _  a2 g2`,
-		// 217.8 ns/op	     288 B/op	       4 allocs/op
+		// 206.4 ns/op	     288 B/op	       4 allocs/op
 		`
 			c4        e4 60 68
 			# @chord:a2 _  a2 g2`,
@@ -162,11 +162,15 @@ func TestParseVars(t *testing.T) {
 			},
 		},
 		{
-			name:   "values with modificators to defaults",
-			given:  "a:20",
-			values: []string{"+7"},
+			name:   "parse complex vars",
+			given:  "a:20 b:a+10 c:b+20 d:44 e:12",
+			values: []string{"40+5", "+1", "", "80"},
 			expected: map[string]float64{
-				"a": 27,
+				"a": 45, // absolute 40+5
+				"b": 56, // add +1 to a+10
+				"c": 76, // b's 56+20
+				"d": 80, // absolute 80
+				"e": 12, // default
 			},
 		},
 	}
@@ -182,21 +186,50 @@ func TestParseVars(t *testing.T) {
 
 func BenchmarkParseVars(b *testing.B) {
 	tests := []struct {
-		s      string
+		given  string
 		values []string
 	}{
-		// 172.8 ns/op	     288 B/op	       3 allocs/op
-		{s: "note:e2 dur:1", values: []string{"cs3", "2"}},
-		// 242.6 ns/op	     304 B/op	       3 allocs/op
-		{s: "n:e2 m:60 d:2", values: []string{"a3"}},
-		// 442.0 ns/op	     304 B/op	       3 allocs/op
-		{s: "a:20 b:a+10 c:b+20", values: []string{"40"}},
+		{
+			// 211.2 ns/op	     288 B/op	       3 allocs/op
+			given:  "note:e2 dur:1",
+			values: []string{"cs3", "2"},
+		},
+		{
+			// 258.9 ns/op	     304 B/op	       3 allocs/op
+			given:  "n:e2 m:60 d:2",
+			values: []string{"a3"},
+		},
+		{
+			// 488.3 ns/op	     304 B/op	       3 allocs/op
+			given:  "a:20 b:a+10 c:b+20",
+			values: []string{"40"},
+		},
+		{
+			// 479.8 ns/op	     304 B/op	       3 allocs/op
+			given:  "a:20 b:a+10 c:b+20",
+			values: []string{},
+		},
+		{
+			// 221.6 ns/op	     288 B/op	       3 allocs/op
+			given:  "a:20 b:a+10",
+			values: []string{"40", "80"},
+		},
+		{
+			// 177.5 ns/op	     272 B/op	       3 allocs/op
+			given:  "a:20",
+			values: []string{"40+7"},
+		},
+		{
+			// 695.4 ns/op	     344 B/op	       4 allocs/op
+			given:  "a:20 b:a+10 c:b+20 d:44 e:12",
+			values: []string{"40+5", "+1", "", "80"},
+		},
 	}
 
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
 			for b.Loop() {
-				parseVars(tc.s, tc.values)
+				parseVars(tc.given, tc.values)
 			}
 		})
 	}
@@ -248,14 +281,14 @@ func BenchmarkApplyVars(b *testing.B) {
 		given string
 	}{
 		{
-			// 797.8 ns/op	    1010 B/op	      13 allocs/op
+			// 765.4 ns/op	    1010 B/op	      13 allocs/op
 			vars: map[string]float64{"note": 60, "dur": 8},
 			given: `
 			>note dur |
 			>note+7 dur/2`,
 		},
 		{
-			// 1006 ns/op	    6808 B/op	      10 allocs/op
+			// 977.5 ns/op	    6808 B/op	      10 allocs/op
 			vars: map[string]float64{"a": 60, "b": 80},
 			given: `
 			a _ _ a
@@ -320,17 +353,17 @@ func TestEvalArg(t *testing.T) {
 
 func BenchmarkEvalArg(b *testing.B) {
 	tests := []string{
-		// 46.87 ns/op	       0 B/op	       0 allocs/op
+		// 42.52 ns/op	       0 B/op	       0 allocs/op
 		"65.0",
-		// 60.89 ns/op	       0 B/op	       0 allocs/op
+		// 61.83 ns/op	       0 B/op	       0 allocs/op
 		"60+4",
-		// 54.57 ns/op	       0 B/op	       0 allocs/op
+		// 54.37 ns/op	       0 B/op	       0 allocs/op
 		"cs2+7",
-		// 54.40 ns/op	       0 B/op	       0 allocs/op
+		// 54.24 ns/op	       0 B/op	       0 allocs/op
 		"cs2+7",
-		// 197.0 ns/op	       0 B/op	       0 allocs/op
+		// 187.2 ns/op	       0 B/op	       0 allocs/op
 		"6*2-2/5*3+10/4",
-		// 96.10 ns/op	      51 B/op	       2 allocs/op
+		// 91.28 ns/op	      51 B/op	       2 allocs/op
 		"cf2+9",
 	}
 
@@ -404,31 +437,31 @@ func BenchmarkGetArg(b *testing.B) {
 		prev  string
 	}{
 		{
-			// 6.490 ns/op	       0 B/op	       0 allocs/op
+			// 2.129 ns/op	       0 B/op	       0 allocs/op
 			given: []string{"60", "2", "0.8"},
 			idx:   1,
 			prev:  "1",
 		},
 		{
-			// 2.046 ns/op	       0 B/op	       0 allocs/op
+			// 2.062 ns/op	       0 B/op	       0 allocs/op
 			given: []string{"60"},
 			idx:   2,
 			prev:  "80",
 		},
 		{
-			// 23.73 ns/op	       4 B/op	       1 allocs/op
+			// 20.78 ns/op	       4 B/op	       1 allocs/op
 			given: []string{"+7", "-1"},
 			idx:   0,
 			prev:  "60",
 		},
 		{
-			// 10.10 ns/op	       0 B/op	       0 allocs/op
+			// 2.061 ns/op	       0 B/op	       0 allocs/op
 			given: []string{"c4"},
 			idx:   0,
 			prev:  "60",
 		},
 		{
-			// 2.088 ns/op	       0 B/op	       0 allocs/op
+			// 2.072 ns/op	       0 B/op	       0 allocs/op
 			given: []string{"60", ""},
 			idx:   1,
 			prev:  "12",
