@@ -175,16 +175,21 @@ func TestGenRiffIR(t *testing.T) {
 		{
 			name: "time manipulations",
 			given: [][]string{
-				{"40", ">", ">", ">"},
+				{"40", ">2", "|"},
+				{"44"},
 				{"80", "_", "<", "_"},
 				{"_", "60", "60", "_"},
+				{"66", "_2", "66"},
 			},
 			expected: []string{
-				"m40.0 v1.0 d4.0 t0.0",
+				"m40.0 v1.0 d3.0 t0.0",
 				"m80.0 v1.0 d1.0 t0.0",
+				"m66.0 v1.0 d1.0 t0.0",
 				"m60.0 v1.0 d1.0 t1.0",
 				"m80.0 v1.0 d1.0 t2.0",
 				"m60.0 v1.0 d1.0 t2.0",
+				"m44.0 v1.0 d1.0 t3.0",
+				"m66.0 v1.0 d1.0 t3.0",
 			},
 		},
 	}
@@ -205,4 +210,45 @@ func TestGenRiffIR(t *testing.T) {
 			}
 		})
 	}
+}
+
+// NOTE: before run - comment all stdout operations (logs.Trace for ex)
+func BenchmarkGenRiffIR(b *testing.B) {
+	tests := []struct {
+		given [][]string
+	}{
+		{
+			given: [][]string{
+				{"40", "_", "c4", "_"},
+				{"80", "88", "_", "68"},
+			},
+		},
+		{
+			given: [][]string{
+				{"40:4:2", "_"},
+				{"80", "88+2"},
+			},
+		},
+		{
+			given: [][]string{
+				{"40", ">2", "|"},
+				{"44"},
+				{"80", "_", "<", "_"},
+				{"_", "60", "60", "_"},
+				{"66", "_2", "66"},
+			},
+		},
+	}
+
+	logLevel := logs.GetLogLevel()
+	logs.SetLogLevel(logs.DISABLED)
+	bl := NewBleeder(&Bleed{})
+	for i, tc := range tests {
+		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
+			for b.Loop() {
+				bl.genRiffIR(tc.given)
+			}
+		})
+	}
+	logs.SetLogLevel(logLevel)
 }

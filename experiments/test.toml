@@ -6,18 +6,16 @@ include = [
 ]
 
 [lane.main]
+vars = 'A:a2+8'
 content = '''
-@standNbleed:a3:e4
-@standNbleed:a4:e4
-
-# >A-8:7 >A-5
-# @testRiff1Bass:A-8 	   < <+4 <
-# @testRiff1:A 	       < <+4 <
-# @testRiff1:A+8 	       < <+4 <
-# @testRiff1Lead:A+2:A+9 < <+4 <
-# @testRiff1:A+2 	       < <+4 <
-# @testRiff1:A+2 	       < <+4 <
-# >A-10:4
+>A-8:7 >A-5
+@testRiff1Bass:A-8 	   < <+4 <
+@testRiff1:A 	       < <+4 <
+@testRiff1:A+8 	       < <+4 <
+@testRiff1Lead:A+2:A+9 < <+4 <
+@testRiff1:A+2 	       < <+4 <
+@testRiff1:A+2 	       < <+4 <
+>A-10:4
 '''
 
 [lane.track2]

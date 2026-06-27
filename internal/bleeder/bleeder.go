@@ -84,7 +84,6 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			/* PLAY */
 			case chPlay:
 				cT += aT
-				prevCh = ch
 				ins, err := b.evalPlay(
 					getArg(args, 0, ""),
 					getArg(args, 1, "1"),
@@ -95,13 +94,13 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				}
 				ins.Time, ins.Info = cT, cell
 				outIrp.Add(ins)
-				aT = ins.Dur
 				prevIns = ins
+				prevCh = ch
+				aT = ins.Dur
 
 			/* LINK */
 			case chLink:
 				cT += aT
-				prevCh = ch
 				prevLinkName = getArg(args, 0, "")
 				prevLinkArgs = args[1:]
 				irp, err := b.evalLink(prevLinkName, prevLinkArgs)
@@ -110,6 +109,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				}
 				irp.Shift(cT)
 				outIrp.Merge(irp)
+				prevCh = ch
 				aT = irp.Duration()
 
 			/* PREV */
@@ -127,8 +127,8 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					}
 					ins.Time, ins.Info = cT, cell
 					outIrp.Add(ins)
-					aT = ins.Dur
 					prevIns = ins
+					aT = ins.Dur
 				case chLink:
 					newArgs := make([]string, max(len(prevLinkArgs), len(args)))
 					for i := range newArgs {
@@ -165,20 +165,15 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
-	outIrp := ir.NewProgram() // generated IR Program
+	var cT float64              // current time
+	var prevCh string           // previos operation character
+	var prevIns *ir.Instruction // previos instruction
+	var prevLinkName string     // previos link name
+	var prevLinkArgs []string   // previos link args
+	outIrp := ir.NewProgram()   // generated IR Program
 
 	for _, line := range tokens {
-		// TODO: remove
-		fmt.Printf("LINE: %s\n", line)
-		var cT float64              // current time
-		var prevCh string           // previos operation character
-		var prevIns *ir.Instruction // previos instruction
-		var prevLinkName string     // previos link name
-		var prevLinkArgs []string   // previos link args
-
-		for _, cell := range line {
-			// TODO: remove
-			fmt.Printf("CELL: %s\n", cell)
+		for ci, cell := range line {
 			ch := string(cell[0])
 			switch ch {
 			/* FILL */
@@ -186,9 +181,10 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				if prevIns == nil {
 					return nil, fmt.Errorf("%s without previos instruction", ch)
 				}
-				prevIns.Dur += 1
+				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				prevIns.Dur += aT
 				prevCh = ch
-				cT += 1
+				cT += aT
 
 			/* LINK */
 			case chLink:
@@ -248,7 +244,15 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* REST */
 			case chRest:
-				cT += 1
+				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				cT += aT
+
+			/* WITH */
+			case chWith:
+				if ci != len(line)-1 {
+					return nil, fmt.Errorf("%s should be the last operation", ch)
+				}
+				continue
 
 			/* PLAY */
 			default:
@@ -268,7 +272,10 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				cT += 1
 			}
 		}
-		fmt.Printf("%v %v\n", prevCh, prevIns)
+		if line[len(line)-1] != chWith {
+			cT = 0
+			prevCh = ""
+		}
 	}
 	outIrp.Sort()
 	return outIrp, nil
@@ -276,7 +283,6 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 // evaluate args and produce play instruction
 func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, error) {
-	// fmt.Printf("evaluating m `%s`, d `%s`, v `%s`\n", midiArg, durArg, volArg)
 	midi := evalArg(midiArg)
 	dur := evalArg(durArg)
 	vol := evalArg(volArg)

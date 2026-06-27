@@ -3,7 +3,7 @@
 # Better to be called as
 # @standNbleed:a3:e4
 # @standNbleed:a4:e4
-vars = 'b:c3 o3:g3 o2:o3+4'
+vars = 'b:a3 o3:b+7 o2:o3+4'
 content = '''
 >b-12:8 | >b   <+4 >o3 >o2:5
 >b-10:8 | >b+2 <+4 >o3 >o2 <+3 <-3 >b+6 >o3
@@ -19,7 +19,7 @@ content = '''
 # @testRiff1Bass:A-8 	  < <+4 <
 # @testRiff1:A 	          < <+4 <
 # @testRiff1:A+8 	      < <+4 <
-# @testRiff1Lead:A+2:A+9   < <+4 <
+# @testRiff1Lead:A+2:A+9  < <+4 <
 # @testRiff1:A+2 	      < <+4 <
 # @testRiff1:A+2 	      < <+4 <
 # >A-10:4
@@ -27,13 +27,11 @@ vars = 'A:e3'
 content = '''
 @testRiff1Bass:A-12 | @testRiff1Lead:A
 '''
-
 [riff.testRiff1Bass]
 vars = 'd:e2 e:d+7'
 content = '''
 d d > >  e _ d _
 '''
-
 [riff.testRiff1Lead]
 vars = 'a:e3 b:a+3 c:b+4'
 content = '''
