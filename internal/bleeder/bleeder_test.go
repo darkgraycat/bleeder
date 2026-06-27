@@ -124,6 +124,13 @@ func BenchmarkGenLaneIR(b *testing.B) {
 				{">40", "|", "<60+8"},
 			},
 		},
+		{
+			// 1386 ns/op	     680 B/op	      23 allocs/op
+			given: [][]string{
+				{">e2:2", "<g3", "<+1"},
+				{">e2:2", "<g3", "<+1"},
+			},
+		},
 	}
 
 	logLevel := logs.GetLogLevel()
@@ -239,6 +246,13 @@ func BenchmarkGenRiffIR(b *testing.B) {
 				{"80", "_", "<", "_"},
 				{"_", "60", "60", "_"},
 				{"66", "_2", "66"},
+			},
+		},
+		{
+			// 1415 ns/op	     680 B/op	      23 allocs/op
+			given: [][]string{
+				{"e2:2", "<g3", "<+1"},
+				{"e2:2", "<g3", "<+1"},
 			},
 		},
 	}
