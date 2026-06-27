@@ -70,7 +70,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	var cT, aT float64          // current time, advance time
-	var prev string             // previos operation character
+	var prevCh string           // previos operation character
 	var prevIns *ir.Instruction // previos instruction
 	var prevLinkName string     // previos link name
 	var prevLinkArgs []string   // previos link args
@@ -81,9 +81,10 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			ch := string(cell[0])
 			args := splitArgs(cell[1:])
 			switch ch {
+			/* PLAY */
 			case chPlay:
 				cT += aT
-				prev = ch
+				prevCh = ch
 				ins, err := b.evalPlay(
 					getArg(args, 0, ""),
 					getArg(args, 1, "1"),
@@ -97,9 +98,10 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				aT = ins.Dur
 				prevIns = ins
 
+			/* LINK */
 			case chLink:
 				cT += aT
-				prev = ch
+				prevCh = ch
 				prevLinkName = getArg(args, 0, "")
 				prevLinkArgs = args[1:]
 				irp, err := b.evalLink(prevLinkName, prevLinkArgs)
@@ -110,9 +112,10 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				outIrp.Merge(irp)
 				aT = irp.Duration()
 
+			/* PREV */
 			case chPrev:
 				cT += aT
-				switch prev {
+				switch prevCh {
 				case chPlay:
 					ins, err := b.evalPlay(
 						getArg(args, 0, strconv.FormatFloat(prevIns.Midi, 'g', 8, 64)),
@@ -139,17 +142,18 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					irp.Shift(cT)
 					outIrp.Merge(irp)
 					aT = irp.Duration()
-				default:
-					return nil, fmt.Errorf("%s can't be used after `%s`", chPrev, prev)
 				}
 
+			/* VIBE */
 			case chVibe:
 				return nil, fmt.Errorf("%s operator is not implemented yet", ch)
 
+			/* REST */
 			case chRest:
 				cT += aT
 				aT = evalArg(getArg(args, 0, "1"))
 
+			/* WITH */
 			case chWith:
 				aT = 0
 			}
@@ -161,32 +165,53 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
-	var prev string             // previos operation character
-	var prevIns *ir.Instruction // previos instruction
-	// var prevLinkName string     // previos link name
-	// var prevLinkArgs []string   // previos link args
-	outIrp := ir.NewProgram()
+	outIrp := ir.NewProgram() // generated IR Program
+
 	for _, line := range tokens {
+		// TODO: remove
 		fmt.Printf("LINE: %s\n", line)
-		cT, aT := 0.0, 0.0 // current time, advance time
+		var cT float64              // current time
+		var prevCh string           // previos operation character
+		var prevIns *ir.Instruction // previos instruction
+		var prevLinkName string     // previos link name
+		var prevLinkArgs []string   // previos link args
+
 		for _, cell := range line {
+			// TODO: remove
 			fmt.Printf("CELL: %s\n", cell)
 			ch := string(cell[0])
 			switch ch {
+			/* FILL */
 			case chPlay:
-				switch prev {
-				case "":
-					prevIns.Dur += 1.0
-				case chLink:
-					return nil, fmt.Errorf("%s not after %s implemented yet", ch, chLink)
+				if prevIns == nil {
+					return nil, fmt.Errorf("%s without previos instruction", ch)
 				}
+				prevIns.Dur += 1
+				prevCh = ch
+				cT += 1
+
+			/* LINK */
 			case chLink:
-				return nil, fmt.Errorf("%s not implemented yet", ch)
+				args := splitArgs(cell[1:])
+				prevLinkName = getArg(args, 0, "")
+				prevLinkArgs = args[1:]
+				irp, err := b.evalLink(prevLinkName, prevLinkArgs)
+				if err != nil {
+					return nil, fmt.Errorf("%w in %s", err, cell)
+				}
+				irp.Shift(cT)
+				outIrp.Merge(irp)
+				if last := irp.Last(); last != nil {
+					prevIns = last
+				}
+				prevCh = ch
+				cT += irp.Duration()
+
+			/* PREV */
 			case chPrev:
-				switch prev {
-				case "":
-					cT += aT
-					args := splitArgs(cell[1:])
+				args := splitArgs(cell[1:])
+				switch prevCh {
+				case chPlay, "":
 					ins, err := b.evalPlay(
 						getArg(args, 0, strconv.FormatFloat(prevIns.Midi, 'g', 8, 64)),
 						getArg(args, 1, strconv.FormatFloat(prevIns.Dur, 'g', 8, 64)),
@@ -197,19 +222,36 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 					}
 					ins.Time, ins.Info = cT, cell
 					outIrp.Add(ins)
-					aT = 1
 					prevIns = ins
+					cT += 1
 				case chLink:
-					return nil, fmt.Errorf("%s not implemented yet for @", ch)
+					newArgs := make([]string, max(len(prevLinkArgs), len(args)))
+					for i := range newArgs {
+						newArgs[i] = getArg(args, i, getArg(prevLinkArgs, i, ""))
+					}
+					prevLinkArgs = newArgs
+					irp, err := b.evalLink(prevLinkName, newArgs)
+					if err != nil {
+						return nil, fmt.Errorf("%w in %s", err, cell)
+					}
+					irp.Shift(cT)
+					outIrp.Merge(irp)
+					if last := irp.Last(); last != nil {
+						prevIns = last
+					}
+					cT += irp.Duration()
 				}
+
+			/* VIBE */
 			case chVibe:
 				return nil, fmt.Errorf("%s not implemented yet", ch)
+
+			/* REST */
 			case chRest:
-				cT += aT
-				aT = 1 // TODO: do we need it?
+				cT += 1
+
+			/* PLAY */
 			default:
-				cT += aT
-				prev = ""
 				args := splitArgs(cell)
 				ins, err := b.evalPlay(
 					getArg(args, 0, ""),
@@ -221,12 +263,13 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				}
 				ins.Time, ins.Info = cT, cell
 				outIrp.Add(ins)
-				aT = 1
 				prevIns = ins
+				prevCh = chPlay
+				cT += 1
 			}
 		}
+		fmt.Printf("%v %v\n", prevCh, prevIns)
 	}
-	fmt.Printf("%v %v\n", prev, prevIns)
 	outIrp.Sort()
 	return outIrp, nil
 }

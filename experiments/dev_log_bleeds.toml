@@ -10,3 +10,32 @@ content = '''
 >b-8:8  | >b+4 <+2 >o3 >o2:5
 >b-10:8 | >b+2 <+4 >o3 >b+6 <+1 <-5 <+4 <-4
 '''
+
+[lane.testRiff1]
+# Fri 26 Jun - parser for Riff is partialy done, first melody made
+# Better to be called as
+# A:a2+8
+# >A-8:7 >A-5
+# @testRiff1Bass:A-8 	  < <+4 <
+# @testRiff1:A 	          < <+4 <
+# @testRiff1:A+8 	      < <+4 <
+# @testRiff1Lead:A+2:A+9   < <+4 <
+# @testRiff1:A+2 	      < <+4 <
+# @testRiff1:A+2 	      < <+4 <
+# >A-10:4
+vars = 'A:e3'
+content = '''
+@testRiff1Bass:A-12 | @testRiff1Lead:A
+'''
+
+[riff.testRiff1Bass]
+vars = 'd:e2 e:d+7'
+content = '''
+d d > >  e _ d _
+'''
+
+[riff.testRiff1Lead]
+vars = 'a:e3 b:a+3 c:b+4'
+content = '''
+a b a b  a b c b
+'''

@@ -264,6 +264,20 @@ func TestApplyVars(t *testing.T) {
 			80 80 _ _
 			`,
 		},
+		{
+			name: "apply vars avoiding sequence names",
+			vars: map[string]float64{"a": 60, "b": 80, "d1": 2, "d": 3},
+			given: `
+			@bass |
+			@drum |
+			>a:d1 >a:d >b:d >a:d1
+			`,
+			expected: `
+			@bass |
+			@drum |
+			>60:2 >60:3 >80:3 >60:2
+			`,
+		},
 	}
 
 	for _, tc := range tests {
@@ -281,18 +295,27 @@ func BenchmarkApplyVars(b *testing.B) {
 		given string
 	}{
 		{
-			// 765.4 ns/op	    1010 B/op	      13 allocs/op
+			// 449.8 ns/op	     202 B/op	       6 allocs/op
 			vars: map[string]float64{"note": 60, "dur": 8},
 			given: `
 			>note dur |
 			>note+7 dur/2`,
 		},
 		{
-			// 977.5 ns/op	    6808 B/op	      10 allocs/op
+			// 437.5 ns/op	     204 B/op	       7 allocs/op
 			vars: map[string]float64{"a": 60, "b": 80},
 			given: `
 			a _ _ a
 			b b _ _
+			`,
+		},
+		{
+			// 1094 ns/op	     300 B/op	       7 allocs/op
+			vars: map[string]float64{"a": 60, "b": 80, "d1": 2, "d": 3},
+			given: `
+			@bass |
+			@drum |
+			>a:d1 >a:d >b:d >a:d1
 			`,
 		},
 	}

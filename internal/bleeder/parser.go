@@ -3,6 +3,7 @@ package bleeder
 import (
 	"bleeder/internal/audio"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -77,11 +78,35 @@ func applyVars(s string, vars map[string]float64) string {
 	if len(vars) == 0 {
 		return s
 	}
-	pairs := make([]string, 0, len(vars)*2)
+	pairs := make([][2]string, 0, len(vars))
 	for k, v := range vars {
-		pairs = append(pairs, k, strconv.FormatFloat(v, 'g', 8, 64))
+		pairs = append(pairs, [2]string{k, strconv.FormatFloat(v, 'g', 8, 64)})
 	}
-	return strings.NewReplacer(pairs...).Replace(s)
+	sort.Slice(pairs, func(i, j int) bool {
+		return len(pairs[i][0]) > len(pairs[j][0])
+	})
+
+	var result strings.Builder
+	result.Grow(len(s))
+outer:
+	for i := 0; i < len(s); {
+		for _, pair := range pairs {
+			k, v := pair[0], pair[1]
+			if strings.HasPrefix(s[i:], k) {
+				nextPos := i + len(k)
+				if (i == 0 || !isAlphaNum(s[i-1])) &&
+					(nextPos >= len(s) || !isAlphaNum(s[nextPos])) {
+					result.WriteString(v)
+					i = nextPos
+					continue outer
+				}
+
+			}
+		}
+		result.WriteByte(s[i])
+		i++
+	}
+	return result.String()
 }
 
 // evaluate argument with short arithmetic expression
@@ -138,9 +163,12 @@ func splitArgs(s string) []string {
 
 // checks if character is one of +-*/
 func isModCh(c byte) bool {
-	switch c {
-	case '+', '-', '*', '/':
-		return true
-	}
-	return false
+	return c == '+' || c == '-' ||
+		c == '*' || c == '/'
+}
+
+// checks if character is alphanumeric
+func isAlphaNum(c byte) bool {
+	return (c|0x20 >= 'a' && c|0x20 <= 'z') ||
+		(c >= '0' && c <= '9')
 }

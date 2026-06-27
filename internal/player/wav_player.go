@@ -36,19 +36,19 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	}
 
 	logs.Debug("get samples")
-	wave := audio.WaveFuncMix(audio.WaveParabola, audio.WaveSoftSquare)
+	wave := audio.WaveFuncMix(audio.WaveSoftSquare, audio.WaveParabola)
 	out := p.getSamples(instructions, totalSamples, wave)
 
 	logs.Debug("append samples")
 	p.wav.Append(out)
 
 	logs.Debug("create file")
-	f, err := os.CreateTemp("", "out*.wav")
-	// f, err := os.Create("out_test.wav")
+	// f, err := os.CreateTemp("", "out*.wav")
+	f, err := os.Create("test.wav")
 	if err != nil {
 		return err
 	}
-	defer os.Remove(f.Name())
+	// defer os.Remove(f.Name())
 	defer f.Close()
 
 	logs.Debug("write file")
