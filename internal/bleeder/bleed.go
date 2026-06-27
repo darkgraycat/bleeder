@@ -44,69 +44,77 @@ type Sequence struct {
 	Content string `toml:"content"` // sequence content
 }
 
+// Load Bleed file contents
 func LoadBleed(path string) (*Bleed, error) {
-	var bleed Bleed
-	if _, err := toml.DecodeFile(path, &bleed); err != nil {
+	b := &Bleed{
+		Vibes: make(map[string]Vibe),
+		Lanes: make(map[string]Sequence),
+		Riffs: make(map[string]Sequence),
+	}
+	if _, err := toml.DecodeFile(path, &b); err != nil {
 		return nil, err
 	}
 	// assign lane type and validate naming
-	for k, v := range bleed.Lanes {
-		if strings.ContainsAny(k, chRest) {
-			return nil, fmt.Errorf("sequence %q name cannot contain %s", k, chRest)
+	for k, v := range b.Lanes {
+		if strings.ContainsAny(k, chRest+"+-*/") {
+			return nil, fmt.Errorf("sequence %q name cannot contain special characters", k)
 		}
-		if _, exists := bleed.Riffs[k]; exists {
+		if _, exists := b.Riffs[k]; exists {
 			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
 		}
 		v.Type = SEQ_LANE
-		bleed.Lanes[k] = v
+		b.Lanes[k] = v
 	}
 	// assign riff type and validate naming
-	for k, v := range bleed.Riffs {
+	for k, v := range b.Riffs {
 		if strings.ContainsAny(k, chRest) {
 			return nil, fmt.Errorf("sequence %q name cannot contain %s", k, chRest)
 		}
-		if _, exists := bleed.Lanes[k]; exists {
+		if _, exists := b.Lanes[k]; exists {
 			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
 		}
 		v.Type = SEQ_RIFF
-		bleed.Riffs[k] = v
+		b.Riffs[k] = v
 	}
 	// validate vibe naming
-	for k := range bleed.Vibes {
+	for k := range b.Vibes {
 		if strings.ContainsAny(k, chRest) {
 			return nil, fmt.Errorf("vibe %q name cannot contain %s", k, chRest)
 		}
 	}
 	// parse included bleeds
 	baseDir := filepath.Dir(path)
-	for _, includePath := range bleed.Meta.Include {
+	for _, includePath := range b.Meta.Include {
 		included, err := LoadBleed(filepath.Join(baseDir, includePath))
 		if err != nil {
 			return nil, err
 		}
 		// load vibes
 		for k, v := range included.Vibes {
-			if _, exists := bleed.Vibes[k]; exists {
+			fmt.Printf("[%s] load vibe %s\n", includePath, k)
+			if _, exists := b.Vibes[k]; exists {
 				return nil, fmt.Errorf("vibe %q already defined, conflict with include %q", k, includePath)
 			}
-			bleed.Vibes[k] = v
+			b.Vibes[k] = v
 		}
 		// load lanes
 		for k, v := range included.Lanes {
-			if _, exists := bleed.Lanes[k]; exists {
+			fmt.Printf("[%s] load lane %s\n", includePath, k)
+			if _, exists := b.Lanes[k]; exists {
 				return nil, fmt.Errorf("lane %q already defined, conflict with include %q", k, includePath)
 			}
-			bleed.Lanes[k] = v
+			b.Lanes[k] = v
 		}
 		// load riffs
 		for k, v := range included.Riffs {
-			if _, exists := bleed.Riffs[k]; exists {
+			fmt.Printf("[%s] load riff %s\n", includePath, k)
+			if _, exists := b.Riffs[k]; exists {
 				return nil, fmt.Errorf("riff %q already defined, conflict with include %q", k, includePath)
 			}
-			bleed.Riffs[k] = v
+			b.Riffs[k] = v
 		}
 	}
-	return &bleed, nil
+	return b, nil
 }
 
 func (b Bleed) String() string {
