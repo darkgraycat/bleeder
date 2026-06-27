@@ -70,10 +70,10 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	var cT, aT float64          // current time, advance time
-	var prevCh string           // previos operation character
-	var prevIns *ir.Instruction // previos instruction
-	var prevLinkName string     // previos link name
-	var prevLinkArgs []string   // previos link args
+	var prevCh string           // previous operation character
+	var prevIns *ir.Instruction // previous instruction
+	var prevLinkName string     // previous link name
+	var prevLinkArgs []string   // previous link args
 	outIrp := ir.NewProgram()   // generated IR Program
 
 	for _, line := range tokens {
@@ -165,21 +165,29 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
-	var cT float64              // current time
-	var prevCh string           // previos operation character
-	var prevIns *ir.Instruction // previos instruction
-	var prevLinkName string     // previos link name
-	var prevLinkArgs []string   // previos link args
+	var cT, iT float64          // current time, initial time
+	var prevCh string           // previous operation character
+	var prevIns *ir.Instruction // previous instruction
+	var prevLinkName string     // previous link name
+	var prevLinkArgs []string   // previous link args
 	outIrp := ir.NewProgram()   // generated IR Program
 
 	for _, line := range tokens {
+		cT = iT
+		if cT == 0 {
+			cT = 0
+			prevCh = ""
+			prevIns = nil
+			prevLinkName = ""
+			prevLinkArgs = nil
+		}
 		for ci, cell := range line {
 			ch := string(cell[0])
 			switch ch {
 			/* FILL */
 			case chPlay:
 				if prevIns == nil {
-					return nil, fmt.Errorf("%s without previos instruction", ch)
+					return nil, fmt.Errorf("%s without previous instruction", ch)
 				}
 				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
 				prevIns.Dur += aT
@@ -272,9 +280,11 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				cT += 1
 			}
 		}
-		if line[len(line)-1] != chWith {
-			cT = 0
-			prevCh = ""
+
+		if len(line) > 0 && line[len(line)-1] == chWith {
+			iT = cT
+		} else {
+			iT = 0
 		}
 	}
 	outIrp.Sort()

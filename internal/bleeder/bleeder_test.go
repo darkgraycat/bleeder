@@ -50,7 +50,7 @@ func TestGenLaneIR(t *testing.T) {
 			},
 		},
 		{
-			name: "repeat previos",
+			name: "repeat previous",
 			given: [][]string{
 				{">40:3", "<+8:-1"},
 				{">40", "|", "<60+8"},
@@ -99,26 +99,26 @@ func BenchmarkGenLaneIR(b *testing.B) {
 		given [][]string
 	}{
 		{
-			// 499.9 ns/op	     332 B/op	      13 allocs/op
+			// 501.2 ns/op	     332 B/op	      13 allocs/op
 			given: [][]string{
 				{">40", ">80", ">c4"},
 			},
 		},
 		{
-			// 663.7 ns/op	     424 B/op	      18 allocs/op
+			// 661.2 ns/op	     424 B/op	      18 allocs/op
 			given: [][]string{
 				{">40", "|", ">80"},
 				{">c4", "|", ">d4"},
 			},
 		},
 		{
-			// 537.6 ns/op	     356 B/op	      15 allocs/op
+			// 544.9 ns/op	     356 B/op	      15 allocs/op
 			given: [][]string{
 				{">40", ">60:2", "|", "_", ">80"},
 			},
 		},
 		{
-			// 967.2 ns/op	     452 B/op	      17 allocs/op
+			// 1002 ns/op	     452 B/op	      17 allocs/op
 			given: [][]string{
 				{">40:3", "<+8:-1"},
 				{">40", "|", "<60+8"},
@@ -218,18 +218,21 @@ func BenchmarkGenRiffIR(b *testing.B) {
 		given [][]string
 	}{
 		{
+			// 901.5 ns/op	     576 B/op	      23 allocs/op
 			given: [][]string{
 				{"40", "_", "c4", "_"},
 				{"80", "88", "_", "68"},
 			},
 		},
 		{
+			// 554.9 ns/op	     368 B/op	      14 allocs/op
 			given: [][]string{
 				{"40:4:2", "_"},
 				{"80", "88+2"},
 			},
 		},
 		{
+			// 1593 ns/op	     860 B/op	      37 allocs/op
 			given: [][]string{
 				{"40", ">2", "|"},
 				{"44"},

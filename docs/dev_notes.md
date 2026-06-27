@@ -597,7 +597,7 @@ Also lets imaging using "<" operator in Riff. Its much easier to parse it sequen
 
 
 # Dev chPrev
-we have stringified varsions of previos ins properties
+we have stringified varsions of previous ins properties
 we have getArg with fallback
 we have evalArg which calculates and returns number
 
