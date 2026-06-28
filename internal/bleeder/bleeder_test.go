@@ -273,9 +273,59 @@ func BenchmarkGenRiffIR(b *testing.B) {
 func TestGenSeqIRErrors(t *testing.T) {
 	tests := []struct {
 		name   string
-		bleed  *Bleed
 		errMsg string
-	}{}
+		bleed  *Bleed
+	}{
+		{
+			name:   "sequence not exist",
+			errMsg: `sequence "main" processing: line(1) cell(2) "@song1": sequence "song1" does not exist`,
+			bleed: &Bleed{
+				Lanes: map[string]Sequence{
+					"main": {
+						Type: SEQ_LANE,
+						Content: `
+						>60 @song1
+						`,
+					},
+				},
+			},
+		},
+		{
+			name:   "empty content",
+			errMsg: "",
+			bleed: &Bleed{
+				Lanes: map[string]Sequence{
+					"main": {
+						Type:    SEQ_LANE,
+						Content: `@song1`,
+					},
+					"song1": {Type: SEQ_RIFF},
+				},
+			},
+		},
+		{
+			name:   "unknown type",
+			errMsg: `sequence "main" processing: unknown type 999`,
+			bleed: &Bleed{
+				Lanes: map[string]Sequence{
+					"main": {Type: 999},
+				},
+			},
+		},
+		{
+			name: "error in nested sequence",
+			errMsg: `sequence "main" processing: line(1) cell(1) "@song1": ` +
+				`sequence "song1" processing: line(1) cell(2) "@song2": ` +
+				`sequence "song2" processing: line(1) cell(3) "dd": play: NaN:1.0:1.0`,
+			bleed: &Bleed{
+				Lanes: map[string]Sequence{
+					"main":  {Type: SEQ_LANE, Content: `@song1`},
+					"song1": {Type: SEQ_LANE, Content: `>a3 @song2`},
+					"song2": {Type: SEQ_RIFF, Content: `d3 c3 dd`},
+				},
+			},
+		},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
