@@ -23,14 +23,14 @@ func CmdPlay(args *CmdArgs) error {
 	logs.Debug("loading config")
 	cfg, err := LoadConfig(args.CfgPath)
 	if err != nil {
-		return fmt.Errorf("config - %v", err)
+		return fmt.Errorf("loading config: %w", err)
 	}
 	logs.Debug("config loaded")
 
 	logs.Debug("loading bleed")
 	bleed, err := bleeder.LoadBleed(args.BleedPath)
 	if err != nil {
-		return fmt.Errorf("bleed - %v", err)
+		return fmt.Errorf("loading bleed: %w", err)
 	}
 	logs.Debug("bleed loaded")
 

@@ -20,18 +20,18 @@ func runExp1() error {
 	fmt.Printf("Experiment 1\n")
 	cfg, err := cmd.LoadConfig("./config.toml")
 	if err != nil {
-		return fmt.Errorf("config - %v", err)
+		return fmt.Errorf("loading config: %w", err)
 	}
 	bleed, err := bleeder.LoadBleed("./experiments/test.toml")
 	if err != nil {
-		return fmt.Errorf("bleed - %v", err)
+		return fmt.Errorf("loading bleed: %w", err)
 	}
 
 	b := bleeder.NewBleeder(bleed)
 
 	irp, err := b.GenMainIR()
 	if err != nil {
-		return fmt.Errorf("IR - %v", err)
+		return fmt.Errorf("getting IR: %w", err)
 	}
 
 	fmt.Printf("IR - %v\n", irp)
@@ -41,9 +41,5 @@ func runExp1() error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func runExp2() error {
 	return nil
 }
