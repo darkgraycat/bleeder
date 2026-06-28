@@ -5,23 +5,25 @@ include = [
 ]
 
 [lane.main]
-vars = 'A:a2+8'
+vars = 'A:a2+8 D:.1'
 content = '''
-@part1:+0 <
-@part1:+2 <
-@part1:+4 <
-@part1:+7 <:-2
+>60 <+D <+D <+D
 
-_10
-
->A-8:7 >A-5
-@testRiff1Bass:A-8 	   < <+4 <
-@testRiff1:A 	       < <+4 <
-@testRiff1:A+8 	       < <+4 <
-@testRiff1Lead:A+2:A+9 < <+4 <
-@testRiff1:A+2 	       < <+4 <
-@testRiff1:A+2 	       < <+4 <
->A-10:4
+# @part1:+0 <
+# @part1:+2 <
+# @part1:+4 <
+# @part1:+7 <:-2
+# 
+# _10
+# 
+# >A-8:7 >A-5
+# @testRiff1Bass:A-8 	   < <+4 <
+# @testRiff1:A 	       < <+4 <
+# @testRiff1:A+8 	       < <+4 <
+# @testRiff1Lead:A+2:A+9 < <+4 <
+# @testRiff1:A+2 	       < <+4 <
+# @testRiff1:A+2 	       < <+4 <
+# >A-10:4
 '''
 
 [lane.track2]

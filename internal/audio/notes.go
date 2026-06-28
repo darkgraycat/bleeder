@@ -69,8 +69,13 @@ func MidiToNote(idx int) string {
 	return "c4"
 }
 
-// Get midi float number by freq
-func FreqToMidi(freq float64) float64 {
+// Get frequency by float midi number
+func MidfToFreq(midf float64) float64 {
+	return BaseToneFreq * math.Pow(2, (midf-60)/12)
+}
+
+// Get midi float number by frequence
+func FreqToMidf(freq float64) float64 {
 	return 60 + 12*math.Log2(freq/BaseToneFreq)
 }
 
