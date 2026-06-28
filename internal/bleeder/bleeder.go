@@ -11,7 +11,6 @@ import (
 
 // Core DSL processor and IRs generator
 type Bleeder struct {
-	main  string
 	vibes map[string]*Vibe
 	sqncs map[string]*Sequence
 }
@@ -20,7 +19,6 @@ type Bleeder struct {
 func NewBleeder(bleed *Bleed) *Bleeder {
 	// logs.TraceFrom(logs.INFO, "called")
 	b := &Bleeder{
-		main:  bleed.Meta.Main,
 		vibes: make(map[string]*Vibe, len(bleed.Vibes)),
 		sqncs: make(map[string]*Sequence, len(bleed.Lanes)+len(bleed.Riffs)),
 	}
@@ -39,7 +37,7 @@ func NewBleeder(bleed *Bleed) *Bleeder {
 // Get IR of the main sequence
 func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 	// logs.TraceFrom(logs.INFO, "called")
-	return b.GenSeqIR(b.main, "")
+	return b.GenSeqIR(MAIN_NAME, "")
 }
 
 // Get IR of specified section with args

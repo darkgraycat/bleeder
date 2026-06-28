@@ -1,6 +1,7 @@
 package bleeder
 
 import (
+	"bleeder/internal/audio"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,9 @@ import (
 
 // SequenceType describes how a sequence content should be parsed
 type SequenceType int
+
+// Bleed entrypoint name
+const MAIN_NAME = "main"
 
 // Sequence types enum
 const (
@@ -28,13 +32,14 @@ type Bleed struct {
 
 // Meta holds global playback settings for a bleed file.
 type Meta struct {
-	Main    string   `toml:"main"`    // main sequence name
+	Path    string   // file path
 	Tempo   int      `toml:"tempo"`   // beats per minute
 	Include []string `toml:"include"` // included bleed file paths
 }
 
 // Audio modification TODO:
 type Vibe struct {
+	WaveFunc audio.WaveFunc
 }
 
 // Sequence defines a named playback data using DSL
@@ -47,6 +52,7 @@ type Sequence struct {
 // Load Bleed file contents
 func LoadBleed(path string) (*Bleed, error) {
 	b := &Bleed{
+		Meta:  Meta{Path: path},
 		Vibes: make(map[string]Vibe),
 		Lanes: make(map[string]Sequence),
 		Riffs: make(map[string]Sequence),
@@ -91,7 +97,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load vibes
 		for k, v := range included.Vibes {
-			fmt.Printf("[%s] load vibe %s\n", includePath, k)
+			fmt.Printf("Load vibe %s from %s\n", k, includePath)
 			if _, exists := b.Vibes[k]; exists {
 				return nil, fmt.Errorf("vibe %q already defined, conflict with include %q", k, includePath)
 			}
@@ -99,7 +105,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load lanes
 		for k, v := range included.Lanes {
-			fmt.Printf("[%s] load lane %s\n", includePath, k)
+			fmt.Printf("Load lane %s from %s\n", k, includePath)
 			if _, exists := b.Lanes[k]; exists {
 				return nil, fmt.Errorf("lane %q already defined, conflict with include %q", k, includePath)
 			}
@@ -107,7 +113,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load riffs
 		for k, v := range included.Riffs {
-			fmt.Printf("[%s] load riff %s\n", includePath, k)
+			fmt.Printf("Load riff %s from %s\n", k, includePath)
 			if _, exists := b.Riffs[k]; exists {
 				return nil, fmt.Errorf("riff %q already defined, conflict with include %q", k, includePath)
 			}
@@ -119,16 +125,15 @@ func LoadBleed(path string) (*Bleed, error) {
 
 func (b Bleed) String() string {
 	var sb strings.Builder
-	sb.WriteString("Meta:\n")
 	fmt.Fprintf(&sb, "%s\n", b.Meta)
 
 	sb.WriteString("Lanes:\n")
-	for k, v := range b.Lanes {
-		fmt.Fprintf(&sb, "  %s: %s\n", k, v)
+	for k := range b.Lanes {
+		fmt.Fprintf(&sb, "  - %s\n", k)
 	}
 	sb.WriteString("Riffs:\n")
-	for k, v := range b.Riffs {
-		fmt.Fprintf(&sb, "  %s: %s\n", k, v)
+	for k := range b.Riffs {
+		fmt.Fprintf(&sb, "  - %s\n", k)
 	}
 	return sb.String()
 }
@@ -139,11 +144,11 @@ func (s Sequence) String() string {
 
 func (m Meta) String() string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "Main: %s\n", m.Main)
+	fmt.Fprintf(&sb, "Bleed: %s\n", m.Path)
 	if len(m.Include) > 0 {
 		sb.WriteString("Includes:\n")
 		for _, path := range m.Include {
-			fmt.Fprintf(&sb, "  %s\n", path)
+			fmt.Fprintf(&sb, "  - %s\n", path)
 		}
 	}
 	return sb.String()

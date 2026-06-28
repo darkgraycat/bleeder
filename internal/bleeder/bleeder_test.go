@@ -269,3 +269,18 @@ func BenchmarkGenRiffIR(b *testing.B) {
 	}
 	logs.SetLogLevel(logLevel)
 }
+
+func TestGenSeqIRErrors(t *testing.T) {
+	tests := []struct {
+		name     string
+		given    string
+		expected string
+	}{}
+
+	// bleed := &Bleed{}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+
+		})
+	}
+}

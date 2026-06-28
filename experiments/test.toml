@@ -1,5 +1,4 @@
 [meta]
-main = 'main'
 include = [
 	'test_nested.toml',
 	'dev_log_bleeds.toml'
@@ -8,6 +7,13 @@ include = [
 [lane.main]
 vars = 'A:a2+8'
 content = '''
+@part1:+0 <
+@part1:+2 <
+@part1:+4 <
+@part1:+7 <:-2
+
+_10
+
 >A-8:7 >A-5
 @testRiff1Bass:A-8 	   < <+4 <
 @testRiff1:A 	       < <+4 <
@@ -34,3 +40,7 @@ content = '''
 >bass-7:4 | >tone <+2 <+1 <+2
 >bass-5:4 | >tone <+2 <+3 <-3
 '''
+
+[lane.part1]
+vars = 'A:f2 B:A+7 dur:4'
+content = '>A:dur | >B:dur/2 <:/3<<'
