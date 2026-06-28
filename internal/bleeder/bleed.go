@@ -1,6 +1,7 @@
 package bleeder
 
 import (
+	"bleeder/internal/shared/logs"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -97,7 +98,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load vibes
 		for k, v := range included.Vibes {
-			fmt.Printf("Load vibe %q from %q\n", k, includePath)
+			logs.Debug("Load vibe %q from %q", k, includePath)
 			if _, exists := b.Vibes[k]; exists {
 				return nil, fmt.Errorf("vibe %q already exists, conflict with include %q", k, includePath)
 			}
@@ -105,7 +106,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load lanes
 		for k, v := range included.Lanes {
-			fmt.Printf("Load lane %q from %q\n", k, includePath)
+			logs.Debug("Load lane %q from %q", k, includePath)
 			_, laneExist := b.Lanes[k]
 			_, riffExist := b.Riffs[k]
 			if laneExist || riffExist {
@@ -115,7 +116,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load riffs
 		for k, v := range included.Riffs {
-			fmt.Printf("Load riff %q from %q\n", k, includePath)
+			logs.Debug("Load riff %q from %q", k, includePath)
 			_, laneExist := b.Lanes[k]
 			_, riffExist := b.Riffs[k]
 			if laneExist || riffExist {

@@ -272,15 +272,17 @@ func BenchmarkGenRiffIR(b *testing.B) {
 
 func TestGenSeqIRErrors(t *testing.T) {
 	tests := []struct {
-		name     string
-		given    string
-		expected string
+		name   string
+		bleed  *Bleed
+		errMsg string
 	}{}
 
-	// bleed := &Bleed{}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
+			testutils.CheckFlags(t)
+			b := NewBleeder(tc.bleed)
+			_, err := b.GenMainIR()
+			testutils.AssertErr(t, err, tc.errMsg)
 		})
 	}
 }

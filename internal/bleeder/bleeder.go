@@ -51,14 +51,20 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		return nil, fmt.Errorf("sequence %q content is invalid or empty", name)
 	}
 
+	var err error
+	var irp *ir.Program
 	switch seq.Type {
 	case SEQ_LANE:
-		return b.genLaneIR(tokens)
+		irp, err = b.genLaneIR(tokens)
 	case SEQ_RIFF:
-		return b.genRiffIR(tokens)
+		irp, err = b.genRiffIR(tokens)
 	default:
-		return nil, fmt.Errorf("sequence %q unknown type", name)
+		err = fmt.Errorf("unknown type")
 	}
+	if err != nil {
+		err = fmt.Errorf("sequence %q processing: %w", name, err)
+	}
+	return irp, err
 }
 
 // Get IR from raw Lane-DSL
@@ -140,7 +146,8 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 			/* VIBE */
 			case chVibe:
-				return nil, fmt.Errorf("operator %q is not implemented yet", ch)
+				return nil, b.fmtCellErr(
+					fmt.Errorf("operator %q is not implemented yet", ch), cell, li, ci)
 
 			/* REST */
 			case chRest:
@@ -168,8 +175,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 	for li, line := range tokens {
 		cT = iT
-		if cT == 0 {
-			cT = 0
+		if iT == 0 {
 			prevCh = ""
 			prevIns = nil
 			prevLinkName = ""
@@ -181,7 +187,8 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			/* FILL */
 			case chPlay:
 				if prevIns == nil {
-					return nil, fmt.Errorf("operator %q requires a previous instruction", ch)
+					return nil, b.fmtCellErr(
+						fmt.Errorf("operator %q requires a previous instruction", ch), cell, li, ci)
 				}
 				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
 				prevIns.Dur += aT
@@ -209,7 +216,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			case chPrev:
 				args := splitArgs(cell[1:])
 				switch prevCh {
-				case chPlay, "":
+				case chPlay:
 					ins, err := b.evalPlay(
 						getArg(args, 0, strconv.FormatFloat(prevIns.Midi, 'g', 8, 64)),
 						getArg(args, 1, strconv.FormatFloat(prevIns.Dur, 'g', 8, 64)),
@@ -242,7 +249,8 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* VIBE */
 			case chVibe:
-				return nil, fmt.Errorf("operator %q is not implemented yet", ch)
+				return nil, b.fmtCellErr(
+					fmt.Errorf("operator %q is not implemented yet", ch), cell, li, ci)
 
 			/* REST */
 			case chRest:
@@ -252,7 +260,8 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			/* WITH */
 			case chWith:
 				if ci != len(line)-1 {
-					return nil, fmt.Errorf("operator %q only allowed at line end", ch)
+					return nil, b.fmtCellErr(
+						fmt.Errorf("operator %q only allowed at line end", ch), cell, li, ci)
 				}
 				continue
 
@@ -314,5 +323,5 @@ func (b *Bleeder) evalVibe(name string, args []string) (*ir.Patch, error) {
 }
 
 func (b *Bleeder) fmtCellErr(err error, cell string, li, ci int) error {
-	return fmt.Errorf("line[%d] cell[%d] %q: %w", li+1, ci+1, cell, err)
+	return fmt.Errorf("line(%d) cell(%d) %q: %w", li+1, ci+1, cell, err)
 }
