@@ -311,3 +311,8 @@ func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 	}
 	return irp.Copy(), nil
 }
+
+// evaluate args and produce audio patch
+func (b *Bleeder) evalVibe(name string, args []string) (*ir.Patch, error) {
+	return nil, nil
+}

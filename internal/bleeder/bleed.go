@@ -1,7 +1,6 @@
 package bleeder
 
 import (
-	"bleeder/internal/audio"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -37,9 +36,9 @@ type Meta struct {
 	Include []string `toml:"include"` // included bleed file paths
 }
 
-// Audio modification TODO:
+// Audio modification
 type Vibe struct {
-	WaveFunc audio.WaveFunc
+	Wave string // name of wave function to use
 }
 
 // Sequence defines a named playback data using DSL

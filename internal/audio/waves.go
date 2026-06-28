@@ -9,6 +9,18 @@ const PI2 = 2 * math.Pi
 // WaveFunc returns signal value at normalized phase [0..1)
 type WaveFunc func(p Phase) float64
 
+// WaveFunc lookup map
+var WaveFuncs = map[string]WaveFunc{
+	"sine":        WaveSine,
+	"square":      WaveSquare,
+	"saw":         WaveSaw,
+	"triangle":    WaveTriangle,
+	"abs-sine":    WaveAbsSine,
+	"soft-square": WaveSoftSquare,
+	"parabola":    WaveParabola,
+	"cubic":       WaveCubic,
+}
+
 // f(p) = sin(2πp)
 func WaveSine(p Phase) float64 {
 	return math.Sin(PI2 * p)
@@ -74,4 +86,15 @@ func WaveFuncMix(waves ...WaveFunc) WaveFunc {
 		}
 		return sum * div
 	}
+}
+
+// Get mixed wave function
+func GetWaveFunc(names ...string) WaveFunc {
+	waves := make([]WaveFunc, 0, len(names))
+	for _, n := range names {
+		if w, ok := WaveFuncs[n]; ok {
+			waves = append(waves, w)
+		}
+	}
+	return WaveFuncMix(waves...)
 }

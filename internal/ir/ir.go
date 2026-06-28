@@ -108,12 +108,12 @@ func (p *Program) Last() *Instruction {
 
 // Instruction is a basic unit of Intermediate Representation
 type Instruction struct {
-	Midi  float64           // fractional midi
-	Dur   float64           // duration in ticks (fractional)
-	Vol   float64           // volume 0.0..1.0
-	Time  float64           // absolute time in ticks (fractional)
-	Info  string            // debug information
-	Patch *InstructionPatch // patch to use
+	Midi  float64 // fractional midi
+	Dur   float64 // duration in ticks (fractional)
+	Vol   float64 // volume 0.0..1.0
+	Time  float64 // absolute time in ticks (fractional)
+	Info  string  // debug information
+	Patch *Patch  // patch to use
 }
 
 // Format Instruction into string
@@ -123,7 +123,7 @@ func (ins Instruction) String() string {
 }
 
 // Instruction shape of the sound
-type InstructionPatch struct {
-	Name string         // patch name
-	Wave audio.WaveFunc // wave function to use
+type Patch struct {
+	Name     string         // patch name
+	WaveFunc audio.WaveFunc // wave function to use
 }

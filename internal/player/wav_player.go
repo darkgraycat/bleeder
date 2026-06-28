@@ -32,7 +32,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Total duration %f", duration)
 
 	for i, ins := range irp.Instructions() {
-		fmt.Printf("[%d] \t%.1f : %.1f : %.1f\n", i, ins.Midi, ins.Dur, ins.Vol)
+		fmt.Printf("[%d] \t%.1f : %.1f : %.1f : %.1f\n", i, ins.Midi, ins.Dur, ins.Vol, ins.Time)
 	}
 
 	logs.Debug("get samples")
