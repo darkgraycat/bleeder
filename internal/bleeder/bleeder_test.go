@@ -93,7 +93,6 @@ func TestGenLaneIR(t *testing.T) {
 	}
 }
 
-// NOTE: before run - comment all stdout operations (logs.Trace for ex)
 func BenchmarkGenLaneIR(b *testing.B) {
 	tests := []struct {
 		given [][]string
@@ -219,7 +218,6 @@ func TestGenRiffIR(t *testing.T) {
 	}
 }
 
-// NOTE: before run - comment all stdout operations (logs.Trace for ex)
 func BenchmarkGenRiffIR(b *testing.B) {
 	tests := []struct {
 		given [][]string
