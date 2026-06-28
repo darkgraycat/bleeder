@@ -41,7 +41,7 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	seq, ok := b.sqncs[name]
 	if !ok {
-		return nil, fmt.Errorf("sequence %q does not exist", name)
+		return nil, fmt.Errorf("%s not exist", name)
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	rawContent := applyVars(seq.Content, varsMap)
@@ -58,7 +58,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		err = fmt.Errorf("unknown type %d", seq.Type)
 	}
 	if err != nil {
-		err = fmt.Errorf("sequence %q processing: %w", name, err)
+		err = fmt.Errorf("%s: %w", name, err)
 	}
 	return irp, err
 }
@@ -143,7 +143,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			/* VIBE */
 			case chVibe:
 				return nil, b.fmtCellErr(
-					fmt.Errorf("operator %q is not implemented yet", ch), cell, li, ci)
+					fmt.Errorf("%q not implemented", ch), cell, li, ci)
 
 			/* REST */
 			case chRest:
@@ -184,7 +184,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			case chPlay:
 				if prevIns == nil {
 					return nil, b.fmtCellErr(
-						fmt.Errorf("operator %q requires a previous instruction", ch), cell, li, ci)
+						fmt.Errorf("%q requires a previous instruction", ch), cell, li, ci)
 				}
 				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
 				prevIns.Dur += aT
@@ -246,7 +246,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			/* VIBE */
 			case chVibe:
 				return nil, b.fmtCellErr(
-					fmt.Errorf("operator %q is not implemented yet", ch), cell, li, ci)
+					fmt.Errorf("%q not implemented", ch), cell, li, ci)
 
 			/* REST */
 			case chRest:
@@ -257,7 +257,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			case chWith:
 				if ci != len(line)-1 {
 					return nil, b.fmtCellErr(
-						fmt.Errorf("operator %q only allowed at line end", ch), cell, li, ci)
+						fmt.Errorf("%q not at EOL", ch), cell, li, ci)
 				}
 				continue
 
@@ -315,9 +315,9 @@ func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 
 // evaluate args and produce audio patch
 func (b *Bleeder) evalVibe(name string, args []string) (*ir.Patch, error) {
-	return nil, fmt.Errorf("vibe: Vibe is not implemented yet")
+	return nil, fmt.Errorf("vibe: not implemented")
 }
 
 func (b *Bleeder) fmtCellErr(err error, cell string, li, ci int) error {
-	return fmt.Errorf("line(%d) cell(%d) %q: %w", li+1, ci+1, cell, err)
+	return fmt.Errorf("at l%d-c%d %q: %w", li+1, ci+1, cell, err)
 }
