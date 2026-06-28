@@ -70,8 +70,8 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	var prevLinkArgs []string   // previous link args
 	outIrp := ir.NewProgram()   // generated IR Program
 
-	for _, line := range tokens {
-		for _, cell := range line {
+	for li, line := range tokens {
+		for ci, cell := range line {
 			ch := string(cell[0])
 			args := splitArgs(cell[1:])
 			switch ch {
@@ -84,7 +84,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					getArg(args, 2, "1"),
 				)
 				if err != nil {
-					return nil, fmt.Errorf("%w in %s", err, cell)
+					return nil, b.fmtCellErr(err, cell, li, ci)
 				}
 				ins.Time, ins.Info = cT, cell
 				outIrp.Add(ins)
@@ -99,7 +99,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				prevLinkArgs = args[1:]
 				irp, err := b.evalLink(prevLinkName, prevLinkArgs)
 				if err != nil {
-					return nil, fmt.Errorf("%w in %s", err, cell)
+					return nil, b.fmtCellErr(err, cell, li, ci)
 				}
 				irp.Shift(cT)
 				outIrp.Merge(irp)
@@ -117,7 +117,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 						getArg(args, 2, strconv.FormatFloat(prevIns.Vol, 'g', 8, 64)),
 					)
 					if err != nil {
-						return nil, fmt.Errorf("%w in %s", err, cell)
+						return nil, b.fmtCellErr(err, cell, li, ci)
 					}
 					ins.Time, ins.Info = cT, cell
 					outIrp.Add(ins)
@@ -131,7 +131,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					prevLinkArgs = newArgs
 					irp, err := b.evalLink(prevLinkName, newArgs)
 					if err != nil {
-						return nil, fmt.Errorf("%w in %s", err, cell)
+						return nil, b.fmtCellErr(err, cell, li, ci)
 					}
 					irp.Shift(cT)
 					outIrp.Merge(irp)
@@ -140,7 +140,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 
 			/* VIBE */
 			case chVibe:
-				return nil, fmt.Errorf("%s operator is not implemented yet", ch)
+				return nil, fmt.Errorf("operator %q is not implemented yet", ch)
 
 			/* REST */
 			case chRest:
@@ -166,7 +166,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 	var prevLinkArgs []string   // previous link args
 	outIrp := ir.NewProgram()   // generated IR Program
 
-	for _, line := range tokens {
+	for li, line := range tokens {
 		cT = iT
 		if cT == 0 {
 			cT = 0
@@ -181,7 +181,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			/* FILL */
 			case chPlay:
 				if prevIns == nil {
-					return nil, fmt.Errorf("%s without previous instruction", ch)
+					return nil, fmt.Errorf("operator %q requires a previous instruction", ch)
 				}
 				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
 				prevIns.Dur += aT
@@ -195,7 +195,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				prevLinkArgs = args[1:]
 				irp, err := b.evalLink(prevLinkName, prevLinkArgs)
 				if err != nil {
-					return nil, fmt.Errorf("%w in %s", err, cell)
+					return nil, b.fmtCellErr(err, cell, li, ci)
 				}
 				irp.Shift(cT)
 				outIrp.Merge(irp)
@@ -216,7 +216,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 						getArg(args, 2, strconv.FormatFloat(prevIns.Vol, 'g', 8, 64)),
 					)
 					if err != nil {
-						return nil, fmt.Errorf("%w in %s", err, cell)
+						return nil, b.fmtCellErr(err, cell, li, ci)
 					}
 					ins.Time, ins.Info = cT, cell
 					outIrp.Add(ins)
@@ -230,7 +230,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 					prevLinkArgs = newArgs
 					irp, err := b.evalLink(prevLinkName, newArgs)
 					if err != nil {
-						return nil, fmt.Errorf("%w in %s", err, cell)
+						return nil, b.fmtCellErr(err, cell, li, ci)
 					}
 					irp.Shift(cT)
 					outIrp.Merge(irp)
@@ -242,7 +242,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* VIBE */
 			case chVibe:
-				return nil, fmt.Errorf("%s not implemented yet", ch)
+				return nil, fmt.Errorf("operator %q is not implemented yet", ch)
 
 			/* REST */
 			case chRest:
@@ -252,7 +252,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 			/* WITH */
 			case chWith:
 				if ci != len(line)-1 {
-					return nil, fmt.Errorf("%s should be the last operation", ch)
+					return nil, fmt.Errorf("operator %q only allowed at line end", ch)
 				}
 				continue
 
@@ -265,7 +265,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 					getArg(args, 2, "1"),
 				)
 				if err != nil {
-					return nil, fmt.Errorf("%w in %s", err, cell)
+					return nil, b.fmtCellErr(err, cell, li, ci)
 				}
 				ins.Time, ins.Info = cT, cell
 				outIrp.Add(ins)
@@ -311,4 +311,8 @@ func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 // evaluate args and produce audio patch
 func (b *Bleeder) evalVibe(name string, args []string) (*ir.Patch, error) {
 	return nil, fmt.Errorf("evaluating: Vibe is not implemented yet")
+}
+
+func (b *Bleeder) fmtCellErr(err error, cell string, li, ci int) error {
+	return fmt.Errorf("line[%d] cell[%d] %q: %w", li+1, ci+1, cell, err)
 }
