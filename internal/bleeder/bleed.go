@@ -97,7 +97,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load vibes
 		for k, v := range included.Vibes {
-			fmt.Printf("Load vibe %s from %s\n", k, includePath)
+			fmt.Printf("Load vibe %q from %q\n", k, includePath)
 			if _, exists := b.Vibes[k]; exists {
 				return nil, fmt.Errorf("vibe %q already exists, conflict with include %q", k, includePath)
 			}
@@ -105,7 +105,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load lanes
 		for k, v := range included.Lanes {
-			fmt.Printf("Load lane %s from %s\n", k, includePath)
+			fmt.Printf("Load lane %q from %q\n", k, includePath)
 			_, laneExist := b.Lanes[k]
 			_, riffExist := b.Riffs[k]
 			if laneExist || riffExist {
@@ -115,7 +115,7 @@ func LoadBleed(path string) (*Bleed, error) {
 		}
 		// load riffs
 		for k, v := range included.Riffs {
-			fmt.Printf("Load riff %s from %s\n", k, includePath)
+			fmt.Printf("Load riff %q from %q\n", k, includePath)
 			_, laneExist := b.Lanes[k]
 			_, riffExist := b.Riffs[k]
 			if laneExist || riffExist {
@@ -148,7 +148,7 @@ func (s Sequence) String() string {
 
 func (m Meta) String() string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "Bleed: %s\n", m.Path)
+	fmt.Fprintf(&sb, "Bleed %q\n", m.Path)
 	if len(m.Include) > 0 {
 		sb.WriteString("Includes:\n")
 		for _, path := range m.Include {

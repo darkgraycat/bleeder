@@ -2,7 +2,6 @@ package bleeder
 
 import (
 	"bleeder/internal/ir"
-	// "bleeder/internal/shared/logs"
 	"fmt"
 	"math"
 	"strconv"
@@ -17,7 +16,6 @@ type Bleeder struct {
 
 // Create new Bleeder instance
 func NewBleeder(bleed *Bleed) *Bleeder {
-	// logs.TraceFrom(logs.INFO, "called")
 	b := &Bleeder{
 		vibes: make(map[string]*Vibe, len(bleed.Vibes)),
 		sqncs: make(map[string]*Sequence, len(bleed.Lanes)+len(bleed.Riffs)),
@@ -36,23 +34,21 @@ func NewBleeder(bleed *Bleed) *Bleeder {
 
 // Get IR of the main sequence
 func (b *Bleeder) GenMainIR() (*ir.Program, error) {
-	// logs.TraceFrom(logs.INFO, "called")
 	return b.GenSeqIR(MAIN_NAME, "")
 }
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
-	// logs.TraceFrom(logs.INFO, "called with %v, %v", name, vars)
 	seq, ok := b.sqncs[name]
 	if !ok {
-		return nil, fmt.Errorf("%s sequence does not exist", name)
+		return nil, fmt.Errorf("sequence %q does not exist", name)
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	rawContent := applyVars(seq.Content, varsMap)
 
 	tokens := tokenizeContent(rawContent)
 	if tokens == nil {
-		return nil, fmt.Errorf("sequence content is invalid or empty")
+		return nil, fmt.Errorf("sequence %q content is invalid or empty", name)
 	}
 
 	switch seq.Type {
@@ -61,7 +57,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	case SEQ_RIFF:
 		return b.genRiffIR(tokens)
 	default:
-		return nil, fmt.Errorf("%s is unknown sequence type", name)
+		return nil, fmt.Errorf("sequence %q unknown type", name)
 	}
 }
 
@@ -295,7 +291,7 @@ func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, err
 	dur := evalArg(durArg)
 	vol := evalArg(volArg)
 	if math.IsNaN(midi + dur + vol) {
-		return nil, fmt.Errorf("eval >%.1f:%.1f:%.1f failed", midi, dur, vol)
+		return nil, fmt.Errorf("evaluating: >%.1f:%.1f:%.1f", midi, dur, vol)
 	}
 	return &ir.Instruction{Midi: midi, Dur: dur, Vol: vol}, nil
 }
@@ -303,16 +299,16 @@ func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, err
 // evaluate args and produce linked program
 func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 	if name == "" {
-		return nil, fmt.Errorf("eval with no sequence name failed")
+		return nil, fmt.Errorf("evaluating: no sequence name")
 	}
 	irp, err := b.GenSeqIR(name, strings.Join(args, chArgs))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("evaluating: %w", err)
 	}
 	return irp.Copy(), nil
 }
 
 // evaluate args and produce audio patch
 func (b *Bleeder) evalVibe(name string, args []string) (*ir.Patch, error) {
-	return nil, nil
+	return nil, fmt.Errorf("evaluating: Vibe is not implemented yet")
 }
