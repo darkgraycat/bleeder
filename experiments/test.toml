@@ -8,8 +8,7 @@ include = [
 vars = 'A:a2+8'
 content = '''
 @tst
-
-
+# _10
 # >A-8:7 >A-5
 # @testRiff1Bass:A-8 	   < <+4 <
 # @testRiff1:A 	       < <+4 <
@@ -21,8 +20,16 @@ content = '''
 '''
 
 [riff.tst]
+vars = 'A:a3 B:A+7 C:A-12'
 content = '''
-> a2 a2 b3
+@some >
+'''
+
+[lane.some]
+vars = 'A:d3'
+content = '''
+>A >A _ >A
+>A >A _ >A
 '''
 
 [lane.track2]

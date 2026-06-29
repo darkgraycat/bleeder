@@ -178,14 +178,31 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 		for ci, cell := range line {
 			ch := string(cell[0])
 			switch ch {
+			/* PLAY */
+			default:
+				args := splitArgs(cell)
+				ins, err := b.evalPlay(
+					getArg(args, 0, ""),
+					getArg(args, 1, "1"),
+					getArg(args, 2, "1"),
+				)
+				if err != nil {
+					return nil, b.fmtCellErr(err, cell, li, ci)
+				}
+				ins.Time, ins.Info = cT, cell
+				outIrp.Add(ins)
+				prevIns = ins
+				prevCh = chPlay
+				cT += 1
+
 			/* FILL */
 			case chPlay:
-				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
 				if prevIns != nil {
-					prevIns.Dur += aT
+					prevIns.Dur += dur
 				}
 				prevCh = ch
-				cT += aT
+				cT += dur
 
 			/* LINK */
 			case chLink:
@@ -233,9 +250,6 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 					}
 					irp.Shift(cT)
 					outIrp.Merge(irp)
-					if last := irp.Last(); last != nil {
-						prevIns = last
-					}
 					cT += irp.Duration()
 				}
 
@@ -246,39 +260,17 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* REST */
 			case chRest:
-				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
-				cT += aT
+				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				cT += dur
 
 			/* WITH */
 			case chWith:
-				if ci != len(line)-1 {
-					return nil, b.fmtCellErr(
-						fmt.Errorf("%q not at EOL", ch), cell, li, ci)
-				}
+				iT = cT
 				continue
-
-			/* PLAY */
-			default:
-				args := splitArgs(cell)
-				ins, err := b.evalPlay(
-					getArg(args, 0, ""),
-					getArg(args, 1, "1"),
-					getArg(args, 2, "1"),
-				)
-				if err != nil {
-					return nil, b.fmtCellErr(err, cell, li, ci)
-				}
-				ins.Time, ins.Info = cT, cell
-				outIrp.Add(ins)
-				prevIns = ins
-				prevCh = chPlay
-				cT += 1
 			}
 		}
 
-		if len(line) > 0 && line[len(line)-1] == chWith {
-			iT = cT
-		} else {
+		if line[len(line)-1] != chWith {
 			iT = 0
 		}
 	}
