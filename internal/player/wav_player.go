@@ -23,9 +23,8 @@ func NewWAVPlayer(sampleRate, channels int) *WAVPlayer {
 func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Play")
 	sr := p.wav.SampleRate()
-	// ts := ipr.TimeScale()
 	instructions := irp.Instructions()
-	duration := irp.Duration()
+	_, duration := irp.MinMaxTime()
 	totalSamples := int(duration * float64(sr))
 	logs.Info("Total instructions %d", irp.Length())
 	logs.Info("Total samples %d", totalSamples)
@@ -61,34 +60,6 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 
 func (p *WAVPlayer) Stop() error {
 	return nil
-}
-
-func (p *WAVPlayer) getSamples2(irp *ir.Program, wave audio.WaveFunc) []int16 {
-	sr := p.wav.SampleRate()
-	timeScale := 2.0 // TODO
-	total := int(float64(sr) * irp.Duration())
-	buf := make([]float64, total)
-	out := make([]int16, total)
-	clip := float64(math.MaxInt16)
-
-	for _, ins := range irp.Instructions() {
-		offset := int(ins.Time*timeScale) * sr
-		samples := p.wav.GenerateSamplesEnvelope(
-			ins.Midi,
-			float64(ins.Dur)*timeScale,
-			float64(ins.Vol),
-			0.03, 0.06,
-			wave,
-		)
-		for i, s := range samples {
-			buf[offset+i] += float64(s)
-		}
-	}
-	for i, s := range buf {
-		s = math.Tanh(s/clip) * clip // soft-clipping
-		out[i] = int16(s)
-	}
-	return out
 }
 
 func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave audio.WaveFunc) []int16 {

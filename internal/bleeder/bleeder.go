@@ -172,22 +172,18 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 	for li, line := range tokens {
 		cT = iT
 		if iT == 0 {
-			prevCh = ""
-			prevIns = nil
-			prevLinkName = ""
-			prevLinkArgs = nil
+			prevCh, prevLinkName = "", ""
+			prevIns, prevLinkArgs = nil, nil
 		}
 		for ci, cell := range line {
 			ch := string(cell[0])
 			switch ch {
 			/* FILL */
 			case chPlay:
-				if prevIns == nil {
-					return nil, b.fmtCellErr(
-						fmt.Errorf("%q requires a previous instruction", ch), cell, li, ci)
-				}
 				aT := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
-				prevIns.Dur += aT
+				if prevIns != nil {
+					prevIns.Dur += aT
+				}
 				prevCh = ch
 				cT += aT
 

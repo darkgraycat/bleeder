@@ -53,6 +53,12 @@ func (p *Program) Length() int {
 
 // Get duration of whole Program
 func (p *Program) Duration() float64 {
+	minTime, maxTime := p.MinMaxTime()
+	return maxTime - minTime
+}
+
+// Get start and end time of Program
+func (p *Program) MinMaxTime() (float64, float64) {
 	minTime := math.MaxFloat64
 	maxTime := 0.0
 	for _, ins := range p.instructions {
@@ -64,7 +70,7 @@ func (p *Program) Duration() float64 {
 			maxTime = end
 		}
 	}
-	return maxTime - minTime
+	return minTime, maxTime
 }
 
 // Shift start time of each instruction
