@@ -5,15 +5,8 @@ include = [
 ]
 
 [lane.main]
-vars = 'A:a2+8 D:.1'
+vars = 'A:a2+8'
 content = '''
-@part1:A+0 <
-@part1:A+2 <
-@part1:A+4 <
-@part1:A+7 <:-2
-
-_10
-
 >A-8:7 >A-5
 @testRiff1Bass:A-8 	   < <+4 <
 @testRiff1:A 	       < <+4 <
