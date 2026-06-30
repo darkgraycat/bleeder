@@ -7,48 +7,12 @@ include = [
 [lane.main]
 vars = 'A:a2+8'
 content = '''
-@tst
-# _10
-# >A-8:7 >A-5
-# @testRiff1Bass:A-8 	   < <+4 <
-# @testRiff1:A 	       < <+4 <
-# @testRiff1:A+8 	       < <+4 <
-# @testRiff1Lead:A+2:A+9 < <+4 <
-# @testRiff1:A+2 	       < <+4 <
-# @testRiff1:A+2 	       < <+4 <
-# >A-10:4
+>A-8:7 >A-5
+@testRiff1Bass:A-8 	   < <+4 <
+@testRiff1:A 	       < <+4 <
+@testRiff1:A+8 	       < <+4 <
+@testRiff1Lead:A+2:A+9 < <+4 <
+@testRiff1:A+2 	       < <+4 <
+@testRiff1:A+2 	       < <+4 <
+>A-10:4
 '''
-
-[riff.tst]
-vars = 'A:a3 B:A+7 C:A-12'
-content = '''
-@some >
-'''
-
-[lane.some]
-vars = 'A:d3'
-content = '''
->A >A _ >A
->A >A _ >A
-'''
-
-[lane.track2]
-content = '''
-@chord:a2:4 | @arpeg:a3:1
-@chord:f2:4 | @arpeg:f3:1
-@chord:d2:4 | @arpeg:d3:1
-@chord:d2:4 | @arpeg:d3:1
-'''
-
-[lane.track1]
-vars = 'tone:a3 bass:tone-12'
-content = '''
->bass+0:4 | >tone <+2 <+1 <+2
->bass-4:4 | >tone <+2 <+1 <+2
->bass-7:4 | >tone <+2 <+1 <+2
->bass-5:4 | >tone <+2 <+3 <-3
-'''
-
-[lane.part1]
-vars = 'A:f2 B:A+7 dur:4'
-content = '>A:dur | >B:dur/2 <:/3<<'
