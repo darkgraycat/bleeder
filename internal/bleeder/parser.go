@@ -112,7 +112,7 @@ outer:
 // evaluate argument with short arithmetic expression
 func evalArg(s string) float64 {
 	i := strings.LastIndexAny(s, "+-*/")
-	if i < 0 {
+	if i <= 0 {
 		return parseTone(s)
 	}
 	lhs := evalArg(s[:i])

@@ -59,11 +59,11 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		err = fmt.Errorf("unknown type %d", seq.Type)
 	}
 	if err != nil {
-		err = fmt.Errorf("%s: %w", name, err)
+		return nil, fmt.Errorf("%s: %w", name, err)
 	}
 	irp.Stretch(tick)
 	irp.Transpose(tune)
-	return irp, err
+	return irp, nil
 }
 
 // Get IR from raw Lane-DSL
