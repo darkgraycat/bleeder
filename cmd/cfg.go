@@ -8,24 +8,10 @@ type Config struct {
 		Channels   int `toml:"channels"`
 	} `toml:"audio"`
 
-	Parser struct {
-		DefaultDur float64 `toml:"default_dur"`
-		DefaultVol float64 `toml:"default_vol"`
-	} `toml:"parser"`
-
 	Output struct {
 		Command string
 		Args    []string
 	} `toml:"output"`
-
-	Mapping struct {
-		Play       string `toml:"play"`
-		Wave       string `toml:"wave"`
-		Seq        string `toml:"seq"`
-		Wait       string `toml:"wait"`
-		Repeat     string `toml:"repeat"`
-		RepeatLine string `toml:"repeat_line"`
-	} `toml:"mapping"`
 }
 
 func LoadConfig(path string) (*Config, error) {

@@ -2,52 +2,34 @@ package main
 
 import (
 	"bleeder/cmd"
-	"bleeder/internal/shared/logs"
-	"flag"
 	"fmt"
 	"os"
 )
 
-var cmds = map[string]cmd.Cmd{
+var handlers = map[string]cmd.Cmd{
 	"play":   cmd.CmdPlay,
 	"listen": cmd.CmdListen,
-	"send":   cmd.CmdSend,
+	"reload": cmd.CmdReload,
+	"stop":   cmd.CmdStop,
+	"status": cmd.CmdStatus,
+	"help":   cmd.CmdHelp,
 }
 
 func main() {
-	logs.SetLogLevel(logs.DEBUG)
+	if len(os.Args) < 2 {
+		fmt.Fprintln(os.Stderr, "TODO: print usage")
+		os.Exit(1)
+	}
 
-	// TODO remove
-	// if 2 > 9 {
-	// 	experiments.Run()
-	// 	logs.Info("Exit")
-	// 	return
-	// }
-
-	// parse CLI flags
-	cmdMode := ""
-	cmdArgs := cmd.CmdArgs{}
-	flag.StringVar(&cmdMode, "mode", "play", "")
-	flag.StringVar(&cmdArgs.BleedPath, "bleed", "", "")
-	flag.StringVar(&cmdArgs.CfgPath, "cfg", "config.toml", "")
-	flag.StringVar(&cmdArgs.Seq, "seq", "", "")
-	flag.StringVar(&cmdArgs.Raw, "raw", "", "")
-	flag.Parse()
-
-	// define which cmd to use
-	exec, ok := cmds[cmdMode]
+	handler, ok := handlers[os.Args[1]]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Unknown mode: %s\n", cmdMode)
+		fmt.Fprintln(os.Stderr, "TODO: print usage")
 		os.Exit(1)
 	}
 
-	// run selected cmd
-	logs.Info("executing")
-	err := exec(&cmdArgs)
+	err := handler(os.Args[2:])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error in", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	logs.Info("finish")
 }

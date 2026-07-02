@@ -3,62 +3,69 @@ package cmd
 import (
 	"bleeder/internal/bleeder"
 	"bleeder/internal/player"
-	"bleeder/internal/shared/logs"
+	"flag"
 	"fmt"
 )
 
-type CmdArgs struct {
-	BleedPath string
-	CfgPath   string
-	Seq       string
-	Raw       string
-}
+type Cmd func(args []string) error
 
-type Cmd func(args *CmdArgs) error
+func CmdPlay(args []string) error {
+	fs := flag.NewFlagSet("play", flag.ExitOnError)
+	cfgPath := fs.String("config", "config.toml", "config file path")
+	seqName := fs.String("seq", bleeder.MAIN_NAME, "sequence to play")
+	seqVars := fs.String("vars", "", "sequence variables")
+	fs.Parse(args)
 
-// Command to play specified .bleed.toml file
-func CmdPlay(args *CmdArgs) error {
-	logs.Info("PLAY %v", args)
+	bleedPath := fs.Arg(0)
+	if bleedPath == "" {
+		return fmt.Errorf("usage: bleeder play <path>")
+	}
 
-	logs.Debug("loading config")
-	cfg, err := LoadConfig(args.CfgPath)
+	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
-	logs.Debug("config loaded")
 
-	logs.Debug("loading bleed")
-	bleed, err := bleeder.LoadBleed(args.BleedPath)
+	bleed, err := bleeder.LoadBleed(bleedPath)
 	if err != nil {
 		return fmt.Errorf("loading bleed: %w", err)
 	}
-	logs.Debug("bleed loaded")
 
 	b := bleeder.NewBleeder(bleed)
-	irp, err := b.GenMainIR()
+	irp, err := b.GenSeqIR(*seqName, *seqVars)
 	if err != nil {
-		return err
+		return fmt.Errorf("generating %q %s: %w", seqName, seqVars, err)
 	}
 
 	// TODO: define correct player by config or some
 	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
 	err = p.Play(irp, 0, irp.Length())
 	if err != nil {
-		return err
+		return fmt.Errorf("playing %s %s: %w", seqName, seqVars, err)
 	}
 	return nil
 }
 
-// Start application in daemon mode listening
-func CmdListen(args *CmdArgs) error {
-	// TODO
-	logs.Info("LISTEN %v", args)
-	return nil
+func CmdListen(args []string) error {
+	return fmt.Errorf("listen is not implemented yet")
 }
 
-// Send partial sequence data to play
-func CmdSend(args *CmdArgs) error {
-	// TODO
-	logs.Info("SEND %v", args)
-	return nil
+func CmdReload(args []string) error {
+	return fmt.Errorf("reload is not implemented yet")
+}
+
+func CmdStop(args []string) error {
+	return fmt.Errorf("stop is not implemented yet")
+}
+
+func CmdStatus(args []string) error {
+	return fmt.Errorf("status is not implemented yet")
+}
+
+func CmdInfo(args []string) error {
+	return fmt.Errorf("info is not implemented yet")
+}
+
+func CmdHelp(args []string) error {
+	return fmt.Errorf("help is not implemented yet")
 }
