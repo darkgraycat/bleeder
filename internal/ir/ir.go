@@ -74,28 +74,31 @@ func (p *Program) MinMaxTime() (float64, float64) {
 }
 
 // Shift start time of each instruction
-func (p *Program) Shift(t float64) {
-	if t <= 0 {
+func (p *Program) Shift(offset float64) {
+	if offset <= 0 || math.IsNaN(offset) {
 		return
 	}
 	for _, ins := range p.instructions {
-		ins.Time += t
+		ins.Time += offset
 	}
 }
 
 // Stretch program in time
-func (p *Program) Stretch(t float64) {
-	if t <= 0 {
+func (p *Program) Stretch(factor float64) {
+	if factor <= 0 || math.IsNaN(factor) {
 		return
 	}
 	for _, ins := range p.instructions {
-		ins.Dur *= t
-		ins.Time *= t
+		ins.Dur *= factor
+		ins.Time *= factor
 	}
 }
 
 // Transpose all instructions
 func (p *Program) Transpose(semitones float64) {
+	if semitones == 0 || math.IsNaN(semitones) {
+		return
+	}
 	for _, ins := range p.instructions {
 		ins.Midi += semitones
 	}

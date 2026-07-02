@@ -61,12 +61,8 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	if err != nil {
 		err = fmt.Errorf("%s: %w", name, err)
 	}
-	if !math.IsNaN(tick) && tick > 0 {
-		irp.Stretch(tick)
-	}
-	if !math.IsNaN(tune) && tune != 0 {
-		irp.Transpose(tune)
-	}
+	irp.Stretch(tick)
+	irp.Transpose(tune)
 	return irp, err
 }
 
