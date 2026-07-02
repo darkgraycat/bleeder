@@ -7,8 +7,6 @@ include = [
 [lane.main]
 tick = '8/8'
 content = '''
->c2 < < >g3
-
 @scaleLead:c2:16 |
 @scaleLead:g3:32 <
 '''
