@@ -29,12 +29,38 @@ content = '''
 @testRiff1Bass:A-12 | @testRiff1Lead:A
 '''
 [riff.testRiff1Bass]
+tick = '1/4'
 vars = 'd:e2 e:d+7'
 content = '''
 d d > >  e _ d _
 '''
 [riff.testRiff1Lead]
+tick = '1/4'
 vars = 'a:e3 b:a+3 c:b+4'
 content = '''
 a b a b  a b c b
+'''
+
+[lane.testTicks]
+# Thu 2 Jul - implemented time manipulations via 'tick' property
+# Refactored CLI, now I can play by sequence name
+# Additionaly added some Vim keybindings to play with, its fun, really
+vars = 'A:e2 B:A+7 d:32'
+content = '''
+@testTicksCombo:A:A+12:d
+@testTicksRiff:B:d    <
+@testTicksCombo:A:B:d <
+@testTicksCombo:A:B:d <
+'''
+[lane.testTicksRiff]
+vars = 'A:e2 d:24'
+tick = '8/d'
+content = '''
+>A < < <+3:/2 <-2 _ <:*2 < <-3
+'''
+[lane.testTicksCombo]
+vars = 'A:e2 B:A+12 d:24 d2:d/2'
+content = '''
+@testTicksRiff:A:d2 |
+@testTicksRiff:B:d  <
 '''

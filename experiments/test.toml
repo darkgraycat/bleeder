@@ -5,15 +5,18 @@ include = [
 ]
 
 [lane.main]
-tick = '8/8'
 content = '''
-@scaleLead:c2:16 |
-@scaleLead:g3:32 <
+@test2:a2
+@test2:f2
+@test2:d2
+@test2:d2
 '''
 
-[riff.scaleLead]
-vars = 'A:e3 d:8'
-tick = '8/d'
+[riff.test2]
+vars = 'T:e2'
+tick = '1/4'
+tune = 'T'
 content = '''
-A A+7 A+12 A+7
+7 > > > > > > >
+0 0 1 0 0 0 1 0
 '''

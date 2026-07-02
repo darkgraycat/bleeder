@@ -46,6 +46,7 @@ type Sequence struct {
 	Type    SequenceType
 	Vars    string `toml:"vars"`    // sequence arguments
 	Tick    string `toml:"tick"`    // sequence tick duration
+	Tune    string `toml:"tune"`    // sequence transposition
 	Content string `toml:"content"` // sequence content
 }
 

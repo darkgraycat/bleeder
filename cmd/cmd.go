@@ -63,6 +63,7 @@ func CmdStatus(args []string) error {
 }
 
 func CmdInfo(args []string) error {
+	// fs := flag.NewFlagSet("info")
 	return fmt.Errorf("info is not implemented yet")
 }
 

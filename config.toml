@@ -4,4 +4,4 @@ channels = 1
 
 [output] # TODO - remove
 command = "afplay"
-args = ["-v", "0.8"]
+args = ["-v", "0.1"]

@@ -83,6 +83,24 @@ func (p *Program) Shift(t float64) {
 	}
 }
 
+// Stretch program in time
+func (p *Program) Stretch(t float64) {
+	if t <= 0 {
+		return
+	}
+	for _, ins := range p.instructions {
+		ins.Dur *= t
+		ins.Time *= t
+	}
+}
+
+// Transpose all instructions
+func (p *Program) Transpose(semitones float64) {
+	for _, ins := range p.instructions {
+		ins.Midi += semitones
+	}
+}
+
 // Sort instructions by absolute time
 func (p *Program) Sort() {
 	slices.SortFunc(p.instructions, func(a, b *Instruction) int {
