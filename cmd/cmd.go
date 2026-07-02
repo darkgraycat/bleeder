@@ -18,7 +18,7 @@ func CmdPlay(args []string) error {
 
 	bleedPath := fs.Arg(0)
 	if bleedPath == "" {
-		return fmt.Errorf("usage: bleeder play <path>")
+		return fmt.Errorf("usage: bleeder play [flags] <file>")
 	}
 
 	cfg, err := LoadConfig(*cfgPath)
@@ -34,14 +34,14 @@ func CmdPlay(args []string) error {
 	b := bleeder.NewBleeder(bleed)
 	irp, err := b.GenSeqIR(*seqName, *seqVars)
 	if err != nil {
-		return fmt.Errorf("generating %q %s: %w", seqName, seqVars, err)
+		return fmt.Errorf("generating %q %q: %w", *seqName, *seqVars, err)
 	}
 
 	// TODO: define correct player by config or some
 	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
 	err = p.Play(irp, 0, irp.Length())
 	if err != nil {
-		return fmt.Errorf("playing %s %s: %w", seqName, seqVars, err)
+		return fmt.Errorf("playing %q %q: %w", *seqName, *seqVars, err)
 	}
 	return nil
 }
