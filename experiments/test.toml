@@ -5,14 +5,17 @@ include = [
 ]
 
 [lane.main]
-vars = 'A:a2+8'
+tick = '8/8'
 content = '''
->A-8:7 >A-5
-@testRiff1Bass:A-8 	   < <+4 <
-@testRiff1:A 	       < <+4 <
-@testRiff1:A+8 	       < <+4 <
-@testRiff1Lead:A+2:A+9 < <+4 <
-@testRiff1:A+2 	       < <+4 <
-@testRiff1:A+2 	       < <+4 <
->A-10:4
+>c2 < < >g3
+
+@scaleLead:c2:16 |
+@scaleLead:g3:32 <
+'''
+
+[riff.scaleLead]
+vars = 'A:e3 d:8'
+tick = '8/d'
+content = '''
+A A+7 A+12 A+7
 '''

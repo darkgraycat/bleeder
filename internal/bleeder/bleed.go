@@ -33,7 +33,6 @@ type Bleed struct {
 // Meta holds global playback settings for a bleed file.
 type Meta struct {
 	Path    string   // file path
-	Tempo   int      `toml:"tempo"`   // beats per minute
 	Include []string `toml:"include"` // included bleed file paths
 }
 
@@ -46,6 +45,7 @@ type Vibe struct {
 type Sequence struct {
 	Type    SequenceType
 	Vars    string `toml:"vars"`    // sequence arguments
+	Tick    string `toml:"tick"`    // sequence tick duration
 	Content string `toml:"content"` // sequence content
 }
 

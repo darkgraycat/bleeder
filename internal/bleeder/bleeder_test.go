@@ -79,7 +79,7 @@ func TestGenLaneIR(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
-			irp, err := b.genLaneIR(tc.given)
+			irp, err := b.genLaneIR(tc.given, 1)
 
 			testutils.AssertErr(t, err, tc.errMsg)
 			testutils.AssertInts(t, len(tc.expected), irp.Length())
@@ -138,7 +138,7 @@ func BenchmarkGenLaneIR(b *testing.B) {
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
 			for b.Loop() {
-				bl.genLaneIR(tc.given)
+				bl.genLaneIR(tc.given, 1)
 			}
 		})
 	}
@@ -204,7 +204,7 @@ func TestGenRiffIR(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
-			irp, err := b.genRiffIR(tc.given)
+			irp, err := b.genRiffIR(tc.given, 1)
 
 			testutils.AssertErr(t, err, tc.errMsg)
 			testutils.AssertInts(t, len(tc.expected), irp.Length())
@@ -261,7 +261,7 @@ func BenchmarkGenRiffIR(b *testing.B) {
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
 			for b.Loop() {
-				bl.genRiffIR(tc.given)
+				bl.genRiffIR(tc.given, 1)
 			}
 		})
 	}

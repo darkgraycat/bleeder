@@ -45,15 +45,22 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	rawContent := applyVars(seq.Content, varsMap)
+	rawTick := applyVars(seq.Tick, varsMap)
+
 	tokens := tokenizeContent(rawContent)
+	tick := evalArg(rawTick)
+	if math.IsNaN(tick) {
+		tick = 1.0
+	}
 
 	var err error
 	var irp *ir.Program
 	switch seq.Type {
 	case SEQ_LANE:
-		irp, err = b.genLaneIR(tokens)
+		// TODO: add timeScale float64 argument
+		irp, err = b.genLaneIR(tokens, tick)
 	case SEQ_RIFF:
-		irp, err = b.genRiffIR(tokens)
+		irp, err = b.genRiffIR(tokens, tick)
 	default:
 		err = fmt.Errorf("unknown type %d", seq.Type)
 	}
@@ -64,7 +71,7 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 }
 
 // Get IR from raw Lane-DSL
-func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
+func (b *Bleeder) genLaneIR(tokens [][]string, tick float64) (*ir.Program, error) {
 	var cT, aT float64          // current time, advance time
 	var prevCh string           // previous operation character
 	var prevIns *ir.Instruction // previous instruction
@@ -88,7 +95,9 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 				if err != nil {
 					return nil, b.fmtCellErr(err, cell, li, ci)
 				}
-				ins.Time, ins.Info = cT, cell
+				ins.Dur *= tick
+				ins.Time = cT
+				ins.Info = cell
 				outIrp.Add(ins)
 				prevIns = ins
 				prevCh = ch
@@ -121,7 +130,8 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 					if err != nil {
 						return nil, b.fmtCellErr(err, cell, li, ci)
 					}
-					ins.Time, ins.Info = cT, cell
+					ins.Time = cT
+					ins.Info = cell
 					outIrp.Add(ins)
 					prevIns = ins
 					aT = ins.Dur
@@ -148,7 +158,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			/* REST */
 			case chRest:
 				cT += aT
-				aT = evalArg(getArg(args, 0, "1"))
+				aT = evalArg(getArg(args, 0, "1")) * tick
 
 			/* WITH */
 			case chWith:
@@ -161,7 +171,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 }
 
 // Get IR from raw Riff-DSL
-func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
+func (b *Bleeder) genRiffIR(tokens [][]string, tick float64) (*ir.Program, error) {
 	var cT, iT float64          // current time, initial time
 	var prevCh string           // previous operation character
 	var prevIns *ir.Instruction // previous instruction
@@ -189,15 +199,17 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				if err != nil {
 					return nil, b.fmtCellErr(err, cell, li, ci)
 				}
-				ins.Time, ins.Info = cT, cell
+				ins.Dur *= tick
+				ins.Time = cT
+				ins.Info = cell
 				outIrp.Add(ins)
 				prevIns = ins
 				prevCh = chPlay
-				cT += 1
+				cT += tick
 
 			/* FILL */
 			case chPlay:
-				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1")) * tick
 				if prevIns != nil {
 					prevIns.Dur += dur
 				}
@@ -234,10 +246,11 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 					if err != nil {
 						return nil, b.fmtCellErr(err, cell, li, ci)
 					}
-					ins.Time, ins.Info = cT, cell
+					ins.Time = cT
+					ins.Info = cell
 					outIrp.Add(ins)
 					prevIns = ins
-					cT += 1
+					cT += tick
 				case chLink:
 					newArgs := make([]string, max(len(prevLinkArgs), len(args)))
 					for i := range newArgs {
@@ -260,7 +273,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* REST */
 			case chRest:
-				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1")) * tick
 				cT += dur
 
 			/* WITH */
