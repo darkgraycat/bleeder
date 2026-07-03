@@ -6,7 +6,7 @@ include = [
 
 [lane.main]
 content = '''
-@noSleepLane3
+@noSleepLane3:1
 '''
 
 [riff.tst1]

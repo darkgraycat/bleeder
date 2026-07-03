@@ -4,58 +4,52 @@ const net = require('net');
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
+  /** @type {net.Socket} */
   let client = null;
 
   // CodeLens
   vscode.languages.registerCodeLensProvider('toml', {
     provideCodeLenses(document) {
-      const lenses = [];
+      /** @type {vscode.CodeLens[]} */
+      const out = [];
       const text = document.getText();
-
-      // Match [lane.xxx] or [riff.xxx]
-      const regex = /^\[(lane|riff)\.(\w+)\]/gm;
+      const regex = /^\[(lane|riff)\.(\w+)\]/gm; // [lane.xxx] or [riff.xxx]
       let match;
-
-      while ((match = regex.exec(text))) {
-        const line = document.positionAt(match.index).line;
-        const range = new vscode.Range(line, 0, line, 0);
-        const seqName = match[2];
-        const seqType = match[1];
-
-        lenses.push(
-          new vscode.CodeLens(range, {
-            title: `Play`,
-            command: 'bleeder.play',
-            arguments: [seqName, seqType]
-          })
+      while (match = regex.exec(text)) {
+        const p = document.positionAt(match.index);
+        const [, seqType, seqName] = match;
+        out.push(
+          new vscode.CodeLens(
+            new vscode.Range(p.line, 0, p.line, 0),
+            {
+              title: `Play ${seqName}`,
+              command: 'bleeder.play',
+              arguments: [seqName]
+            })
         );
       }
-
-      return lenses;
+      return out;
     }
   });
 
   // InlayHints
   vscode.languages.registerInlayHintsProvider('toml', {
-    provideInlayHints(document, range) {
-      const hints = [];
-
-      // Find @seq:args patterns
-      const regex = /@(\w+):(\w+)/g;
+    provideInlayHints(document) {
+      /** @type {vscode.InlayHint[]} */
+      const out = [];
+      const text = document.getText();
+      const regex = /@(\w+):(\w+)/g; // @seq:args
       let match;
-
-      while ((match = regex.exec(document.getText()))) {
-        const pos = document.positionAt(match.index + match[0].length);
-
-        hints.push({
-          position: pos,
+      while (match = regex.exec(text)) {
+        const p = document.positionAt(match.index);
+        out.push({
+          position: document.lineAt(p.line).range.end,
           label: ' [4 beats, tune: d1]',
           kind: vscode.InlayHintKind.Type,
           paddingLeft: true
         });
       }
-
-      return hints;
+      return out;
     }
   });
 
