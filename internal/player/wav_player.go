@@ -79,7 +79,7 @@ func (p *WAVPlayer) getSamples(instructions []*ir.Instruction, total int, wave a
 		dur := ins.Dur / forDebugTimeTempVariableAtAll
 		// TODO
 		// samples := p.wav.GenerateSamples(ins.Freq, ins.Dur, ins.Vol, wave)
-		samples := p.wav.GenerateSamplesEnvelope(audio.MidfToFreq(ins.Midi), dur, ins.Vol, 0.03, 0.06, wave)
+		samples := p.wav.GenerateSamplesEnvelope(audio.MidfToFreq(ins.Midi), dur, ins.Vol, 0.01, 0.01, wave)
 		for i, s := range samples {
 			buf[offset+i] += float64(s)
 		}

@@ -64,3 +64,30 @@ content = '''
 @testTicksRiff:A:d2 |
 @testTicksRiff:B:d  <
 '''
+
+[lane.noSleep]
+# Fri 3 Jul 2:47 - melody translated from guitar in Riff and then in Lane
+# Also, found out that we can have oneline helpers in shared 'lane' or 'riff' sections
+# Can be usefull
+content = '@noSleepRiff @noSleepLane @chordShort:a2 | @arpegShort:a3:4'
+[riff.noSleepRiff]
+vars = 'T:a2 D:2'
+tick = '1/D'
+tune = 'T'
+content = '''
+7 > > <+2:.5 <+2 | 4+7 > > <+1:.5 <-1
+0 > > >          | 4   > > >
+'''
+[lane.noSleepLane]
+vars = 'T:0 D:2'
+tick = '1/D'
+tune = 'T'
+content = '''
+>a2:4  |<+7:3 |_3 <+2:.5 <+2
+>cs3:4 |<+7:3 |_3 <+1:.5 <-1
+'''
+[lane]
+chordShort={vars='note:e2 D:1',tick='1/D',content='>note |<+7'}
+arpegShort={vars='note:e2 D:1',tick='1/D',content='>note <+7 <+5 <-5'}
+
+

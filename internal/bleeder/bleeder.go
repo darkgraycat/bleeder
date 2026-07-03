@@ -199,7 +199,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 				outIrp.Add(ins)
 				prevIns = ins
 				prevCh = chPlay
-				cT += 1
+				cT += ins.Dur
 
 			/* FILL */
 			case chPlay:
@@ -244,7 +244,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 					ins.Info = cell
 					outIrp.Add(ins)
 					prevIns = ins
-					cT += 1
+					cT += ins.Dur
 				case chLink:
 					newArgs := make([]string, max(len(prevLinkArgs), len(args)))
 					for i := range newArgs {

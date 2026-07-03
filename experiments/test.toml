@@ -6,32 +6,22 @@ include = [
 
 [lane.main]
 content = '''
-@bass | @lead
+@noSleepLane3
 '''
 
-[riff.lead]
-vars = 'T:e2'
-tick = '1/4'
+[riff.tst1]
+vars = 'T:e1 D:4'
+tick = '1/D'
 tune = 'T'
 content = '''
-0 0 1 2 > 5 2 5 |
-2 2 1 0 7 0 7 >
+0 7 8 0 7 8 10 5
 '''
 
-[riff.bass]
-vars = 'T:e2'
-tick = '1/4'
-tune = 'T-12'
+[riff.tst2]
+vars = 'T:e1 D:4'
+tick = '1/D/2'
+tune = 'T+12'
 content = '''
-2 2 5 2 2 2 5 2 |
-0 0 7 0 0 0 7 1
+0 7 10 8 0 7 10 8
 '''
 
-[lane.chord2]
-vars = 'T:e2'
-tick = '1/4'
-tune = 'T'
-content = '''
->0:8   |<+7
->0-2:8 |<+7
-'''
