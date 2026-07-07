@@ -754,3 +754,9 @@ Q: where to put idx after update?
 
 
 ## How can we know boundaries
+
+
+## Command to play using ffplay
+```sh
+bleeder play -seq main '/Users/pburi/DarkGrayCat/golang/bleeder/experiments/test.toml' | ffplay -autoexit -nodisp -loglevel quiet -
+```

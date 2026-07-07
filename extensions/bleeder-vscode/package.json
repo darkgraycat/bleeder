@@ -1,24 +1,43 @@
 {
-	"name": "bleeder-vscode",
-	"displayName": "Bleeder",
-	"description": "Live music coding with Bleeder",
-	"version": "0.1.0",
-	"publisher": "darkgraycat",
-	"engines": {
-	  "vscode": "^1.80.0"
-	},
-	"activationEvents": [
-	  "onLanguage:toml",
-	  "onCommand:bleeder.play"
-	],
-	"main": "./extension.js",
-	"contributes": {
-	  "commands": [
-		{"command": "bleeder.play", "title": "▶ Play"},
-		{"command": "bleeder.stop", "title": "⏹ Stop"}
-	  ]
-	},
-	"devDependencies": {
-	  "@types/vscode": "^1.80.0"
-	}
+  "name": "bleeder-vscode",
+  "displayName": "Bleeder",
+  "description": "Live music coding with Bleeder",
+  "version": "0.1.0",
+  "publisher": "darkgraycat",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "onLanguage:toml"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "bleeder.play",
+        "title": "Bleeder: Play"
+      },
+      {
+        "command": "bleeder.stop",
+        "title": "Bleeder: Stop"
+      }
+    ],
+    "configuration": {
+      "properties": {
+        "bleeder.path": {
+          "type": "string",
+          "default": "/Users/pburi/DarkGrayCat/golang/bleeder/bleeder",
+          "description": "Path to bleeder binary"
+        },
+        "bleeder.player": {
+          "type": "string",
+          "default": "ffplay -autoexit -nodisp -loglevel quiet -",
+          "description": "WAV output stream player"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0"
   }
+}

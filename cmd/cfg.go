@@ -1,6 +1,11 @@
 package cmd
 
-import "github.com/BurntSushi/toml"
+import (
+	"os"
+	"path/filepath"
+
+	"github.com/BurntSushi/toml"
+)
 
 type Config struct {
 	Audio struct {
@@ -20,4 +25,14 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+func defaultConfigPath() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+
+	dir := filepath.Dir(ex)
+	return filepath.Join(dir, "config.toml")
 }

@@ -11,7 +11,7 @@ type Cmd func(args []string) error
 
 func CmdPlay(args []string) error {
 	fs := flag.NewFlagSet("play", flag.ExitOnError)
-	cfgPath := fs.String("config", "config.toml", "config file path")
+	cfgPath := fs.String("config", defaultConfigPath(), "config file path")
 	seqName := fs.String("seq", bleeder.MAIN_NAME, "sequence to play")
 	seqVars := fs.String("vars", "", "sequence variables")
 	fs.Parse(args)

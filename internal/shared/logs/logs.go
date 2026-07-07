@@ -2,6 +2,7 @@ package logs
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -89,7 +90,7 @@ func Log(level LogLevel, format string, a ...any) {
 	case ERROR:
 		prefix = red + "[ERROR] " + reset
 	}
-	fmt.Printf(prefix+format+"\n", a...)
+	fmt.Fprintf(os.Stderr, prefix+format+"\n", a...)
 }
 
 func callerName(skip int) string {

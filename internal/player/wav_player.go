@@ -4,10 +4,8 @@ import (
 	"bleeder/internal/audio"
 	"bleeder/internal/ir"
 	"bleeder/internal/shared/logs"
-	"fmt"
 	"math"
 	"os"
-	"os/exec"
 )
 
 type WAVPlayer struct {
@@ -30,10 +28,6 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Info("Total samples %d", totalSamples)
 	logs.Info("Total duration %f", duration)
 
-	for i, ins := range irp.Instructions() {
-		fmt.Printf("[%d] \t%.1f : %.1f : %.1f : %.1f\n", i, ins.Midi, ins.Dur, ins.Vol, ins.Time)
-	}
-
 	logs.Debug("get samples")
 	wave := audio.WaveFuncMix(audio.WaveCubic, audio.WaveSoftSquare)
 	out := p.getSamples(instructions, totalSamples, wave)
@@ -41,21 +35,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	logs.Debug("append samples")
 	p.wav.Append(out)
 
-	logs.Debug("create file")
-	// f, err := os.CreateTemp("", "out*.wav")
-	f, err := os.Create("test.wav")
-	if err != nil {
-		return err
-	}
-	// defer os.Remove(f.Name())
-	defer f.Close()
-
-	logs.Debug("write file")
-	p.wav.Write(f)
-
-	// TODO: fix bug - it not exiting when its done
-	logs.Debug("execute")
-	return exec.Command("afplay", "-v", "0.5", f.Name()).Run()
+	return p.wav.Write(os.Stdout)
 }
 
 func (p *WAVPlayer) Stop() error {
