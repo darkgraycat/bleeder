@@ -6,7 +6,9 @@ include = [
 
 [lane.main]
 content = '''
-@tst1
+# @tst4:c1 <
+
+@seq1:a1 <-4 <-5 <+4
 '''
 
 [riff.tst1]
@@ -17,11 +19,22 @@ content = '''
 0 7 8 0 7 8 10 5
 '''
 
-[riff.tst2]
+[riff.seq1]
 vars = 'T:e1 D:4'
 tick = '1/D'
-tune = 'T+12'
+tune = 'T'
 content = '''
-0 0 0 0
+0 12 0 12
 '''
 
+
+[lane.tst4]
+vars = 'T:e1 D:4'
+tick = '1/D'
+tune = 'T'
+content = '''
+>9 <+12 >9 <+12
+>5 <+12 >5 <+12
+>0 <+12 >0 <+12
+>4 <+12 >4 <+12
+'''

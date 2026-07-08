@@ -1,7 +1,7 @@
 // @ts-check
 const vscode = require('vscode');
-const { spawn } = require('child_process');
 const net = require('net');
+const { spawn } = require('child_process');
 const { regExs, getSequenceRaw, getSequenceDetails, parseBleedData } = require('./helpers');
 
 /** @type {{
@@ -72,33 +72,20 @@ function activate(context) {
       const activeDoc = getActiveDocument();
       if (!activeDoc) return;
 
+      vscode.window.setStatusBarMessage(`Playing: ${seqName}`, 5000);
       const filePath = activeDoc.uri.fsPath;
-
       const config = vscode.workspace.getConfiguration('bleeder');
       const binPath = config.get('path');
       const player = config.get('player');
 
-      console.log({ seqName });
       const cmd = `${binPath} play -seq ${seqName} ${filePath} | ${player}`;
-      console.log({ cmd });
       const proc = spawn('sh', ['-c', cmd]);
 
       let stderr = '';
-      proc.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      proc.on('error', (err) => {
-        vscode.window.showErrorMessage(`Bleeder not found: ${err.message}`);
-      });
-
-      proc.on('close', (code) => {
-        if (code === 0) {
-          vscode.window.showInformationMessage(`▶ ${seqName}`);
-        } else {
-          vscode.window.showErrorMessage(`Play failed: ${stderr}`);
-        }
-      });
+      proc.stderr.on('data', (data) => stderr += data.toString());
+      proc.on('error', (err) => vscode.window.showErrorMessage(`Error: ${err.message}`));
+      proc.on('close', (code) => code !== 0 && vscode.window.showErrorMessage(`Play failed: ${stderr}`));
+      // TODO proper error handling
     })
   );
 }
