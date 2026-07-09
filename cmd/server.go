@@ -9,16 +9,15 @@ import (
 
 func handleConnection(conn net.Conn) error {
 	defer conn.Close()
-
 	scanner := bufio.NewScanner(conn)
 
 	for scanner.Scan() {
-		cmd := strings.TrimSpace(scanner.Text())
-
-		switch cmd {
-		case "":
+		args := strings.Fields(scanner.Text())
+		if len(args) == 0 {
 			continue
+		}
 
+		switch args[0] {
 		case "PLAY":
 			fmt.Fprintln(conn, "OK")
 
@@ -29,7 +28,7 @@ func handleConnection(conn net.Conn) error {
 			fmt.Fprintln(conn, "playing")
 
 		default:
-			fmt.Fprintf(conn, "ERR unknown command: %s\n", cmd)
+			fmt.Fprintf(conn, "ERR unknown command: %q\n", args[0])
 		}
 	}
 

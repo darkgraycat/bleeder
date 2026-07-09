@@ -4,11 +4,10 @@ include = [
 ]
 
 [lane.main]
-tune = '-2'
-tick = '.88'
+tune = '+2'
+tick = '1/4'
 content = '''
 @test233 <<<
-# @nobodyClaimingMe <<<
 '''
 
 [lane.track1]

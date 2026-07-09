@@ -76,16 +76,16 @@ func CmdLive(args []string) error {
 	defer listener.Close()
 
 	log.Printf("[INIT:LIVE] Listening on %s\n", port)
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("[ERROR] ", err)
 			continue
 		}
-
-		if err := handleConnection(conn); err != nil {
+		err = handleConnection(conn)
+		if err != nil {
 			log.Println("[ERROR] ", err)
+			continue
 		}
 	}
 }
