@@ -1,34 +1,10 @@
 [meta]
 include = [
-	# 'dev_log_bleeds.toml'
+'dev_log_bleeds.toml'
 ]
 
-[riff]
-rep={vars='T:e1',tune='T',content='0 12 0 12'}
-
 [lane.main]
-tune = '+0'
-tick = '1/4'
+tune = '-4'
 content = '''
-@iDontBelongHere:-2 <<<
-# @nobodyClaimingMe <
-'''
-
-[lane.iDontBelongHere]
-vars = 'T:e1 D:1'
-tick = '1/D'
-tune = 'T'
-content = '''
-@rep:9 <5 <0 <4
-'''
-
-[lane.nobodyClaimingMe]
-vars = 'T:e1 D:1'
-tick = '1/D'
-tune = 'T'
-content = '''
-@rep:0 <
-@rep:8 >8 <+12 >8 _
-@rep:7 <
-@rep:7 <1
+@graur
 '''

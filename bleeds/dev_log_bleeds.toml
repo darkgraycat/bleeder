@@ -90,4 +90,30 @@ content = '''
 chordShort={vars='note:e2 D:1',tick='1/D',content='>note |<+7'}
 arpegShort={vars='note:e2 D:1',tick='1/D',content='>note <+7 <+5 <-5'}
 
+[lane.graur]
+# Thu 9 Jul 3:55 - was inspired by "graur" tracks
+# Also enhanced play and added stop command to run multiple bleeder instances
+content = '''
+@nobodyClaimingMe <
+@iDontBelongHere <
+'''
+[riff]
+rep={vars='T:e1',tune='T',content='0 12 0 12'}
 
+[lane.iDontBelongHere]
+vars = 'T:e1 D:4'
+tick = '1/D'
+tune = 'T'
+content = '''
+@rep:9 <5 <0 <4
+'''
+[lane.nobodyClaimingMe]
+vars = 'T:e1 D:4'
+tick = '1/D'
+tune = 'T'
+content = '''
+@rep:0 <
+@rep:8 >8 <+12 >8 _
+@rep:7 <
+@rep:7 <1
+'''
