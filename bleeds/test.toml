@@ -4,7 +4,28 @@ include = [
 ]
 
 [lane.main]
-tune = '-4'
+tune = '-2'
+tick = '.88'
 content = '''
-@graur
+@test233 <<<
+# @nobodyClaimingMe <<<
+'''
+
+[lane.track1]
+content = '''
+@iDontBelongHere:c1 <
+'''
+
+[lane.track2]
+content = '''
+@iDontBelongHere:c2 <
+'''
+
+[riff.test233]
+vars = 'T:e2 D:4'
+tick = '1/D'
+tune = 'T'
+content = '''
+0 0 0 0 | 1 1 1 1 | 0 0 0 0 | 1 1 1  1
+7 7 _ 8 | 8 _ 8 8 | 8 7 7 _ | _ 8 10 8
 '''

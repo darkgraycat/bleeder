@@ -46,20 +46,8 @@ func CmdPlay(args []string) error {
 	return nil
 }
 
-func CmdStop(args []string) error {
-	return fmt.Errorf("stop is not implemented yet")
-}
-
-func CmdListen(args []string) error {
+func CmdLive(args []string) error {
 	return fmt.Errorf("listen is not implemented yet")
-}
-
-func CmdReload(args []string) error {
-	return fmt.Errorf("reload is not implemented yet")
-}
-
-func CmdStatus(args []string) error {
-	return fmt.Errorf("status is not implemented yet")
 }
 
 func CmdInfo(args []string) error {

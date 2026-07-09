@@ -1,7 +1,6 @@
 package bleeder
 
 import (
-	"bleeder/internal/shared/logs"
 	"bleeder/internal/shared/testutils"
 	"fmt"
 	"testing"
@@ -132,8 +131,6 @@ func BenchmarkGenLaneIR(b *testing.B) {
 		},
 	}
 
-	logLevel := logs.GetLogLevel()
-	logs.SetLogLevel(logs.DISABLED)
 	bl := NewBleeder(&Bleed{})
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
@@ -142,7 +139,6 @@ func BenchmarkGenLaneIR(b *testing.B) {
 			}
 		})
 	}
-	logs.SetLogLevel(logLevel)
 }
 
 func TestGenRiffIR(t *testing.T) {
@@ -255,8 +251,6 @@ func BenchmarkGenRiffIR(b *testing.B) {
 		},
 	}
 
-	logLevel := logs.GetLogLevel()
-	logs.SetLogLevel(logs.DISABLED)
 	bl := NewBleeder(&Bleed{})
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
@@ -265,7 +259,6 @@ func BenchmarkGenRiffIR(b *testing.B) {
 			}
 		})
 	}
-	logs.SetLogLevel(logLevel)
 }
 
 func TestGenSeqIRErrors(t *testing.T) {

@@ -2,34 +2,31 @@ package main
 
 import (
 	"bleeder/cmd"
-	"fmt"
+	"log"
 	"os"
 )
 
 var handlers = map[string]cmd.Cmd{
-	"play":   cmd.CmdPlay,
-	"listen": cmd.CmdListen,
-	"reload": cmd.CmdReload,
-	"stop":   cmd.CmdStop,
-	"status": cmd.CmdStatus,
-	"help":   cmd.CmdHelp,
+	"play": cmd.CmdPlay,
+	"live": cmd.CmdLive,
+	"info": cmd.CmdInfo,
+	"help": cmd.CmdHelp,
 }
 
 func main() {
+	log.SetFlags(0)
+
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "TODO: print usage")
-		os.Exit(1)
+		log.Fatalln("[ERROR]: invalid number of arguments")
 	}
 
 	handler, ok := handlers[os.Args[1]]
 	if !ok {
-		fmt.Fprintln(os.Stderr, "TODO: print usage")
-		os.Exit(1)
+		log.Fatalf("[ERROR]: available commands - play, live, info, help")
 	}
 
 	err := handler(os.Args[2:])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 }
