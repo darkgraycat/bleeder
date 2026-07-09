@@ -13,10 +13,9 @@ type Config struct {
 		Channels   int `toml:"channels"`
 	} `toml:"audio"`
 
-	Output struct {
-		Command string
-		Args    []string
-	} `toml:"output"`
+	Live struct {
+		Port int `toml:"port"`
+	}
 }
 
 func LoadConfig(path string) (*Config, error) {

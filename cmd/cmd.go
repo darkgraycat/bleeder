@@ -5,6 +5,8 @@ import (
 	"bleeder/internal/player"
 	"flag"
 	"fmt"
+	"log"
+	"net"
 )
 
 type Cmd func(args []string) error
@@ -47,7 +49,39 @@ func CmdPlay(args []string) error {
 }
 
 func CmdLive(args []string) error {
-	return fmt.Errorf("listen is not implemented yet")
+	fs := flag.NewFlagSet("live", flag.ExitOnError)
+	cfgPath := fs.String("config", defaultConfigPath(), "config file path")
+	fs.Parse(args)
+
+	// bleedPath := fs.Arg(0)
+	// if bleedPath == "" {
+	// 	return fmt.Errorf("usage: bleeder live [flags] <file>")
+	// }
+
+	cfg, err := LoadConfig(*cfgPath)
+	if err != nil {
+		return fmt.Errorf("loading config: %w", err)
+	}
+
+	// bleed, err := bleeder.LoadBleed(bleedPath)
+	// if err != nil {
+	// 	return fmt.Errorf("loading bleed: %w", err)
+	// }
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Live.Port))
+	if err != nil {
+		return fmt.Errorf("tcp server: %w", err)
+	}
+	defer listener.Close()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println("[ERROR] accepting conn:", err)
+			continue
+		}
+		go handleConnection(conn)
+	}
 }
 
 func CmdInfo(args []string) error {
