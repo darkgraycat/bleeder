@@ -4,37 +4,31 @@ include = [
 	'dev_log_bleeds.toml'
 ]
 
+[riff]
+rep={vars='T:e1',tune='T',content='0 12 0 12'}
+
 [lane.main]
+tune = '+0'
+tick = '3/4'
 content = '''
-# @tst4:c1 <
-
-@seq1:a1 <-4 <-5 <+4
+@nobodyClaimingMe <
 '''
 
-[riff.tst1]
-vars = 'T:e2 D:4'
-tick = '1/D'
-tune = 'T'
-content = '''
-0 7 8 0 7 8 10 5
-'''
-
-[riff.seq1]
+[lane.iDontBelongHere]
 vars = 'T:e1 D:4'
 tick = '1/D'
 tune = 'T'
 content = '''
-0 12 0 12
+@rep:9 <5 <0 <4
 '''
 
-
-[lane.tst4]
+[lane.nobodyClaimingMe]
 vars = 'T:e1 D:4'
 tick = '1/D'
 tune = 'T'
 content = '''
->9 <+12 >9 <+12
->5 <+12 >5 <+12
->0 <+12 >0 <+12
->4 <+12 >4 <+12
+@rep:0 <
+@rep:8 >8 <+12 >8 _
+@rep:7 <
+@rep:7 <1
 '''

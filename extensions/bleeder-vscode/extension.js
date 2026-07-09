@@ -1,15 +1,21 @@
 // @ts-check
 const vscode = require('vscode');
-const net = require('net');
-const { spawn } = require('child_process');
+const net = require('node:net');;
+const chp = require('node:child_process');
 const { regExs, getSequenceRaw, getSequenceDetails, parseBleedData } = require('./helpers');
 
 /** @type {{
- * data?: ReturnType<typeof parseBleedData>
- * client?: net.Socket
+ * data?: ReturnType<typeof parseBleedData> // TODO remove
+ * client: net.Socket
+ * procs: Record<string, chp.ChildProcess>
+ * stateUpdated: vscode.EventEmitter
  * }} 
  */
-const state = {};
+const state = {
+  client: null,
+  procs: {},
+  stateUpdated: new vscode.EventEmitter()
+};
 
 /** @param {vscode.ExtensionContext} context */
 function activate(context) {
@@ -26,6 +32,7 @@ function activate(context) {
     }),
     // CodeLens
     vscode.languages.registerCodeLensProvider('toml', {
+      onDidChangeCodeLenses: state.stateUpdated.event,
       provideCodeLenses(document) {
         /** @type {vscode.CodeLens[]} */
         const out = [];
@@ -34,14 +41,15 @@ function activate(context) {
         while (match = regExs.seqDef.exec(text)) {
           const p = document.positionAt(match.index);
           const [, seqType, seqName] = match;
+          const range = new vscode.Range(p.line, 0, p.line, 0);
+          const isPlaying = state.procs[seqName];
+
           out.push(
-            new vscode.CodeLens(
-              new vscode.Range(p.line, 0, p.line, 0),
-              {
-                title: `Play ${seqName}`,
-                command: 'bleeder.play',
-                arguments: [seqName]
-              })
+            new vscode.CodeLens(range, {
+              title: `${isPlaying ? '⏹' : '▶'} ${seqName}`,
+              command: `bleeder.${isPlaying ? 'stop' : 'play'}`,
+              arguments: [seqName],
+            }),
           );
         }
         return out;
@@ -79,14 +87,30 @@ function activate(context) {
       const player = config.get('player');
 
       const cmd = `${binPath} play -seq ${seqName} ${filePath} | ${player}`;
-      const proc = spawn('sh', ['-c', cmd]);
+      const proc = chp.spawn('sh', ['-c', cmd], { detached: true });
+      state.procs[seqName] = proc;
+      state.stateUpdated.fire();
 
       let stderr = '';
       proc.stderr.on('data', (data) => stderr += data.toString());
       proc.on('error', (err) => vscode.window.showErrorMessage(`Error: ${err.message}`));
-      proc.on('close', (code) => code !== 0 && vscode.window.showErrorMessage(`Play failed: ${stderr}`));
-      // TODO proper error handling
-    })
+      proc.on('close', (code) => {
+        state.procs[seqName] = null;
+        state.stateUpdated.fire();
+        if (code !== 0) {
+          // const last = stderr.split('\n').at(-2);
+          // vscode.window.showErrorMessage(`Play failed: ${last}`);
+          // TODO proper error handling
+        }
+      });
+    }),
+    vscode.commands.registerCommand('bleeder.stop', (seqName = 'main') => {
+      const proc = state.procs[seqName];
+      if (proc)
+        process.kill(-proc.pid, 'SIGTERM');
+    }),
+    // Misc
+    state.stateUpdated,
   );
 }
 

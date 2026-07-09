@@ -357,8 +357,13 @@ func TestEvalArg(t *testing.T) {
 		},
 		{
 			name:     "evaluate into NaN",
-			given:    "cf2+9",
+			given:    "lol+9",
 			expected: math.NaN(),
+		},
+		{
+			name:     "evaluate with preceding modifier",
+			given:    "-2-4",
+			expected: -6,
 		},
 	}
 
