@@ -3,25 +3,35 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 )
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn) error {
 	defer conn.Close()
 
-	reader := bufio.NewReader(conn)
-	message, err := reader.ReadString('\n')
-	if err != nil {
-		log.Println("[ERROR] read:", err)
-		return
+	scanner := bufio.NewScanner(conn)
+
+	for scanner.Scan() {
+		cmd := strings.TrimSpace(scanner.Text())
+
+		switch cmd {
+		case "":
+			continue
+
+		case "PLAY":
+			fmt.Fprintln(conn, "OK")
+
+		case "STOP":
+			fmt.Fprintln(conn, "OK")
+
+		case "INFO":
+			fmt.Fprintln(conn, "playing")
+
+		default:
+			fmt.Fprintf(conn, "ERR unknown command: %s\n", cmd)
+		}
 	}
 
-	ackMsg := strings.ToUpper(strings.TrimSpace(message))
-	response := fmt.Sprintf("ACK: %s\n", ackMsg)
-	_, err = conn.Write([]byte(response))
-	if err != nil {
-		log.Println("[ERROR] write:", err)
-	}
+	return scanner.Err()
 }

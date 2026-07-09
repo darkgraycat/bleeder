@@ -68,19 +68,25 @@ func CmdLive(args []string) error {
 	// 	return fmt.Errorf("loading bleed: %w", err)
 	// }
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Live.Port))
+	port := fmt.Sprintf(":%d", cfg.Live.Port)
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		return fmt.Errorf("tcp server: %w", err)
 	}
 	defer listener.Close()
 
+	log.Printf("[INIT:LIVE] Listening on %s\n", port)
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println("[ERROR] accepting conn:", err)
+			log.Println("[ERROR] ", err)
 			continue
 		}
-		go handleConnection(conn)
+
+		if err := handleConnection(conn); err != nil {
+			log.Println("[ERROR] ", err)
+		}
 	}
 }
 
