@@ -130,14 +130,14 @@ func evalArg(s string) float64 {
 	return math.NaN()
 }
 
-// get argument at position idx or fallback to prev value
-func getArg(args []string, idx int, prev string) string {
+// get argument at position idx or use fallback value
+func getArg(args []string, idx int, fallback string) string {
 	if idx >= len(args) || args[idx] == "" {
-		return prev
+		return fallback
 	}
 	v := args[idx]
 	if isModCh(v[0]) {
-		return prev + v
+		return fallback + v
 	}
 	return v
 }

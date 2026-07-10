@@ -25,7 +25,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	totalSamples := int(duration * float64(sr))
 	log.Printf("[INIT:PLAY] instructions %d, samples %d, duration %f\n", irp.Length(), totalSamples, duration)
 
-	wave := audio.WaveFuncMix(audio.WaveParabola, audio.WaveSoftSquare)
+	wave := audio.WaveFuncMix(audio.WaveCubic, audio.WaveSoftSquare)
 	out := p.getSamples(instructions, totalSamples, wave)
 
 	p.wav.Append(out)

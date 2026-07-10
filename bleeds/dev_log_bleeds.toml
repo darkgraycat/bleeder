@@ -101,14 +101,14 @@ content = '''
 rep={vars='T:e1',tune='T',content='0 12'}
 
 [lane.iDontBelongHere]
-vars = 'T:e1 D:4'
+vars = 'T:b0 D:4'
 tick = '1/D'
 tune = 'T'
 content = '''
 @rep:9< <5< <0< <4<
 '''
 [lane.nobodyClaimingMe]
-vars = 'T:e1 D:4'
+vars = 'T:b0 D:4'
 tick = '1/D'
 tune = 'T'
 content = '''

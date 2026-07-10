@@ -104,6 +104,16 @@ func (p *Program) Transpose(semitones float64) {
 	}
 }
 
+// Modify volume of all instructions
+func (p *Program) Volume(volume float64) {
+	if volume <= 0 || math.IsNaN(volume) {
+		return
+	}
+	for _, ins := range p.instructions {
+		ins.Vol *= volume
+	}
+}
+
 // Sort instructions by absolute time
 func (p *Program) Sort() {
 	slices.SortFunc(p.instructions, func(a, b *Instruction) int {

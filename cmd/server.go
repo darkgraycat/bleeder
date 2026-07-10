@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bleeder/internal/bleeder"
 	"bufio"
 	"fmt"
 	"net"
@@ -16,21 +17,34 @@ func handleConnection(conn net.Conn) error {
 		if len(args) == 0 {
 			continue
 		}
-
-		switch args[0] {
+		cmd := strings.ToUpper(args[0])
+		switch cmd {
 		case "PLAY":
-			fmt.Fprintln(conn, "OK")
+			seqName := getArg(args, 1, bleeder.MAIN_NAME)
+			fmt.Fprintf(conn, "Playing %s", seqName)
 
 		case "STOP":
-			fmt.Fprintln(conn, "OK")
+			seqName := getArg(args, 1, bleeder.MAIN_NAME)
+			fmt.Fprintf(conn, "Stopping %s", seqName)
 
 		case "INFO":
-			fmt.Fprintln(conn, "playing")
+			seqName := getArg(args, 1, bleeder.MAIN_NAME)
+			fmt.Fprintf(conn, "Info %s", seqName)
+
+		// TODO: define what actual commands is needed for
+		// live-coding and VSCode extension to operate with
 
 		default:
-			fmt.Fprintf(conn, "ERR unknown command: %q\n", args[0])
+			fmt.Fprintf(conn, "ERR unknown command: %q\n", cmd)
 		}
 	}
 
 	return scanner.Err()
+}
+
+func getArg(args []string, idx int, fallback string) string {
+	if idx >= len(args) || args[idx] == "" {
+		return fallback
+	}
+	return args[idx]
 }

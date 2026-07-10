@@ -5,19 +5,15 @@ include = [
 
 [lane.main]
 tune = '+2'
-tick = '1/4'
+tick = '5/8'
 content = '''
 @test233 <<<
 '''
 
 [lane.track1]
+gain = '2'
 content = '''
-@iDontBelongHere:c1 <
-'''
-
-[lane.track2]
-content = '''
-@iDontBelongHere:c2 <
+@iDontBelongHere <<<
 '''
 
 [riff.test233]

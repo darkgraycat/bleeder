@@ -45,8 +45,6 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	tokens := tokenizeContent(applyVars(seq.Content, varsMap))
-	tick := evalArg(applyVars(seq.Tick, varsMap))
-	tune := evalArg(applyVars(seq.Tune, varsMap))
 
 	var err error
 	var irp *ir.Program
@@ -58,11 +56,13 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	default:
 		err = fmt.Errorf("unknown type %d", seq.Type)
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", name, err)
 	}
-	irp.Stretch(tick)
-	irp.Transpose(tune)
+	irp.Stretch(evalArg(applyVars(seq.Tick, varsMap)))
+	irp.Transpose(evalArg(applyVars(seq.Tune, varsMap)))
+	irp.Volume(evalArg(applyVars(seq.Gain, varsMap)))
 	return irp, nil
 }
 
