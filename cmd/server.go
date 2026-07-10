@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"bleeder/internal/bleeder"
+	"bleeder/internal/core"
 	"bufio"
 	"fmt"
 	"net"
@@ -20,15 +20,15 @@ func handleConnection(conn net.Conn) error {
 		cmd := strings.ToUpper(args[0])
 		switch cmd {
 		case "PLAY":
-			seqName := getArg(args, 1, bleeder.MAIN_NAME)
+			seqName := getArg(args, 1, core.MAIN_NAME)
 			fmt.Fprintf(conn, "Playing %s", seqName)
 
 		case "STOP":
-			seqName := getArg(args, 1, bleeder.MAIN_NAME)
+			seqName := getArg(args, 1, core.MAIN_NAME)
 			fmt.Fprintf(conn, "Stopping %s", seqName)
 
 		case "INFO":
-			seqName := getArg(args, 1, bleeder.MAIN_NAME)
+			seqName := getArg(args, 1, core.MAIN_NAME)
 			fmt.Fprintf(conn, "Info %s", seqName)
 
 		// TODO: define what actual commands is needed for

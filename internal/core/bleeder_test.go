@@ -1,4 +1,4 @@
-package bleeder
+package core
 
 import (
 	"bleeder/internal/shared/testutils"

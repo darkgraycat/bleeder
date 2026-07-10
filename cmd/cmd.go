@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"bleeder/internal/bleeder"
+	"bleeder/internal/core"
 	"bleeder/internal/player"
 	"flag"
 	"fmt"
@@ -14,7 +14,7 @@ type Cmd func(args []string) error
 func CmdPlay(args []string) error {
 	fs := flag.NewFlagSet("play", flag.ExitOnError)
 	cfgPath := fs.String("config", defaultConfigPath(), "config file path")
-	seqName := fs.String("seq", bleeder.MAIN_NAME, "sequence to play")
+	seqName := fs.String("seq", core.MAIN_NAME, "sequence to play")
 	seqVars := fs.String("vars", "", "sequence variables")
 	fs.Parse(args)
 
@@ -28,13 +28,13 @@ func CmdPlay(args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	bleed, err := bleeder.LoadBleed(bleedPath)
+	bleed, err := core.LoadBleed(bleedPath)
 	if err != nil {
 		return fmt.Errorf("loading bleed: %w", err)
 	}
 
-	b := bleeder.NewBleeder(bleed)
-	irp, err := b.GenSeqIR(*seqName, *seqVars)
+	bleeder := core.NewBleeder(bleed)
+	irp, err := bleeder.GenSeqIR(*seqName, *seqVars)
 	if err != nil {
 		return fmt.Errorf("generating %q %q: %w", *seqName, *seqVars, err)
 	}

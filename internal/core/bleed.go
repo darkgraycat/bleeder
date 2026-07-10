@@ -1,4 +1,4 @@
-package bleeder
+package core
 
 import (
 	"fmt"
