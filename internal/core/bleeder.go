@@ -56,10 +56,10 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	default:
 		err = fmt.Errorf("unknown type %d", seq.Type)
 	}
-
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", name, err)
 	}
+
 	irp.Stretch(evalArg(applyVars(seq.Tick, varsMap)))
 	irp.Transpose(evalArg(applyVars(seq.Tune, varsMap)))
 	irp.Volume(evalArg(applyVars(seq.Gain, varsMap)))

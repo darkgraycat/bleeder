@@ -4,23 +4,14 @@ include = [
 ]
 
 [lane.main]
-tune = '+2'
-tick = '5/8'
+tune = 'e1'
 content = '''
-@test233 <<<
+@some:0
+@some:-2
 '''
-
-[lane.track1]
-gain = '2'
+[riff.some]
+tick = '1/4'
+vars = 'a:e1'
 content = '''
-@iDontBelongHere <<<
-'''
-
-[riff.test233]
-vars = 'T:e2 D:4'
-tick = '1/D'
-tune = 'T'
-content = '''
-0 0 0 0 | 1 1 1 1 | 0 0 0 0 | 1 1 1  1
-7 7 _ 8 | 8 _ 8 8 | 8 7 7 _ | _ 8 10 8
+a
 '''

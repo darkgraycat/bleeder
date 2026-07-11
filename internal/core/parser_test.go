@@ -164,11 +164,11 @@ func TestParseVars(t *testing.T) {
 		{
 			name:   "parse complex vars",
 			given:  "a:20 b:a+10 c:b+20 d:44 e:12",
-			values: []string{"40+5", "+1", "", "80"},
+			values: []string{"40+5", "-2", "", "80"},
 			expected: map[string]float64{
 				"a": 45, // absolute 40+5
-				"b": 56, // add +1 to a+10
-				"c": 76, // b's 56+20
+				"b": -2, // absolute -2
+				"c": 18, // b's -2+20
 				"d": 80, // absolute 80
 				"e": 12, // default
 			},
@@ -428,7 +428,7 @@ func TestGetArg(t *testing.T) {
 		},
 		{
 			name:     "modifier prepends prev",
-			given:    []string{"+7", "-1"},
+			given:    []string{"+7"},
 			idx:      0,
 			prev:     "60",
 			expected: "60+7",

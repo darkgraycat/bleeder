@@ -52,11 +52,7 @@ func parseVars(s string, values []string) map[string]float64 {
 	for i, def := range defs {
 		k, v, _ := strings.Cut(def, chArgs)
 		if i < len(values) && values[i] != "" {
-			if isModCh(values[i][0]) {
-				v += values[i]
-			} else {
-				v = values[i]
-			}
+			v = values[i]
 		}
 		pos := strings.IndexAny(v, "+-*/")
 		if pos < 0 {
@@ -136,7 +132,8 @@ func getArg(args []string, idx int, fallback string) string {
 		return fallback
 	}
 	v := args[idx]
-	if isModCh(v[0]) {
+	switch v[0] {
+	case '+', '-', '*', '/':
 		return fallback + v
 	}
 	return v
@@ -159,12 +156,6 @@ func splitArgs(s string) []string {
 		return []string{}
 	}
 	return strings.Split(s, chArgs)
-}
-
-// checks if character is one of +-*/
-func isModCh(c byte) bool {
-	return c == '+' || c == '-' ||
-		c == '*' || c == '/'
 }
 
 // checks if character is alphanumeric

@@ -23,11 +23,11 @@ func init() {
 		"a": 9, "as": 10, "bb": 10,
 		"b": 11, "bs": 0, // c
 	}
-	for noteName, idx := range noteIndex {
+	for key, idx := range noteIndex {
 		for octave := 0; octave <= 9; octave++ {
 			semitones := (octave-4)*12 + idx
 			freq := BaseToneFreq * math.Pow(2, float64(semitones)/12)
-			note := noteName + strconv.Itoa(octave)
+			note := key + strconv.Itoa(octave)
 			midi := semitones + 60
 			noteToFreq[note] = freq
 			noteToMidi[note] = midi
