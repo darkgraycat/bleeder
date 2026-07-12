@@ -167,8 +167,8 @@ func TestParseVars(t *testing.T) {
 			values: []string{"40+5", "-2", "", "80"},
 			expected: map[string]float64{
 				"a": 45, // absolute 40+5
-				"b": -2, // absolute -2
-				"c": 18, // b's -2+20
+				"b": 53, // a+10-2
+				"c": 73, // b+20
 				"d": 80, // absolute 80
 				"e": 12, // default
 			},

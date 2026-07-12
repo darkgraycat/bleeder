@@ -15,7 +15,7 @@ content = '''
 [lane.testRiff1]
 # Fri 26 Jun - parser for Riff is partialy done, first melody made
 # Better to be called as
-# A:a2+8
+# vars = 'A:a2+8'
 # >A-8:7 >A-5
 # @testRiff1Bass:A-8 	  < <+4 <
 # @testRiff1:A 	          < <+4 <

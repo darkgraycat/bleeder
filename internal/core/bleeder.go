@@ -3,6 +3,7 @@ package core
 import (
 	"bleeder/internal/ir"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -39,11 +40,13 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
+	log.Printf("[SEQ] %s (%s)\n", name, vars)
 	seq, ok := b.sqncs[name]
 	if !ok {
 		return nil, fmt.Errorf("%s not exist", name)
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
+	log.Println("VarsMap", varsMap)
 	tokens := tokenizeContent(applyVars(seq.Content, varsMap))
 
 	var err error

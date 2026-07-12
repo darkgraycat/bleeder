@@ -27,6 +27,6 @@ func main() {
 
 	err := handler(os.Args[2:])
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("[ERROR]: %v\n", err)
 	}
 }

@@ -29,10 +29,10 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	out := p.getSamples(instructions, totalSamples, wave)
 
 	p.wav.Append(out)
-	// for i, ins := range instructions {
-	// 	log.Printf("[INS %d] %s m%.1f d%1.f v%1.f t%1.f",
-	// 		i, ins.Info, ins.Midi, ins.Dur, ins.Vol, ins.Time)
-	// }
+	for i, ins := range instructions {
+		log.Printf("[INS %d] %s m%.1f d%1.f v%1.f t%1.f",
+			i, ins.Info, ins.Midi, ins.Dur, ins.Vol, ins.Time)
+	}
 
 	return p.wav.Write(os.Stdout)
 }

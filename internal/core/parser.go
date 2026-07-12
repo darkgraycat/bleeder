@@ -2,6 +2,7 @@ package core
 
 import (
 	"bleeder/internal/audio"
+	"log"
 	"math"
 	"sort"
 	"strconv"
@@ -52,7 +53,13 @@ func parseVars(s string, values []string) map[string]float64 {
 	for i, def := range defs {
 		k, v, _ := strings.Cut(def, chArgs)
 		if i < len(values) && values[i] != "" {
-			v = values[i]
+			log.Printf("values[i] %s, def %s\n", values[i], v)
+			switch values[i][0] {
+			case '+', '-', '*', '/':
+				v += values[i]
+			default:
+				v = values[i]
+			}
 		}
 		pos := strings.IndexAny(v, "+-*/")
 		if pos < 0 {
@@ -76,7 +83,11 @@ func applyVars(s string, vars map[string]float64) string {
 	}
 	pairs := make([][2]string, 0, len(vars))
 	for k, v := range vars {
-		pairs = append(pairs, [2]string{k, strconv.FormatFloat(v, 'g', 8, 64)})
+		vStr := strconv.FormatFloat(v, 'g', 8, 64)
+		if v < 0 { // convert -1 to absolute value 0-1
+			vStr = "0" + vStr
+		}
+		pairs = append(pairs, [2]string{k, vStr})
 	}
 	sort.Slice(pairs, func(i, j int) bool {
 		return len(pairs[i][0]) > len(pairs[j][0])

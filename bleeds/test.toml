@@ -4,14 +4,36 @@ include = [
 ]
 
 [lane.main]
-tune = 'e1'
+tune = '10'
 content = '''
-@some:0
-@some:-2
+@mySong:5
+@mySong:1
 '''
-[riff.some]
-tick = '1/4'
-vars = 'a:e1'
+
+[lane.mySong]
+vars = 'a:40 b:a-2'
+content = '@myRiff:b'
+
+[riff.myRiff]
+vars = 'n:40'
+content = 'n'
+
+[riff.masterRiff1]
+vars = 'T:e1 D:4 V:1'
+tick = '1/D'
+tune = 'T'
+gain = 'V'
 content = '''
-a
+0 1 7 0 1 8 0 1 9 0 1 8 0 1 7 7 |
+0 1 7 0 1 8 0 1 9 0 1 8 0 1 7 >
+'''
+
+[riff.ppunk]
+vars = 'T:e1 a:0 D:6 V:1 n:a+5' # bug - a+5 works, 5+a not
+tick = '1/D'
+tune = 'T'
+gain = 'V'
+content = '''
+5 > 5 5  5 5 5 5 |
+5 5 5 5  n n n 0
 '''
