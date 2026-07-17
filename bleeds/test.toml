@@ -4,10 +4,26 @@ include = [
 ]
 
 [lane.main]
-tune = '10'
+tune = 'a0'
+tick = '0.88'
 content = '''
-@mySong:5
-@mySong:1
+@ppunk:5:0
+@ppunk:1:0
+
+@ppunk:5:2
+@ppunk:1:7
+
+>17+12:3:.5 | @ppunk:5:0
+>18+12:3:.5 | @ppunk:1:0
+
+>22+12:3:.5 | @ppunk:5:2
+>20+12:3:.5 | @ppunk:1:7
+
+>17+12:3:.5 | @ppunk:5:0
+>18+12:3:.5 | @ppunk:1:0
+
+>22+12:3:.5 | @ppunk:5:2
+>20+12:3:.5 | @ppunk:1:7
 '''
 
 [lane.mySong]
@@ -29,7 +45,7 @@ content = '''
 '''
 
 [riff.ppunk]
-vars = 'T:e1 a:0 D:6 V:1 n:a+5' # bug - a+5 works, 5+a not
+vars = 'T:e1 a:0 D:6 V:1 n:5+a'
 tick = '1/D'
 tune = 'T'
 gain = 'V'

@@ -46,42 +46,20 @@ func tokenizeContent(s string) [][]string {
 }
 
 // parse sequence variables into map
-func parseVars(s string, values []string) map[string]float64 {
+func parseVars(s string, vals []string) map[string]float64 {
 	defs := strings.Fields(s)
 	out := make(map[string]float64, len(defs))
 	for i, def := range defs {
 		k, v, _ := strings.Cut(def, chArgs)
-		if i < len(values) && values[i] != "" {
-			switch values[i][0] {
+		if i < len(vals) && vals[i] != "" {
+			switch vals[i][0] {
 			case '+', '-', '*', '/':
-				v += values[i]
+				v += vals[i]
 			default:
-				v = values[i]
+				v = vals[i]
 			}
 		}
-		pos := strings.IndexAny(v, "+-*/")
-		if pos < 0 {
-			if ref, ok := out[v]; ok {
-				v = strconv.FormatFloat(ref, 'g', -1, 64)
-			}
-		} else {
-			lhs := v[:pos]
-			rhs := v[pos+1:]
-			if ref, ok := out[lhs]; ok {
-				lhs = strconv.FormatFloat(ref, 'g', -1, 64)
-				if ref < 0 {
-					lhs = "0" + lhs
-				}
-			}
-			if ref, ok := out[rhs]; ok {
-				rhs = strconv.FormatFloat(ref, 'g', -1, 64)
-				if ref < 0 {
-					rhs = "0" + rhs
-				}
-			}
-			v = lhs + string(v[pos]) + rhs
-		}
-		out[k] = evalArg(v)
+		out[k] = evalVars(v, out)
 	}
 	return out
 }
@@ -126,14 +104,19 @@ outer:
 	return result.String()
 }
 
-// evaluate argument with short arithmetic expression
-func evalArg(s string) float64 {
+// evaluate arithmetic expression with variables map
+func evalVars(s string, vars map[string]float64) float64 {
 	i := strings.LastIndexAny(s, "+-*/")
 	if i <= 0 {
+		if vars != nil {
+			if ref, ok := vars[s]; ok {
+				return ref
+			}
+		}
 		return parseTone(s)
 	}
-	lhs := evalArg(s[:i])
-	rhs := parseTone(s[i+1:])
+	lhs := evalVars(s[:i], vars)
+	rhs := evalVars(s[i+1:], vars)
 	switch s[i] {
 	case '+':
 		return lhs + rhs
@@ -160,6 +143,14 @@ func getArg(args []string, idx int, fallback string) string {
 	return v
 }
 
+// split raw arguments into slice using special character
+func splitArgs(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	return strings.Split(s, chArgs)
+}
+
 // parse string which represents tone. can be midi or note
 func parseTone(s string) float64 {
 	if m := audio.NoteToMidi(s); m >= 0 {
@@ -169,14 +160,6 @@ func parseTone(s string) float64 {
 		return f
 	}
 	return math.NaN()
-}
-
-// split raw arguments into slice
-func splitArgs(s string) []string {
-	if s == "" {
-		return []string{}
-	}
-	return strings.Split(s, chArgs)
 }
 
 // checks if character is alphanumeric

@@ -339,7 +339,7 @@ func BenchmarkApplyVars(b *testing.B) {
 	}
 }
 
-func TestEvalArg(t *testing.T) {
+func TestEvalVars(t *testing.T) {
 	tests := []struct {
 		name     string
 		given    string
@@ -380,7 +380,7 @@ func TestEvalArg(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
-			actual := evalArg(tc.given)
+			actual := evalVars(tc.given, nil)
 			if math.IsNaN(tc.expected) && math.IsNaN(actual) {
 				return
 			}
@@ -389,7 +389,7 @@ func TestEvalArg(t *testing.T) {
 	}
 }
 
-func BenchmarkEvalArg(b *testing.B) {
+func BenchmarkEvalVars(b *testing.B) {
 	tests := []string{
 		// 42.52 ns/op	       0 B/op	       0 allocs/op
 		"65.0",
@@ -408,7 +408,7 @@ func BenchmarkEvalArg(b *testing.B) {
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
 			for b.Loop() {
-				evalArg(tc)
+				evalVars(tc, nil)
 			}
 		})
 	}

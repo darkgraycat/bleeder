@@ -3,7 +3,6 @@ package core
 import (
 	"bleeder/internal/ir"
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -40,13 +39,12 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
-	log.Printf("[SEQ] %s (%s)\n", name, vars)
+	// log.Printf("[SEQ] %s (%s)\n", name, vars)
 	seq, ok := b.sqncs[name]
 	if !ok {
 		return nil, fmt.Errorf("%s not exist", name)
 	}
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
-	log.Println("VarsMap", varsMap)
 	tokens := tokenizeContent(applyVars(seq.Content, varsMap))
 
 	var err error
@@ -63,9 +61,9 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 		return nil, fmt.Errorf("%s: %w", name, err)
 	}
 
-	irp.Stretch(evalArg(applyVars(seq.Tick, varsMap)))
-	irp.Transpose(evalArg(applyVars(seq.Tune, varsMap)))
-	irp.Volume(evalArg(applyVars(seq.Gain, varsMap)))
+	irp.Stretch(evalVars(seq.Tick, varsMap))
+	irp.Transpose(evalVars(seq.Tune, varsMap))
+	irp.Volume(evalVars(seq.Gain, varsMap))
 	return irp, nil
 }
 
@@ -156,7 +154,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 			/* REST */
 			case chRest:
 				cT += aT
-				aT = evalArg(getArg(args, 0, "1"))
+				aT = evalVars(getArg(args, 0, "1"), nil)
 
 			/* WITH */
 			case chWith:
@@ -206,7 +204,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* FILL */
 			case chPlay:
-				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				dur := evalVars(getArg(splitArgs(cell[1:]), 0, "1"), nil)
 				if prevIns != nil {
 					prevIns.Dur += dur
 				}
@@ -270,7 +268,7 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 			/* REST */
 			case chRest:
-				dur := evalArg(getArg(splitArgs(cell[1:]), 0, "1"))
+				dur := evalVars(getArg(splitArgs(cell[1:]), 0, "1"), nil)
 				cT += dur
 
 			/* WITH */
@@ -290,9 +288,9 @@ func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 
 // evaluate args and produce play instruction
 func (b *Bleeder) evalPlay(midiArg, durArg, volArg string) (*ir.Instruction, error) {
-	midi := evalArg(midiArg)
-	dur := evalArg(durArg)
-	vol := evalArg(volArg)
+	midi := evalVars(midiArg, nil)
+	dur := evalVars(durArg, nil)
+	vol := evalVars(volArg, nil)
 	if math.IsNaN(midi + dur + vol) {
 		return nil, fmt.Errorf("play: %.1f:%.1f:%.1f", midi, dur, vol)
 	}
