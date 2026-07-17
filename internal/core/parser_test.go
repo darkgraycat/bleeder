@@ -173,6 +173,16 @@ func TestParseVars(t *testing.T) {
 				"e": 12, // default
 			},
 		},
+		{
+			name:   "parse both sides",
+			given:  "a:5 b:a+10 c:10-a",
+			values: []string{"3"},
+			expected: map[string]float64{
+				"a": 3,
+				"b": 13,
+				"c": 7,
+			},
+		},
 	}
 
 	for _, tc := range tests {
