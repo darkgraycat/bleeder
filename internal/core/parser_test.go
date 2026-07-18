@@ -344,6 +344,7 @@ func TestEvalVars(t *testing.T) {
 		name     string
 		given    string
 		expected float64
+		vars     map[string]float64
 	}{
 		{
 			name:     "evaluate plain numeric value",
@@ -375,12 +376,30 @@ func TestEvalVars(t *testing.T) {
 			given:    "-2-4",
 			expected: -6,
 		},
+		{
+			name:     "evaluate using variables",
+			given:    "a*b-10",
+			expected: 30,
+			vars: map[string]float64{
+				"a": 20,
+				"b": 2,
+			},
+		},
+		{
+			name:     "evaluate negative values using variables",
+			given:    "a-b+a-b", // (((a-b)+a)-b)
+			expected: 2,         // (((-4+5)-4)+5) = (1-4)+5 = -3+5 = 2
+			vars: map[string]float64{
+				"a": -4,
+				"b": -5,
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
-			actual := evalVars(tc.given, nil)
+			actual := evalVars(tc.given, tc.vars)
 			if math.IsNaN(tc.expected) && math.IsNaN(actual) {
 				return
 			}
