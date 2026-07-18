@@ -316,17 +316,17 @@ func TestEvalVars(t *testing.T) {
 
 func BenchmarkEvalVars(b *testing.B) {
 	tests := []string{
-		// 42.52 ns/op	       0 B/op	       0 allocs/op
+		// 45.94 ns/op	       0 B/op	       0 allocs/op
 		"65.0",
-		// 61.83 ns/op	       0 B/op	       0 allocs/op
+		// 73.13 ns/op	       0 B/op	       0 allocs/op
 		"60+4",
-		// 54.37 ns/op	       0 B/op	       0 allocs/op
+		// 66.50 ns/op	       0 B/op	       0 allocs/op
 		"cs2+7",
-		// 54.24 ns/op	       0 B/op	       0 allocs/op
+		// 66.50 ns/op	       0 B/op	       0 allocs/op
 		"cs2+7",
-		// 187.2 ns/op	       0 B/op	       0 allocs/op
+		// 253.3 ns/op	       0 B/op	       0 allocs/op
 		"6*2-2/5*3+10/4",
-		// 91.28 ns/op	      51 B/op	       2 allocs/op
+		// 105.4 ns/op	      51 B/op	       2 allocs/op
 		"cf2+9",
 	}
 

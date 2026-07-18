@@ -67,25 +67,25 @@ func parseVars(s string, vals []string) map[string]float64 {
 // evaluate arithmetic expression with variables map
 func evalVars(s string, vars map[string]float64) float64 {
 	i := strings.LastIndexAny(s, "+-*/")
-	if i <= 0 {
-		if ref, ok := vars[s]; ok {
-			return ref
+	if i > 0 {
+		lhs := evalVars(s[:i], vars)
+		rhs := evalVars(s[i+1:], vars)
+		switch s[i] {
+		case '+':
+			return lhs + rhs
+		case '-':
+			return lhs - rhs
+		case '*':
+			return lhs * rhs
+		case '/':
+			return lhs / rhs
 		}
-		return parseTone(s)
+		return math.NaN()
 	}
-	lhs := evalVars(s[:i], vars)
-	rhs := evalVars(s[i+1:], vars)
-	switch s[i] {
-	case '+':
-		return lhs + rhs
-	case '-':
-		return lhs - rhs
-	case '*':
-		return lhs * rhs
-	case '/':
-		return lhs / rhs
+	if ref, ok := vars[s]; ok {
+		return ref
 	}
-	return math.NaN()
+	return parseTone(s)
 }
 
 // apply sequence variable to content
