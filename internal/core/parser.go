@@ -68,10 +68,8 @@ func parseVars(s string, vals []string) map[string]float64 {
 func evalVars(s string, vars map[string]float64) float64 {
 	i := strings.LastIndexAny(s, "+-*/")
 	if i <= 0 {
-		if vars != nil {
-			if ref, ok := vars[s]; ok {
-				return ref
-			}
+		if ref, ok := vars[s]; ok {
+			return ref
 		}
 		return parseTone(s)
 	}
