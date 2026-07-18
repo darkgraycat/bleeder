@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bleeder/internal/core"
-	"bleeder/internal/player"
 	"flag"
 	"fmt"
 	"log"
@@ -33,19 +32,8 @@ func CmdPlay(args []string) error {
 		return fmt.Errorf("loading bleed: %w", err)
 	}
 
-	bleeder := core.NewBleeder(bleed)
-	irp, err := bleeder.GenSeqIR(*seqName, *seqVars)
-	if err != nil {
-		return fmt.Errorf("generating %q %q: %w", *seqName, *seqVars, err)
-	}
-
-	// TODO: define correct player by config or some
-	p := player.NewWAVPlayer(cfg.Audio.SampleRate, cfg.Audio.Channels)
-	err = p.Play(irp, 0, irp.Length())
-	if err != nil {
-		return fmt.Errorf("playing %q %q: %w", *seqName, *seqVars, err)
-	}
-	return nil
+	ctx := NewCmdContext(cfg, bleed)
+	return ctx.Play(*seqName, *seqVars)
 }
 
 func CmdLive(args []string) error {
@@ -53,20 +41,22 @@ func CmdLive(args []string) error {
 	cfgPath := fs.String("config", defaultConfigPath(), "config file path")
 	fs.Parse(args)
 
-	// bleedPath := fs.Arg(0)
-	// if bleedPath == "" {
-	// 	return fmt.Errorf("usage: bleeder live [flags] <file>")
-	// }
+	bleedPath := fs.Arg(0)
+	if bleedPath == "" {
+		return fmt.Errorf("usage: bleeder live [flags] <file>")
+	}
 
 	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	// bleed, err := bleeder.LoadBleed(bleedPath)
-	// if err != nil {
-	// 	return fmt.Errorf("loading bleed: %w", err)
-	// }
+	bleed, err := core.LoadBleed(bleedPath)
+	if err != nil {
+		return fmt.Errorf("loading bleed: %w", err)
+	}
+
+	ctx := NewCmdContext(cfg, bleed)
 
 	port := fmt.Sprintf(":%d", cfg.Live.Port)
 	listener, err := net.Listen("tcp", port)
@@ -82,7 +72,7 @@ func CmdLive(args []string) error {
 			log.Println("[ERROR] ", err)
 			continue
 		}
-		err = handleConnection(conn)
+		err = handleConnection(conn, ctx)
 		if err != nil {
 			log.Println("[ERROR] ", err)
 			continue

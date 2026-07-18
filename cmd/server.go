@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func handleConnection(conn net.Conn) error {
+func handleConnection(conn net.Conn, ctx *CmdContext) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 
@@ -21,18 +21,23 @@ func handleConnection(conn net.Conn) error {
 		switch cmd {
 		case "PLAY":
 			seqName := getArg(args, 1, core.MAIN_NAME)
-			fmt.Fprintf(conn, "Playing %s", seqName)
+			err := ctx.Play(seqName, "")
+			if err != nil {
+				fmt.Fprintf(conn, "ERR %v\n", err)
+				continue
+			}
 
 		case "STOP":
-			seqName := getArg(args, 1, core.MAIN_NAME)
-			fmt.Fprintf(conn, "Stopping %s", seqName)
+			err := ctx.Stop()
+			if err != nil {
+				fmt.Fprintf(conn, "ERR %v\n", err)
+			} else {
+				fmt.Fprintf(conn, "OK stopped\n")
+			}
 
 		case "INFO":
-			seqName := getArg(args, 1, core.MAIN_NAME)
-			fmt.Fprintf(conn, "Info %s", seqName)
-
-		// TODO: define what actual commands is needed for
-		// live-coding and VSCode extension to operate with
+			info := ctx.Info()
+			fmt.Fprintf(conn, "%s\n", info)
 
 		default:
 			fmt.Fprintf(conn, "ERR unknown command: %q\n", cmd)
