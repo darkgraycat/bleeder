@@ -85,7 +85,7 @@ func (w *WAV) GenerateSamplesEnvelope(freq, dur, vol, attackCoef, releaseCoef fl
 
 // Write WAV data
 func (w *WAV) Write(wr io.Writer) error {
-	dataSize := uint32(len(w.samples) * 2)
+	dataSize := uint32(len(w.samples) * 2) // *2 = int16 bytes
 	fileSize := uint32(36 + dataSize)
 	binary.LittleEndian.PutUint32(w.header[4:8], fileSize)
 	binary.LittleEndian.PutUint32(w.header[40:44], dataSize)
