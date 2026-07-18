@@ -245,100 +245,6 @@ func BenchmarkParseVars(b *testing.B) {
 	}
 }
 
-func TestApplyVars(t *testing.T) {
-	tests := []struct {
-		name     string
-		given    string
-		vars     map[string]float64
-		expected string
-	}{
-		{
-			name: "apply vars on multiline Lane content",
-			vars: map[string]float64{"note": 60, "dur": 8},
-			given: `
-			>note dur |
-			>note+7 dur/2`,
-			expected: `
-			>60 8 |
-			>60+7 8/2`,
-		},
-		{
-			name: "apply vars on multiline Riff content",
-			vars: map[string]float64{"a": 60, "b": 80},
-			given: `
-			a _ _ a
-			b b _ _
-			`,
-			expected: `
-			60 _ _ 60
-			80 80 _ _
-			`,
-		},
-		{
-			name: "apply vars avoiding sequence names",
-			vars: map[string]float64{"a": 60, "b": 80, "d1": 2, "d": 3},
-			given: `
-			@bass |
-			@drum |
-			>a:d1 >a:d >b:d >a:d1
-			`,
-			expected: `
-			@bass |
-			@drum |
-			>60:2 >60:3 >80:3 >60:2
-			`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
-			actual := applyVars(tc.given, tc.vars)
-			testutils.AssertStrings(t, tc.expected, actual)
-		})
-	}
-}
-
-func BenchmarkApplyVars(b *testing.B) {
-	tests := []struct {
-		vars  map[string]float64
-		given string
-	}{
-		{
-			// 449.8 ns/op	     202 B/op	       6 allocs/op
-			vars: map[string]float64{"note": 60, "dur": 8},
-			given: `
-			>note dur |
-			>note+7 dur/2`,
-		},
-		{
-			// 437.5 ns/op	     204 B/op	       7 allocs/op
-			vars: map[string]float64{"a": 60, "b": 80},
-			given: `
-			a _ _ a
-			b b _ _
-			`,
-		},
-		{
-			// 1094 ns/op	     300 B/op	       7 allocs/op
-			vars: map[string]float64{"a": 60, "b": 80, "d1": 2, "d": 3},
-			given: `
-			@bass |
-			@drum |
-			>a:d1 >a:d >b:d >a:d1
-			`,
-		},
-	}
-
-	for i, tc := range tests {
-		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
-			for b.Loop() {
-				applyVars(tc.given, tc.vars)
-			}
-		})
-	}
-}
-
 func TestEvalVars(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -428,6 +334,100 @@ func BenchmarkEvalVars(b *testing.B) {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
 			for b.Loop() {
 				evalVars(tc, nil)
+			}
+		})
+	}
+}
+
+func TestApplyVars(t *testing.T) {
+	tests := []struct {
+		name     string
+		given    string
+		vars     map[string]float64
+		expected string
+	}{
+		{
+			name: "apply vars on multiline Lane content",
+			vars: map[string]float64{"note": 60, "dur": 8},
+			given: `
+			>note dur |
+			>note+7 dur/2`,
+			expected: `
+			>60 8 |
+			>60+7 8/2`,
+		},
+		{
+			name: "apply vars on multiline Riff content",
+			vars: map[string]float64{"a": 60, "b": 80},
+			given: `
+			a _ _ a
+			b b _ _
+			`,
+			expected: `
+			60 _ _ 60
+			80 80 _ _
+			`,
+		},
+		{
+			name: "apply vars avoiding sequence names",
+			vars: map[string]float64{"a": 60, "b": 80, "d1": 2, "d": 3},
+			given: `
+			@bass |
+			@drum |
+			>a:d1 >a:d >b:d >a:d1
+			`,
+			expected: `
+			@bass |
+			@drum |
+			>60:2 >60:3 >80:3 >60:2
+			`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.CheckFlags(t)
+			actual := applyVars(tc.given, tc.vars)
+			testutils.AssertStrings(t, tc.expected, actual)
+		})
+	}
+}
+
+func BenchmarkApplyVars(b *testing.B) {
+	tests := []struct {
+		vars  map[string]float64
+		given string
+	}{
+		{
+			// 449.8 ns/op	     202 B/op	       6 allocs/op
+			vars: map[string]float64{"note": 60, "dur": 8},
+			given: `
+			>note dur |
+			>note+7 dur/2`,
+		},
+		{
+			// 437.5 ns/op	     204 B/op	       7 allocs/op
+			vars: map[string]float64{"a": 60, "b": 80},
+			given: `
+			a _ _ a
+			b b _ _
+			`,
+		},
+		{
+			// 1094 ns/op	     300 B/op	       7 allocs/op
+			vars: map[string]float64{"a": 60, "b": 80, "d1": 2, "d": 3},
+			given: `
+			@bass |
+			@drum |
+			>a:d1 >a:d >b:d >a:d1
+			`,
+		},
+	}
+
+	for i, tc := range tests {
+		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
+			for b.Loop() {
+				applyVars(tc.given, tc.vars)
 			}
 		})
 	}

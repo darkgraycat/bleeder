@@ -64,6 +64,32 @@ func parseVars(s string, vals []string) map[string]float64 {
 	return out
 }
 
+// evaluate arithmetic expression with variables map
+func evalVars(s string, vars map[string]float64) float64 {
+	i := strings.LastIndexAny(s, "+-*/")
+	if i <= 0 {
+		if vars != nil {
+			if ref, ok := vars[s]; ok {
+				return ref
+			}
+		}
+		return parseTone(s)
+	}
+	lhs := evalVars(s[:i], vars)
+	rhs := evalVars(s[i+1:], vars)
+	switch s[i] {
+	case '+':
+		return lhs + rhs
+	case '-':
+		return lhs - rhs
+	case '*':
+		return lhs * rhs
+	case '/':
+		return lhs / rhs
+	}
+	return math.NaN()
+}
+
 // apply sequence variable to content
 func applyVars(s string, vars map[string]float64) string {
 	if len(vars) == 0 {
@@ -102,32 +128,6 @@ outer:
 		i++
 	}
 	return result.String()
-}
-
-// evaluate arithmetic expression with variables map
-func evalVars(s string, vars map[string]float64) float64 {
-	i := strings.LastIndexAny(s, "+-*/")
-	if i <= 0 {
-		if vars != nil {
-			if ref, ok := vars[s]; ok {
-				return ref
-			}
-		}
-		return parseTone(s)
-	}
-	lhs := evalVars(s[:i], vars)
-	rhs := evalVars(s[i+1:], vars)
-	switch s[i] {
-	case '+':
-		return lhs + rhs
-	case '-':
-		return lhs - rhs
-	case '*':
-		return lhs * rhs
-	case '/':
-		return lhs / rhs
-	}
-	return math.NaN()
 }
 
 // get argument at position idx or use fallback value
