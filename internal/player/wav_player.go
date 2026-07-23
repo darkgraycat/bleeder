@@ -9,12 +9,12 @@ import (
 )
 
 type WAVPlayer struct {
-	wav *audio.WAV
+	wav *audio.WAV_Old
 }
 
 func NewWAVPlayer(sampleRate, channels int) *WAVPlayer {
 	return &WAVPlayer{
-		wav: audio.NewWAV(sampleRate, channels),
+		wav: audio.NewWAV_Old(sampleRate, channels),
 	}
 }
 
@@ -25,7 +25,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	totalSamples := int(duration * float64(sr))
 	log.Printf("[INIT:PLAY] instructions %d, samples %d, duration %f\n", irp.Length(), totalSamples, duration)
 
-	wave := audio.WaveFuncMix(audio.WaveCubic, audio.WaveSoftSquare)
+	wave := audio.WaveFuncMix(audio.WaveCubic, audio.WaveSoftSquare, audio.WaveSine)
 	out := p.getSamples(instructions, totalSamples, wave)
 
 	p.wav.Append(out)

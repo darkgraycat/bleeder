@@ -760,3 +760,61 @@ Q: where to put idx after update?
 ```sh
 bleeder play -seq main '/Users/pburi/DarkGrayCat/golang/bleeder/experiments/test.toml' | ffplay -autoexit -nodisp -loglevel quiet -
 ```
+
+
+
+## devnotes about new WAV rendering
+HOW THIS WORKS FOR STREAMING:
+
+One-shot (file with correct header):
+wav := NewWAV2(44100, 1)
+samples := renderAll(irp)
+wav.WriteHeader(len(samples), file)
+wav.WriteSamples(samples, file)
+
+Streaming (header once, then chunks):
+wav := NewWAV2(44100, 1)
+wav.WriteHeader(0, os.Stdout)  // Size 0 or huge for streaming
+
+for {
+    chunk := renderChunk(irp, pos, duration)
+    wav.WriteSamples(chunk, os.Stdout)
+    pos += duration
+}
+
+# MAIN devnote about rendering flow
+```sh
+bleeder song.bleed | bleeder-wav | ffplay -
+bleeder song.bleed | bleeder-midi | daw
+bleeder song.bleed | bleeder-irp | tui-viz
+```
+
+```sh
+bleeder song.bleed | tee \
+  >(bleeder-wav | ffplay -) \
+  >(bleeder-midi | daw) \
+  >(bleeder-irp | viz)
+```
+
+Is current Bleeder design plan is fully unix-way?
+No. It's not.
+
+We're building a monolith:
+- Parses DSL
+- Generates IR
+- Renders to multiple formats (WAV/MIDI/IRP)
+- Manages playback state
+- Runs a server
+
+Unix way is:
+bleeder: .bleed → IR (ONE JOB)
+
+Then separate tools:
+bleeder song.bleed | bleeder-wav | ffplay -
+bleeder song.bleed | bleeder-irp | tui-viz
+bleeder song.bleed | tee >(bleeder-wav | ffplay -) >(bleeder-irp | tui-viz)
+
+Bleeder should JUST output IR as text. That's it.
+Renderers are separate programs. Live-coding is watchexec. Parallel outputs are tee.
+No renderers inside bleeder. No streaming loops. No goroutines. No BleedCtx complexity.
+Just: parse .bleed → write IR text → exit.

@@ -49,7 +49,7 @@ func (ctx *CmdContext) Stop() error {
 	return nil
 }
 
-func (ctx *CmdContext) Update() error {
+func (ctx *CmdContext) Sync() error {
 	ctx.mu.Lock()
 	defer ctx.mu.Unlock()
 	return nil

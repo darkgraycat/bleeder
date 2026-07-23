@@ -5,19 +5,33 @@ include = [
 
 [lane.main]
 tune = 'd1'
-tick = '0.88'
+gain = '0.8'
+tick = '0.90'
 content = '''
-@ppunkRiff:5:0
-@ppunkRiff:1:0
+@ppunkRiff:8:1
+@ppunkRiff:4:-1
+@ppunkRiff:8:1
+@ppunkRiff:4:-1
 
-@ppunkRiff:5:2
-@ppunkRiff:1:7
+@ppunkBg:8 | @ppunkRiff:8:1
+@ppunkBg:4 | @ppunkRiff:4:-1
+@ppunkBg:8 | @ppunkRiff:8:1
+@ppunkBg:4 | @ppunkRiff:4:-1
 
->5+24:3:.4 | @ppunkRiff:5:0
->6+24:3:.4 | @ppunkRiff:1:0
+@ppunkRiff:0:7 | @ppunkRiff:12:7
+@ppunkRiff:4:0
 
->10+24:3:.4 | @ppunkRiff:5:2
->12+24:2:.4 | @ppunkRiff:1:7
+# @ppunkRiff:5:0
+# @ppunkRiff:1:0
+
+# @ppunkRiff:5:2
+# @ppunkRiff:1:7
+
+# >5+24:3:.4 | @ppunkRiff:5:0
+# >6+24:3:.4 | @ppunkRiff:1:0
+
+# >10+24:3:.4 | @ppunkRiff:5:2
+# >12+24:2:.4 | @ppunkRiff:1:7
 '''
 
 [lane.mySong]
@@ -48,11 +62,12 @@ content = '''
 5 5 5 5  n n n 0
 '''
 
-[lane.ppunkBg]
+[riff.ppunkBg]
 vars = 'T:e1 add:0 D:6 V:1 n:5+add'
 tick = '1/D'
 tune = 'T+12'
 gain = 'V'
 content = '''
->5:16:.6
+5 > 9 _ 5 > 9 _ |
+12 12 10 10 9 9 5 5
 '''
