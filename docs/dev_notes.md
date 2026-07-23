@@ -781,3 +781,40 @@ for {
     wav.WriteSamples(chunk, os.Stdout)
     pos += duration
 }
+
+# MAIN devnote about rendering flow
+```sh
+bleeder song.bleed | bleeder-wav | ffplay -
+bleeder song.bleed | bleeder-midi | daw
+bleeder song.bleed | bleeder-irp | tui-viz
+```
+
+```sh
+bleeder song.bleed | tee \
+  >(bleeder-wav | ffplay -) \
+  >(bleeder-midi | daw) \
+  >(bleeder-irp | viz)
+```
+
+Is current Bleeder design plan is fully unix-way?
+No. It's not.
+
+We're building a monolith:
+- Parses DSL
+- Generates IR
+- Renders to multiple formats (WAV/MIDI/IRP)
+- Manages playback state
+- Runs a server
+
+Unix way is:
+bleeder: .bleed → IR (ONE JOB)
+
+Then separate tools:
+bleeder song.bleed | bleeder-wav | ffplay -
+bleeder song.bleed | bleeder-irp | tui-viz
+bleeder song.bleed | tee >(bleeder-wav | ffplay -) >(bleeder-irp | tui-viz)
+
+Bleeder should JUST output IR as text. That's it.
+Renderers are separate programs. Live-coding is watchexec. Parallel outputs are tee.
+No renderers inside bleeder. No streaming loops. No goroutines. No BleedCtx complexity.
+Just: parse .bleed → write IR text → exit.
