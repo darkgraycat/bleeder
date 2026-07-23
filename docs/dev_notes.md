@@ -760,3 +760,24 @@ Q: where to put idx after update?
 ```sh
 bleeder play -seq main '/Users/pburi/DarkGrayCat/golang/bleeder/experiments/test.toml' | ffplay -autoexit -nodisp -loglevel quiet -
 ```
+
+
+
+## devnotes about new WAV rendering
+HOW THIS WORKS FOR STREAMING:
+
+One-shot (file with correct header):
+wav := NewWAV2(44100, 1)
+samples := renderAll(irp)
+wav.WriteHeader(len(samples), file)
+wav.WriteSamples(samples, file)
+
+Streaming (header once, then chunks):
+wav := NewWAV2(44100, 1)
+wav.WriteHeader(0, os.Stdout)  // Size 0 or huge for streaming
+
+for {
+    chunk := renderChunk(irp, pos, duration)
+    wav.WriteSamples(chunk, os.Stdout)
+    pos += duration
+}

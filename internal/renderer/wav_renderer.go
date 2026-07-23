@@ -7,15 +7,15 @@ import (
 )
 
 type WAVRenderer struct {
-	wav *audio.WAV
+	wav *audio.WAV_Old
 }
 
 func NewWAVRenderer(sampleRate, channels int) *WAVRenderer {
 	return &WAVRenderer{
-		wav: audio.NewWAV(sampleRate, channels),
+		wav: audio.NewWAV_Old(sampleRate, channels),
 	}
 }
 
-func (wr *WAVRenderer) Render(irp *ir.Program, w io.Writer) {
-
+func (r *WAVRenderer) Render(irp *ir.Program, w io.Writer) error {
+	return nil
 }
