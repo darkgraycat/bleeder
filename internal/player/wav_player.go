@@ -22,7 +22,7 @@ func (p *WAVPlayer) Play(irp *ir.Program, start, end int) error {
 	sr := p.wav.SampleRate()
 	instructions := irp.Instructions()
 	_, duration := irp.MinMaxTime()
-	totalSamples := int(duration * float64(sr))
+	totalSamples := int(math.Round(duration * float64(sr)))
 	log.Printf("[INIT:PLAY] instructions %d, samples %d, duration %f\n", irp.Length(), totalSamples, duration)
 
 	wave := audio.WaveFuncMix(audio.WaveCubic, audio.WaveSoftSquare, audio.WaveSine)
