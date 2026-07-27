@@ -73,6 +73,32 @@ func (p *Program) MinMaxTime() (float64, float64) {
 	return minTime, maxTime
 }
 
+// Get uniq times of instructions
+func (p *Program) Times() []float64 {
+	seen := make(map[float64]bool, len(p.instructions))
+	out := make([]float64, 0, len(p.instructions))
+	for _, ins := range p.instructions {
+		t := ins.Time
+		if _, ok := seen[t]; ok {
+			continue
+		}
+		seen[t] = true
+		out = append(out, t)
+	}
+	return out
+}
+
+// Get instructions started at time
+func (p *Program) AtTime(t float64) []*Instruction {
+	out := make([]*Instruction, 0)
+	for _, ins := range p.instructions {
+		if ins.Time == t {
+			out = append(out, ins)
+		}
+	}
+	return out
+}
+
 // Shift start time of each instruction
 func (p *Program) Shift(offset float64) {
 	if offset <= 0 || math.IsNaN(offset) {

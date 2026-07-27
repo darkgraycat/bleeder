@@ -4,12 +4,29 @@ include = [
 ]
 
 [lane.main]
-tick = '0.5'
-vars = 'cond:1'
+# tick = '.88'
+tick = '1/4'
 content = '''
-@test:12 <<<<
-@test:10 <<<<
-@test:7  <<<<
+>60 | >66 | >72
+>80
+>100:4
+
+# @test:0 <
+# @test:7 <
+# @test:6 <
+# @test:5 <
+
+# @test:0 <
+# @test:1 <
+# @test:2 <
+# @test:3 <
+# @test:4 <
+# @test:5 <
+# @test:7 <
+
+# @test:12 <<<<
+# @test:10 <<<<
+# @test:7  <<<<
 
 # @mainRiff:1   <<<
 # @mainRiff:2:1 <<<
@@ -28,12 +45,20 @@ content = '''
 # @ppunkRiff:4:0
 '''
 
-[riff.test]
-vars = 'tone:0 offset:0'
-tune = 'c1+tone'
+[riff.minorScale]
+tune = 'g1'
 tick = '1/4'
 content = '''
-0 7+offset 8+offset
+0  2  3  5  7  8  10
+12 14 15 17 19 20 22
+'''
+
+[riff.test]
+vars = 'tone:0 off:tone%2'
+tune = 'g1+tone'
+tick = '1/4'
+content = '''
+0+off 7 8+off
 '''
 
 [riff.mainRiff]

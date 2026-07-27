@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 )
 
 type Cmd func(args []string) error
 
 func CmdPlay(args []string) error {
 	fs := flag.NewFlagSet("play", flag.ExitOnError)
-	cfgPath := fs.String("config", defaultConfigPath(), "config file path")
+	cfgPath := fs.String("cfg", defaultConfigPath(), "config file path")
 	seqName := fs.String("seq", core.MAIN_NAME, "sequence to play")
 	seqVars := fs.String("vars", "", "sequence variables")
 	fs.Parse(args)
@@ -22,7 +23,7 @@ func CmdPlay(args []string) error {
 		return fmt.Errorf("usage: bleeder play [flags] <file>")
 	}
 
-	cfg, err := LoadConfig(*cfgPath)
+	_, err := LoadConfig(*cfgPath)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
@@ -32,13 +33,15 @@ func CmdPlay(args []string) error {
 		return fmt.Errorf("loading bleed: %w", err)
 	}
 
-	ctx := NewCmdContext(cfg, bleed)
-	return ctx.Play(*seqName, *seqVars)
+	bctx := core.NewBleedContext(bleed)
+	go bctx.Run(os.Stdout)
+	// TODO - think how we can stream whole IR immediatelly
+	return bctx.Play(*seqName, *seqVars)
 }
 
 func CmdLive(args []string) error {
 	fs := flag.NewFlagSet("live", flag.ExitOnError)
-	cfgPath := fs.String("config", defaultConfigPath(), "config file path")
+	cfgPath := fs.String("cfg", defaultConfigPath(), "config file path")
 	fs.Parse(args)
 
 	bleedPath := fs.Arg(0)
@@ -56,7 +59,8 @@ func CmdLive(args []string) error {
 		return fmt.Errorf("loading bleed: %w", err)
 	}
 
-	ctx := NewCmdContext(cfg, bleed)
+	bctx := core.NewBleedContext(bleed)
+	go bctx.Run(os.Stdout)
 
 	port := fmt.Sprintf(":%d", cfg.Live.Port)
 	listener, err := net.Listen("tcp", port)
@@ -72,16 +76,11 @@ func CmdLive(args []string) error {
 			log.Println("[ERROR] ", err)
 			continue
 		}
-		err = handleConnection(conn, ctx)
-		if err != nil {
-			log.Println("[ERROR] ", err)
-			continue
-		}
+		handleConnection(conn, bctx)
 	}
 }
 
 func CmdInfo(args []string) error {
-	// fs := flag.NewFlagSet("info")
 	return fmt.Errorf("info is not implemented yet")
 }
 

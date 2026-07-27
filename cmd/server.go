@@ -4,15 +4,18 @@ import (
 	"bleeder/internal/core"
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 )
 
-func handleConnection(conn net.Conn, ctx *CmdContext) error {
+func handleConnection(conn net.Conn, bctx *core.BleedContext) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 
+	fmt.Fprintln(conn, "READY")
 	for scanner.Scan() {
+		log.Printf("[TCP] << %s\n", scanner.Text())
 		args := strings.Fields(scanner.Text())
 		if len(args) == 0 {
 			continue
@@ -21,22 +24,15 @@ func handleConnection(conn net.Conn, ctx *CmdContext) error {
 		switch cmd {
 		case "PLAY":
 			seqName := getArg(args, 1, core.MAIN_NAME)
-			err := ctx.Play(seqName, "")
-			if err != nil {
-				fmt.Fprintf(conn, "ERR %v\n", err)
-				continue
-			}
+			bctx.Play(seqName, "")
+			fmt.Fprintf(conn, "OK playing\n")
 
 		case "STOP":
-			err := ctx.Stop()
-			if err != nil {
-				fmt.Fprintf(conn, "ERR %v\n", err)
-			} else {
-				fmt.Fprintf(conn, "OK stopped\n")
-			}
+			bctx.Stop()
+			fmt.Fprintf(conn, "OK stopped\n")
 
 		case "INFO":
-			info := ctx.Info()
+			info := bctx.Info()
 			fmt.Fprintf(conn, "%s\n", info)
 
 		default:
