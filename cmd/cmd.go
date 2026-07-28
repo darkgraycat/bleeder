@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"bleeder/internal/core"
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"strings"
 )
 
 type Cmd func(args []string) error
@@ -34,9 +36,7 @@ func CmdPlay(args []string) error {
 	}
 
 	bctx := core.NewBleedContext(bleed)
-	go bctx.Run(os.Stdout)
-	// TODO - think how we can stream whole IR immediatelly
-	return bctx.Play(*seqName, *seqVars)
+	return bctx.Render(*seqName, *seqVars, os.Stdout)
 }
 
 func CmdLive(args []string) error {
@@ -76,7 +76,7 @@ func CmdLive(args []string) error {
 			log.Println("[ERROR] ", err)
 			continue
 		}
-		handleConnection(conn, bctx)
+		go handleConnection(conn, bctx)
 	}
 }
 
@@ -86,4 +86,57 @@ func CmdInfo(args []string) error {
 
 func CmdHelp(args []string) error {
 	return fmt.Errorf("help is not implemented yet")
+}
+
+func handleConnection(conn net.Conn, bctx *core.BleedContext) error {
+	defer conn.Close()
+	scanner := bufio.NewScanner(conn)
+	fmt.Fprintln(conn, "READY")
+	for scanner.Scan() {
+		args := strings.Fields(scanner.Text())
+		if len(args) == 0 {
+			continue
+		}
+		var err error
+		var res string
+		cmd := strings.ToUpper(args[0])
+		switch cmd {
+		case "PLAY":
+			seqName := getArg(args, 1, core.MAIN_NAME)
+			err = bctx.Play(seqName, "")
+			res = "playing " + seqName
+		case "STOP":
+			err = bctx.Stop()
+			res = "stopped"
+		case "SYNC":
+			err = bctx.Sync()
+			res = "synced"
+		case "INFO":
+			err = nil
+			res = bctx.Info()
+		default:
+			log.Printf("[TCP] Unknown command: %q\n", cmd)
+			fmt.Fprintf(conn, "ERR unknown command: %q\n", cmd)
+			continue
+		}
+		if err != nil {
+			log.Printf("[TCP] %s error: %v\n", cmd, err)
+			fmt.Fprintf(conn, "ERR %v\n", err)
+		} else {
+			log.Printf("[TCP] %s response: %s\n", cmd, res)
+			fmt.Fprintf(conn, "OK %s\n", res)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Printf("[TCP] Connection error: %v\n", err)
+		return err
+	}
+	return nil
+}
+
+func getArg(args []string, idx int, fallback string) string {
+	if idx >= len(args) || args[idx] == "" {
+		return fallback
+	}
+	return args[idx]
 }

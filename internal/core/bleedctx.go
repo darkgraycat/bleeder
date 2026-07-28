@@ -104,6 +104,10 @@ func (ctx *BleedContext) Run(w io.Writer) {
 				times, timeIdx, startTime = irp.Times(), 0, time.Now()
 				cmd.Resp <- BleedContextResponse{Error: nil}
 			case "STOP":
+				if !playing {
+					cmd.Resp <- BleedContextResponse{Error: fmt.Errorf("is not playing")}
+					continue
+				}
 				playing = false
 				cmd.Resp <- BleedContextResponse{Error: nil}
 			case "SYNC":
@@ -157,4 +161,17 @@ func (ctx *BleedContext) Run(w io.Writer) {
 			timeIdx++
 		}
 	}
+}
+
+func (ctx *BleedContext) Render(name, vars string, w io.Writer) error {
+	irp, err := ctx.bleeder.GenSeqIR(name, vars)
+	if err != nil {
+		return err
+	}
+
+	for _, ins := range irp.Instructions() {
+		fmt.Fprintln(w, ins)
+	}
+
+	return nil
 }
