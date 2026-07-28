@@ -300,6 +300,14 @@ func TestEvalVars(t *testing.T) {
 				"b": -5,
 			},
 		},
+		{
+			name:     "evaluate using modulo operator",
+			given:    "a%3+10",
+			expected: 11,
+			vars: map[string]float64{
+				"a": 10,
+			},
+		},
 	}
 
 	for _, tc := range tests {

@@ -2,20 +2,19 @@ package renderer
 
 import (
 	"bleeder/internal/audio"
-	"bleeder/internal/ir"
 	"io"
 )
 
 type WAVRenderer struct {
-	wav *audio.WAV_Old
+	wav *audio.WAV
 }
 
 func NewWAVRenderer(sampleRate, channels int) *WAVRenderer {
 	return &WAVRenderer{
-		wav: audio.NewWAV_Old(sampleRate, channels),
+		wav: audio.NewWAV(sampleRate, channels),
 	}
 }
 
-func (r *WAVRenderer) Render(irp *ir.Program, w io.Writer) error {
+func (wr *WAVRenderer) Render(r io.Reader, w io.Writer) error {
 	return nil
 }

@@ -1,0 +1,77 @@
+[lane.main]
+vars = 'T:e1 D:1 V:1'
+tick = '1/D'
+tune = 'T'
+gain = 'V'
+content = '''
+e2 (e2 a2) a2
+
+e2 e2
+   a2 a2
+
+
+>e2 >e2|>a2 >a2
+e2 e2|a2 a2
+
+>b-12:8 | >b +4 >o3 >o2:5
+b-12:8 | b +4 o3 o2:5
+
+
+>A < < <+3:/2 <-2 _ <:*2 < <-3
+
+A + + +3:/2 -2 > +:*2 + -3
+
+A < < <+3:/2 <-2 > <:*2 < <-3
+
+
+@mainRiff:2:1
+@mainRiff>2>1
+@mainRiff(2,1)
+@mainRiff:a=2:b=1
+@mainRiff a:2 b:1
+
+e3:2:.4
+e3>2>.4
+
+e3:2!4 #hm, or mb we can remove arguments for notes completelly?
+
+e3:2 becames e3>
+e3:8 becames e3>8
+
+e3<8 repeats 8 times?
+
+# and gain is controlled via vibes, wdyt?
+
+b-12:8:.5
+# vs
+b-12(8 .5)
+
+@riff:8:e2:7
+# vs
+@riff(8 e2 7)
+
+'''
+
+[seq.chord222]
+vars = 'note:c1'
+content = '''
+note & note+7
+'''
+
+[seq.standNbleed]
+tune = 'a3'
+content = '''
+0-12:8 & 0 4 7 11
+0-10:8 & 2 6 9 13
+
+0-12:8, 0 4 7 11
+0-10:8, 2 6 9 13
+'''
+
+[lane.standNbleed]
+vars = 'b:a3 o3:b+7 o2:o3+4'
+content = '''
+>b-12:8 | >b   <+4 >o3 >o2
+>b-10:8 | >b+2 <+4 >o3 >o2
+'''
+

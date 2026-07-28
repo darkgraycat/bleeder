@@ -1,10 +1,7 @@
 package renderer
 
-import (
-	"bleeder/internal/ir"
-	"io"
-)
+import "io"
 
 type Renderer interface {
-	Render(irp *ir.Program, w io.Writer) error
+	Render(r io.Reader, w io.Writer) error
 }

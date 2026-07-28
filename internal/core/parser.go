@@ -53,7 +53,7 @@ func parseVars(s string, vals []string) map[string]float64 {
 		k, v, _ := strings.Cut(def, chArgs)
 		if i < len(vals) && vals[i] != "" {
 			switch vals[i][0] {
-			case '+', '-', '*', '/':
+			case '+', '-', '*', '/', '%':
 				v += vals[i]
 			default:
 				v = vals[i]
@@ -66,7 +66,7 @@ func parseVars(s string, vals []string) map[string]float64 {
 
 // evaluate arithmetic expression with variables map
 func evalVars(s string, vars map[string]float64) float64 {
-	i := strings.LastIndexAny(s, "+-*/")
+	i := strings.LastIndexAny(s, "+-*/%")
 	if i > 0 {
 		lhs := evalVars(s[:i], vars)
 		rhs := evalVars(s[i+1:], vars)
@@ -79,6 +79,8 @@ func evalVars(s string, vars map[string]float64) float64 {
 			return lhs * rhs
 		case '/':
 			return lhs / rhs
+		case '%':
+			return math.Mod(lhs, rhs)
 		}
 		return math.NaN()
 	}
@@ -135,7 +137,7 @@ func getArg(args []string, idx int, fallback string) string {
 	}
 	v := args[idx]
 	switch v[0] {
-	case '+', '-', '*', '/':
+	case '+', '-', '*', '/', '%':
 		return fallback + v
 	}
 	return v

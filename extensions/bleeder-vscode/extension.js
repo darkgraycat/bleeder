@@ -65,12 +65,12 @@ function activate(context) {
         let match;
         while (match = regex.exec(text)) {
           const p = document.positionAt(match.index);
-          out.push({
-            position: document.lineAt(p.line).range.end,
-            label: ' [4 beats, tune: d1]',
-            kind: vscode.InlayHintKind.Type,
-            paddingLeft: true
-          });
+          // out.push({
+          //   position: document.lineAt(p.line).range.end,
+          //   label: ' [4 beats, tune: d1]',
+          //   kind: vscode.InlayHintKind.Type,
+          //   paddingLeft: true
+          // });
         }
         return out;
       }
