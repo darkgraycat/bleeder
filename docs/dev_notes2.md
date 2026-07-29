@@ -1,3 +1,13 @@
+# Commands to test
+play mode
+```sh
+```
+
+live mode
+```sh
+bleeder live -cfg ~/DarkGrayCat/golang/bleeder/config.toml bleeds/test.toml | bleeder-wav | ffplay -f s16le -ar 44100 -
+```
+
 # Reinventing DSL
 ### Behaviour of [] foreach operator
 ```toml

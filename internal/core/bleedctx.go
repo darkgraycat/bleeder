@@ -2,8 +2,11 @@ package core
 
 import (
 	"bleeder/internal/ir"
+	"bleeder/internal/renderer"
 	"fmt"
 	"io"
+	"log"
+	"os"
 	"time"
 )
 
@@ -83,11 +86,12 @@ func (ctx *BleedContext) Run(w io.Writer) {
 		seq       string
 		vars      string
 		startTime time.Time
-		times     []float64
-		timeIdx   int
 	)
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
+
+	wr := renderer.NewWAVRenderer(44010, 1)
+	wr.Start(w)
 
 	for {
 		select {
@@ -101,13 +105,14 @@ func (ctx *BleedContext) Run(w io.Writer) {
 				}
 				irp = newIrp
 				seq, vars, pos, playing = cmd.Seq, cmd.Vars, 0.0, true
-				times, timeIdx, startTime = irp.Times(), 0, time.Now()
+				startTime = time.Now()
 				cmd.Resp <- BleedContextResponse{Error: nil}
 			case "STOP":
 				if !playing {
 					cmd.Resp <- BleedContextResponse{Error: fmt.Errorf("is not playing")}
 					continue
 				}
+				log.Println("[DEBUG] STOP: setting playing=false")
 				playing = false
 				cmd.Resp <- BleedContextResponse{Error: nil}
 			case "SYNC":
@@ -125,7 +130,6 @@ func (ctx *BleedContext) Run(w io.Writer) {
 						continue
 					}
 					irp = newIrp
-					times = irp.Times()
 				}
 				cmd.Resp <- BleedContextResponse{Error: nil}
 			case "INFO":
@@ -134,43 +138,56 @@ func (ctx *BleedContext) Run(w io.Writer) {
 				cmd.Resp <- BleedContextResponse{Info: info, Error: nil}
 			}
 		case <-ticker.C:
-			if !playing || irp == nil || timeIdx >= len(times) {
-				if playing && irp != nil && timeIdx >= len(times) {
-					elapsed := time.Since(startTime).Seconds()
-					duration := irp.Duration()
-					if duration > elapsed {
-						sleepDur := time.Duration((duration - elapsed) * float64(time.Second))
-						time.Sleep(sleepDur)
-					}
-					timeIdx = 0
+			// Always write samples - silence if not playing
+			chunkDuration := 0.01 // 10ms
+
+			var activeInstructions []*ir.Instruction
+
+			if playing && irp != nil {
+				elapsed := time.Since(startTime).Seconds()
+				duration := irp.Duration()
+
+				// Check if we need to loop
+				if elapsed >= duration {
+					log.Println("[DEBUG] LOOP: restarting sequence")
 					pos = 0.0
 					startTime = time.Now()
+					elapsed = 0.0
 				}
-				continue
+
+				// Get all instructions that are currently active
+				// (started and not finished yet)
+				for _, ins := range irp.Instructions() {
+					insStart := ins.Time
+					insEnd := ins.Time + ins.Dur
+					if elapsed >= insStart && elapsed < insEnd {
+						activeInstructions = append(activeInstructions, ins)
+					}
+				}
+
+				if len(activeInstructions) > 0 {
+					log.Printf("[DEBUG] Playing %d notes at Time=%.3f\n", len(activeInstructions), elapsed)
+				}
+				pos = elapsed
 			}
-			t := times[timeIdx]
-			elapsed := time.Since(startTime).Seconds()
-			if t > elapsed {
-				continue
+
+			// Write chunk (silence if activeInstructions is empty)
+			wr.WriteChunk(chunkDuration, pos, activeInstructions, w)
+			if f, ok := w.(*os.File); ok {
+				f.Sync()
 			}
-			chunk := irp.AtTime(t)
-			for _, ins := range chunk {
-				fmt.Fprintf(w, "[+%.3fs] %v\n", time.Since(startTime).Seconds(), ins)
-			}
-			pos = t
-			timeIdx++
 		}
 	}
 }
 
-func (ctx *BleedContext) Render(name, vars string, w io.Writer) error {
+func (ctx *BleedContext) Generate(name, vars string, w io.Writer) error {
 	irp, err := ctx.bleeder.GenSeqIR(name, vars)
 	if err != nil {
 		return err
 	}
 
 	for _, ins := range irp.Instructions() {
-		fmt.Fprintln(w, ins)
+		fmt.Fprintln(w, ins.Serialize())
 	}
 
 	return nil
