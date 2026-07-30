@@ -5,7 +5,7 @@ include = [
 
 [lane.main]
 tick = '1'
-tune = 'b1'
+tune = 'b2'
 # tick = '1/4'
 content = '''
 @ppunkRiff:8:7

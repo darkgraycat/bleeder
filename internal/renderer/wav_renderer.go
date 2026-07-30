@@ -20,8 +20,8 @@ type ActiveNote struct {
 type WAVRenderer struct {
 	wav         *audio.WAV
 	activeNotes []ActiveNote
-	notesMutex  sync.Mutex
 	startTime   time.Time
+	mu          sync.Mutex
 }
 
 func NewWAVRenderer(sampleRate, channels int) *WAVRenderer {
@@ -32,8 +32,8 @@ func NewWAVRenderer(sampleRate, channels int) *WAVRenderer {
 	}
 }
 
-// Stream generates continuous audio from IR instruction stream
-func (wr *WAVRenderer) Stream(r io.Reader, w io.Writer) error {
+// Render generates continuous audio from IR instruction stream
+func (wr *WAVRenderer) Render(r io.Reader, w io.Writer) error {
 	// Write WAV header
 	wr.wav.WriteHeader(w, 0)
 
@@ -46,7 +46,7 @@ func (wr *WAVRenderer) Stream(r io.Reader, w io.Writer) error {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		wr.generateAndWriteChunk(chunkDuration, w)
+		wr.writeInstructions(chunkDuration, w)
 	}
 
 	return nil
@@ -64,12 +64,12 @@ func (wr *WAVRenderer) readInstructions(r io.Reader) {
 		}
 
 		// Add to active notes
-		wr.notesMutex.Lock()
+		wr.mu.Lock()
 		wr.activeNotes = append(wr.activeNotes, ActiveNote{
 			Instruction: ins,
 			StartTime:   time.Now(),
 		})
-		wr.notesMutex.Unlock()
+		wr.mu.Unlock()
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -77,39 +77,13 @@ func (wr *WAVRenderer) readInstructions(r io.Reader) {
 	}
 }
 
-// TODO: remove
-func (wr *WAVRenderer) Samples(ins *ir.Instruction) []int16 {
-	sr := wr.wav.SampleRate()
-	out := make([]int16, int(ins.Dur*float64(sr)))
-	freq := audio.MidfToFreq(ins.Midi)
-
-	wave := audio.WaveSine
-	if ins.Patch != nil && ins.Patch.WaveFunc != nil {
-		wave = ins.Patch.WaveFunc
-	}
-
-	clip := float64(math.MaxInt16)
-	amp := ins.Vol * math.MaxInt16
-	step := freq / float64(sr)
-	phase := 0.0
-	for i := range out {
-		v := wave(phase) * amp
-		out[i] = int16(math.Tanh(v/clip) * clip) // soft-clipping
-		phase += step
-		if phase >= 1 {
-			phase -= 1
-		}
-	}
-	return out
-}
-
-// generateAndWriteChunk creates and writes one chunk of audio
-func (wr *WAVRenderer) generateAndWriteChunk(durationSec float64, w io.Writer) {
+// writeInstructions creates and writes one chunk of audio
+func (wr *WAVRenderer) writeInstructions(durationSec float64, w io.Writer) {
 	sr := wr.wav.SampleRate()
 	chunkSize := int(durationSec * float64(sr))
 	chunk := make([]int16, chunkSize)
 
-	wr.notesMutex.Lock()
+	wr.mu.Lock()
 
 	// Remove finished notes and generate samples for active ones
 	activeNotes := wr.activeNotes[:0]
@@ -128,7 +102,7 @@ func (wr *WAVRenderer) generateAndWriteChunk(durationSec float64, w io.Writer) {
 	}
 	wr.activeNotes = activeNotes
 
-	wr.notesMutex.Unlock()
+	wr.mu.Unlock()
 
 	// Write chunk (silence if no active notes)
 	wr.wav.WriteSamples(w, chunk)

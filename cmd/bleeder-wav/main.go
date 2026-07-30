@@ -14,11 +14,12 @@ func main() {
 	ch := fs.Int("ch", 1, "number of channels")
 	fs.Parse(os.Args[1:])
 
-	log.Printf("SampleRate=%d Channels=%d", *sr, *ch)
+	log.Printf("[RENDER] Bleeder WAV")
+	log.Printf("[RENDER] SampleRate=%d Channels=%d", *sr, *ch)
 
 	renderer := renderer.NewWAVRenderer(*sr, *ch)
 
-	err := renderer.Stream(os.Stdin, os.Stdout)
+	err := renderer.Render(os.Stdin, os.Stdout)
 	if err != nil {
 		log.Fatalf("[ERROR]: %v\n", err)
 	}
