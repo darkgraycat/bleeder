@@ -5,7 +5,7 @@ BINS := bleeder bleeder-wav bleeder-irp bleeder-midi
 BIN_DIR := bin
 
 # Install location
-INSTALL_PATH := $(HOME)/bin
+INSTALL_PATH := $(HOME)/.local/bin
 
 .PHONY: all build clean install help test
 

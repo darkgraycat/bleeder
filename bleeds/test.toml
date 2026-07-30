@@ -9,7 +9,7 @@ tune = 'b1'
 # tick = '1/4'
 content = '''
 @ppunkRiff:8:7
-@ppunkRiff:4:3
+@ppunkRiff:4:6
 
 # @mainRiff:1   <<<
 # @mainRiff:2:1 <<<

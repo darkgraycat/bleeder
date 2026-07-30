@@ -16,13 +16,9 @@ func main() {
 
 	log.Printf("SampleRate=%d Channels=%d", *sr, *ch)
 
-	// TODO: Implement WAV renderer
-	// Read serialized IR from stdin
-	// Output WAV samples to stdout
-
 	renderer := renderer.NewWAVRenderer(*sr, *ch)
 
-	err := renderer.Render(os.Stdin, os.Stdout)
+	err := renderer.Stream(os.Stdin, os.Stdout)
 	if err != nil {
 		log.Fatalf("[ERROR]: %v\n", err)
 	}

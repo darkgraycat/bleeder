@@ -2,11 +2,8 @@ package core
 
 import (
 	"bleeder/internal/ir"
-	"bleeder/internal/renderer"
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"time"
 )
 
@@ -82,16 +79,13 @@ func (ctx *BleedContext) Run(w io.Writer) {
 	var (
 		irp       *ir.Program
 		playing   bool
-		pos       float64
 		seq       string
 		vars      string
 		startTime time.Time
+		sentIdx   int // Track which instructions we've already sent
 	)
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
-
-	wr := renderer.NewWAVRenderer(44010, 1)
-	wr.Start(w)
 
 	for {
 		select {
@@ -104,17 +98,19 @@ func (ctx *BleedContext) Run(w io.Writer) {
 					continue
 				}
 				irp = newIrp
-				seq, vars, pos, playing = cmd.Seq, cmd.Vars, 0.0, true
+				seq, vars, playing = cmd.Seq, cmd.Vars, true
 				startTime = time.Now()
+				sentIdx = 0
 				cmd.Resp <- BleedContextResponse{Error: nil}
+
 			case "STOP":
 				if !playing {
 					cmd.Resp <- BleedContextResponse{Error: fmt.Errorf("is not playing")}
 					continue
 				}
-				log.Println("[DEBUG] STOP: setting playing=false")
 				playing = false
 				cmd.Resp <- BleedContextResponse{Error: nil}
+
 			case "SYNC":
 				newBleed, err := LoadBleed(ctx.bleed.Meta.Path)
 				if err != nil {
@@ -124,57 +120,61 @@ func (ctx *BleedContext) Run(w io.Writer) {
 				ctx.bleed = newBleed
 				ctx.bleeder = NewBleeder(newBleed)
 				if playing && seq != "" {
+					// Save current position
+					currentElapsed := time.Since(startTime).Seconds()
+
 					newIrp, err := ctx.bleeder.GenSeqIR(seq, vars)
 					if err != nil {
 						cmd.Resp <- BleedContextResponse{Error: err}
 						continue
 					}
 					irp = newIrp
+
+					// Find where we should be in the new IR
+					instructions := irp.Instructions()
+					newSentIdx := 0
+					for i, ins := range instructions {
+						if ins.Time > currentElapsed {
+							break
+						}
+						newSentIdx = i + 1
+					}
+					sentIdx = newSentIdx
+
+					// Adjust startTime to maintain current position
+					startTime = time.Now().Add(-time.Duration(currentElapsed * float64(time.Second)))
 				}
 				cmd.Resp <- BleedContextResponse{Error: nil}
+
 			case "INFO":
-				info := fmt.Sprintf("seq=%s pos=%.2f playing=%v",
-					seq, pos, playing)
+				info := fmt.Sprintf("seq=%s playing=%v",
+					seq, playing)
 				cmd.Resp <- BleedContextResponse{Info: info, Error: nil}
 			}
+
 		case <-ticker.C:
-			// Always write samples - silence if not playing
-			chunkDuration := 0.01 // 10ms
-
-			var activeInstructions []*ir.Instruction
-
-			if playing && irp != nil {
-				elapsed := time.Since(startTime).Seconds()
-				duration := irp.Duration()
-
-				// Check if we need to loop
-				if elapsed >= duration {
-					log.Println("[DEBUG] LOOP: restarting sequence")
-					pos = 0.0
-					startTime = time.Now()
-					elapsed = 0.0
-				}
-
-				// Get all instructions that are currently active
-				// (started and not finished yet)
-				for _, ins := range irp.Instructions() {
-					insStart := ins.Time
-					insEnd := ins.Time + ins.Dur
-					if elapsed >= insStart && elapsed < insEnd {
-						activeInstructions = append(activeInstructions, ins)
-					}
-				}
-
-				if len(activeInstructions) > 0 {
-					log.Printf("[DEBUG] Playing %d notes at Time=%.3f\n", len(activeInstructions), elapsed)
-				}
-				pos = elapsed
+			if !playing || irp == nil {
+				continue
 			}
 
-			// Write chunk (silence if activeInstructions is empty)
-			wr.WriteChunk(chunkDuration, pos, activeInstructions, w)
-			if f, ok := w.(*os.File); ok {
-				f.Sync()
+			elapsed := time.Since(startTime).Seconds()
+			instructions := irp.Instructions()
+
+			// Send any instructions that should start now
+			for sentIdx < len(instructions) {
+				ins := instructions[sentIdx]
+				if ins.Time > elapsed {
+					break // Future instruction, wait
+				}
+				// Send this instruction
+				fmt.Fprintln(w, ins.Serialize())
+				sentIdx++
+			}
+
+			// Check if we need to loop
+			if sentIdx >= len(instructions) && elapsed >= irp.Duration() {
+				sentIdx = 0
+				startTime = time.Now()
 			}
 		}
 	}

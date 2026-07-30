@@ -1,3 +1,8 @@
+# Rewrite plan
+1. finish live-coding, dont polish it yet
+2. implement new DSL
+3. do refactor of Bleeder struct, renderers and overall
+
 # Commands to test
 play mode
 ```sh
