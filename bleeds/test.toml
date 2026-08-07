@@ -5,27 +5,11 @@ include = [
 
 [lane.main]
 tick = '1'
-tune = 'b2'
+tune = 'b1'
 # tick = '1/4'
 content = '''
 @ppunkRiff:8:7
-@ppunkRiff:4:6
-
-# @mainRiff:1   <<<
-# @mainRiff:2:1 <<<
-
-# @ppunkRiff:8:1
-# @ppunkRiff:4:-1
-# @ppunkRiff:8:1
-# @ppunkRiff:4:-1
-# 
-# @ppunkBg:8 | @ppunkRiff:8:1
-# @ppunkBg:4 | @ppunkRiff:4:-1
-# @ppunkBg:8 | @ppunkRiff:8:1
-# @ppunkBg:4 | @ppunkRiff:4:-1
-# 
-# @ppunkRiff:0:7 | @ppunkRiff:12:7
-# @ppunkRiff:4:0
+@ppunkRiff:4:7
 '''
 
 [riff.minorScale]

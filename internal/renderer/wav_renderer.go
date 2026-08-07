@@ -98,7 +98,7 @@ func (wr *WAVRenderer) writeInstructions(durationSec float64, w io.Writer) {
 		activeNotes = append(activeNotes, note)
 
 		// Generate and mix samples for this note
-		wr.mixNote(chunk, note.Instruction, elapsed, durationSec)
+		wr.mixNote(chunk, note.Instruction, elapsed)
 	}
 	wr.activeNotes = activeNotes
 
@@ -112,8 +112,8 @@ func (wr *WAVRenderer) writeInstructions(durationSec float64, w io.Writer) {
 }
 
 // mixNote generates samples for one note and mixes into chunk
-func (wr *WAVRenderer) mixNote(chunk []int16, ins *ir.Instruction, offsetSec float64, durationSec float64) {
-	sr := wr.wav.SampleRate()
+func (wr *WAVRenderer) mixNote(chunk []int16, ins *ir.Instruction, offsetSec float64) {
+	sr := float64(wr.wav.SampleRate())
 	chunkSize := len(chunk)
 
 	freq := audio.MidfToFreq(ins.Midi)
@@ -123,11 +123,24 @@ func (wr *WAVRenderer) mixNote(chunk []int16, ins *ir.Instruction, offsetSec flo
 	}
 
 	amp := ins.Vol * math.MaxInt16
-	step := freq / float64(sr)
+	step := freq / sr
 	phase := math.Mod(offsetSec*freq, 1.0)
 
+	attack := int(sr * 0.02) // TODO: move to ADSR
+	release := int(sr * 0.03) // TODO: move to ADSR
+	attackStep := 1.0 / float64(attack)
+	releaseStep := 1.0 / float64(release)
+
 	for i := range chunkSize {
-		sample := int16(wave(phase) * amp)
+		envelope := 1.0
+		if i < attack {
+			envelope = attackStep * float64(i)
+		} else if i >= chunkSize-release {
+			envelope = releaseStep * float64(chunkSize-i)
+		}
+		sample := int16(wave(phase) * amp * envelope)
+
+		// sample := int16(wave(phase) * amp)
 
 		// Mix with soft clipping
 		mixed := int(chunk[i]) + int(sample)
