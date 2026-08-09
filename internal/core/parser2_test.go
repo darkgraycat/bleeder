@@ -16,12 +16,17 @@ func TestTokenize(t *testing.T) {
 		{
 			name: "All characters used",
 			given: `
-			# -2+10
+			2 + [a | | b] |
+			2 + [a & b] + [5 7 8 3]
+			# a b c 2 + [a & b] + [1 2&3] * [1 1 0 1]
+			# ___ a b +2
+
+			# -2+10 &
 			# 10+-2
-			2+a*3 b/8 c+b a & b c |
+			# 2+a*3 b/8 c+b a & b c |
 			# 20 30 40 @chord(a b) a b
-			# 7 + 8 @song {n: 60 vol: 1.2}
-			a b c 2 + [a&b] * [1 2 | | 3]
+			# 7 + 8 @song {n 60 vol 1.2}
+			# a b c 2 + [a&b] * [1 2 | | 3]
 			`,
 			expected: [][]string{},
 		},
@@ -33,6 +38,9 @@ func TestTokenize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
 			actual := tokenize(tc.given)
+
+			expand(actual[0])
+
 			// testutils.AssertInts(t, len(tc.expected), len(actual))
 			for i, act := range actual {
 				fmt.Printf("[%d] %s\n", i, strings.Join(act, ", "))
