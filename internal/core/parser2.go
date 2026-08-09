@@ -1,43 +1,130 @@
 package core
 
-import "strings"
-
-// chars:
-// [] - group tones or sequences
-// () - send positional arguments
-// {} - send named arguments
-// _  - rest
-// |  - prev
-// @  - link
-// &  - with
-// #  - skip
-
-var tokenizeReplacer = strings.NewReplacer(
-	"[", " [", "]", "] ",
-	"(", " (", ")", ") ",
-	"{", " {", "}", "} ",
-	"@", " @", "&", " & ",
-	"|", " |", "_", " _ ",
-
-	// chPlay, " "+chPlay,
-	// chPrev, " "+chPrev,
-	// chLink, " "+chLink,
-	// chVibe, " "+chVibe,
-	// chRest, " "+chRest,
-	// chWith, " "+chWith,
-	// chSkip, " "+chSkip,
+import (
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
 )
 
-func tokenize(s string) [][]string {
-	out := make([][]string, 0, 4)
-	src := strings.TrimSpace(tokenizeReplacer.Replace(s))
+var tokenizeReplacer = strings.NewReplacer(
+	"[", " [ ", "]", " ] ", // for each group
+	"(", " ( ", ")", " ) ", // positional arguments
+	"{", " { ", "}", " } ", // named arguments
+	"@", " @", ":", " : ", "&", " & ", "|", " | ", "_", " _ ",
+	"+", " + ", "-", " -", "*", " * ", "/", " / ", "%", " % ", "^", " ^ ",
+)
+
+func tokenize(content string) [][]string {
+	out := make([][]string, 0, 8)
+	mem := make([]string, 0, 16)
+	src := strings.TrimSpace(tokenizeReplacer.Replace(content))
 	for row := range strings.SplitSeq(src, "\n") {
 		if i := strings.IndexByte(row, '#'); i >= 0 {
-			row = row[:i]
+			row = row[:i] // skip rest of the line
 		}
-		if fields := strings.Fields(row); len(fields) > 0 {
-			out = append(out, fields)
+		prevIsValue := false // previos is raw value
+		isJoinGroup := false // join into single group
+		for token := range strings.FieldsSeq(row) {
+			currIsValue := strings.IndexByte("+-*/%^", token[0]) < 0
+			if prevIsValue && currIsValue && !isJoinGroup {
+				out = append(out, append([]string(nil), mem...))
+				mem = mem[:0]
+			}
+			switch token[0] {
+			case '[', '(', '{', '@':
+				isJoinGroup = true
+			case ']', ')', '}':
+				isJoinGroup = false
+			}
+			mem = append(mem, token)
+			prevIsValue = currIsValue
+		}
+		if len(mem) > 0 {
+			out = append(out, append([]string(nil), mem...))
+			mem = mem[:0]
 		}
 	}
 	return out
+}
+
+func expand(tokens []string) [][]string {
+	out := make([][]string, 0, 8)
+	template := make([]string, 0, 8)
+	groups := make([][]string, 0, 4)
+	gcoefs := make([]int, 0, 4)
+	gtidxs := make([]int, 0, 4)
+	combos := 1
+
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i] != "[" {
+			template = append(template, tokens[i])
+			continue
+		}
+		group := make([]string, 0, 4)
+		template = append(template, "§"+strconv.FormatInt(int64(len(groups)), 10))
+		for i++; tokens[i] != "]"; i++ {
+			group = append(group, tokens[i])
+		}
+		gcoefs = append(gcoefs, combos)
+		groups = append(groups, group)
+		gtidxs = append(gtidxs, len(template)-1)
+		combos *= len(group)
+	}
+
+	for i := range combos {
+		exp := append([]string(nil), template...)
+		for j, group := range groups {
+			idx := (i / gcoefs[j]) % len(groups[j])
+			switch group[idx] {
+			case "&":
+				exp = []string{"&"}
+			case "|":
+				if idx > 0 {
+					group[idx] = group[idx - 1]
+				} else {
+					group[idx] = "0"
+				}
+				exp[gtidxs[j]] = group[idx]
+			default:
+				exp[gtidxs[j]] = group[idx]
+			}
+		}
+		out = append(out, exp)
+	}
+
+	return out
+}
+
+// NOT USED
+// evaluate arithmetic expression with variables map
+func evalVars2(s string, vars map[string]string) float64 {
+	i := strings.LastIndexAny(s, "+-*/%^")
+	if i > 0 {
+		lhs := evalVars2(s[:i], vars)
+		rhs := evalVars2(s[i+1:], vars)
+		switch s[i] {
+		case '+':
+			return lhs + rhs
+		case '-':
+			return lhs - rhs
+		case '*':
+			return lhs * rhs
+		case '/':
+			return lhs / rhs
+		case '%':
+			return math.Mod(lhs, rhs)
+		case '^':
+			return math.Pow(lhs, rhs)
+		}
+		return math.NaN()
+	}
+	if ref, ok := vars[s]; ok {
+		val, err := strconv.ParseFloat(ref, 64)
+		if err != nil {
+			return math.NaN()
+		}
+		return val
+	}
+	return parseTone(s)
 }

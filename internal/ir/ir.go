@@ -1,8 +1,6 @@
 package ir
 
 import (
-	"bleeder/internal/audio"
-	"fmt"
 	"math"
 	"slices"
 )
@@ -167,26 +165,4 @@ func (p *Program) Last() *Instruction {
 		return p.instructions[l-1]
 	}
 	return nil
-}
-
-// Instruction is a basic unit of Intermediate Representation
-type Instruction struct {
-	Midi  float64 // fractional midi
-	Dur   float64 // duration in ticks (fractional)
-	Vol   float64 // volume 0.0..1.0
-	Time  float64 // absolute time in ticks (fractional)
-	Info  string  // debug information
-	Patch *Patch  // patch to use
-}
-
-// Format Instruction into string
-func (ins Instruction) String() string {
-	return fmt.Sprintf("Midi=%f Vol=%f Dur=%f Time=%f Info=%s",
-		ins.Midi, ins.Vol, ins.Dur, ins.Time, ins.Info)
-}
-
-// Instruction shape of the sound
-type Patch struct {
-	Name     string         // patch name
-	WaveFunc audio.WaveFunc // wave function to use
 }

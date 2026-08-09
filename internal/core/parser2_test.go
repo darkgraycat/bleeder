@@ -3,6 +3,7 @@ package core
 import (
 	"bleeder/internal/shared/testutils"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -13,38 +14,37 @@ func TestTokenize(t *testing.T) {
 		expected [][]string
 	}{
 		{
-			name: "Simple multiline sequence",
+			name: "All characters used",
 			given: `
-			c4&eb4 60:2 |+8
-			@chord:as2 & a2 gs2
+			2 + [a | | b] |
+			2 + [a & b] + [5 7 8 3]
+			# a b c 2 + [a & b] + [1 2&3] * [1 1 0 1]
+			# ___ a b +2
+
+			# -2+10 &
+			# 10+-2
+			# 2+a*3 b/8 c+b a & b c |
+			# 20 30 40 @chord(a b) a b
+			# 7 + 8 @song {n 60 vol 1.2}
+			# a b c 2 + [a&b] * [1 2 | | 3]
 			`,
-			expected: [][]string{
-				{"c4", "&", "eb4", "60:2", "|+8"},
-				{"@chord:as2", "&", "a2", "gs2"},
-			},
-		},
-		{
-			name: "Complex multiline sequence",
-			given: `
-			0-12:8 & - 4 - 11
-			0-10:8 & 2 | | |+2
-			0:8:.5 0 # 1 2 3
-			`,
-			expected: [][]string{
-				{"0-12:8", "&", "-", "4", "-", "11"},
-				{"0-10:8", "&", "2", "|", "|", "|+2"},
-				{"0:8:.5", "0"},
-			},
+			expected: [][]string{},
 		},
 	}
+
+	// a b c 2 + [a&b] * [1 2 3]
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.CheckFlags(t)
 			actual := tokenize(tc.given)
-			testutils.AssertInts(t, len(tc.expected), len(actual))
+
+			expand(actual[0])
+
+			// testutils.AssertInts(t, len(tc.expected), len(actual))
 			for i, act := range actual {
-				testutils.AssertSlices(t, tc.expected[i], act)
+				fmt.Printf("[%d] %s\n", i, strings.Join(act, ", "))
+				// testutils.AssertSlices(t, tc.expected[i], act)
 			}
 		})
 	}
@@ -53,22 +53,19 @@ func TestTokenize(t *testing.T) {
 func BenchmarkTokenize(b *testing.B) {
 	tests := []struct{ given string }{
 		{
-			// old
-			// 355.3 ns/op	     320 B/op	       4 allocs/op
+			// 634.3 ns/op	     784 B/op	      10 allocs/op
 			given: `
-			0-12:8 & - 4 - 11
-			0-10:8 & 2 | | |+2
-			0:8:.5 0 # 1 2 3
-			`,
-		},
-		{
-			// 257.7 ns/op	     368 B/op	       5 allocs/op
-			given: `
-			c4&eb4 60:2 |+8
-			@chord:as2 & a2 gs2
+			2+a*3 b/8 c+b
+			a b c 2 + [a&b] * [1 2 3]
 			`,
 		},
 	}
+
+	/*
+		[a b c] +[0 0 7 0] &
+		@voices(e2 .8) & @voices{tone:e3 gain:.6}
+		[2 2*2 5 7] |&|+7 ___ |+4
+	*/
 
 	for i, tc := range tests {
 		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {

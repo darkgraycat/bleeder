@@ -36,7 +36,7 @@ func CmdPlay(args []string) error {
 	}
 
 	bctx := core.NewBleedContext(bleed)
-	return bctx.Render(*seqName, *seqVars, os.Stdout)
+	return bctx.Generate(*seqName, *seqVars, os.Stdout)
 }
 
 func CmdLive(args []string) error {

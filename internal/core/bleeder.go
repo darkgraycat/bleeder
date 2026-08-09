@@ -306,7 +306,7 @@ func (b *Bleeder) evalLink(name string, args []string) (*ir.Program, error) {
 	if err != nil {
 		return nil, err
 	}
-	return irp.Copy(), nil
+	return irp.Copy(), nil // TODO - why do we need .Copy() here? Mb, because I planned to use cache
 }
 
 // evaluate args and produce audio patch
