@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -15,7 +14,7 @@ var tokenizeReplacer = strings.NewReplacer(
 	"+", " + ", "-", " -", "*", " * ", "/", " / ", "%", " % ", "^", " ^ ",
 )
 
-func tokenize(content string) [][]string {
+func split(content string) [][]string {
 	out := make([][]string, 0, 8)
 	mem := make([]string, 0, 16)
 	src := strings.TrimSpace(tokenizeReplacer.Replace(content))
@@ -52,10 +51,9 @@ func expand(tokens []string) [][]string {
 	out := make([][]string, 0, 8)
 	template := make([]string, 0, 8)
 	groups := make([][]string, 0, 4)
-	gcoefs := make([]int, 0, 4)
-	gtidxs := make([]int, 0, 4)
-	combos := 1
-
+	gcoefs := make([]int, 0, 4) // mult of prev groups sizes
+	gmarks := make([]int, 0, 4) // template indices to substitute
+	combos := 1                 // total number of combinations
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i] != "[" {
 			template = append(template, tokens[i])
@@ -66,33 +64,33 @@ func expand(tokens []string) [][]string {
 		for i++; tokens[i] != "]"; i++ {
 			group = append(group, tokens[i])
 		}
-		gcoefs = append(gcoefs, combos)
 		groups = append(groups, group)
-		gtidxs = append(gtidxs, len(template)-1)
+		gcoefs = append(gcoefs, combos)
+		gmarks = append(gmarks, len(template)-1)
 		combos *= len(group)
 	}
-
 	for i := range combos {
 		exp := append([]string(nil), template...)
 		for j, group := range groups {
-			idx := (i / gcoefs[j]) % len(groups[j])
+			idx := (i / gcoefs[j]) % len(group)
 			switch group[idx] {
 			case "&":
-				exp = []string{"&"}
+				exp = exp[:0]
+				exp = append(exp, "&")
+				goto flush
 			case "|":
 				if idx > 0 {
-					group[idx] = group[idx - 1]
+					exp[gmarks[j]] = group[idx-1]
 				} else {
-					group[idx] = "0"
+					exp[gmarks[j]] = "0"
 				}
-				exp[gtidxs[j]] = group[idx]
 			default:
-				exp[gtidxs[j]] = group[idx]
+				exp[gmarks[j]] = group[idx]
 			}
 		}
+	flush:
 		out = append(out, exp)
 	}
-
 	return out
 }
 
