@@ -84,27 +84,27 @@ func BenchmarkSplit(b *testing.B) {
 func BenchmarkExpand(b *testing.B) {
 	tests := []struct{ given string }{
 		{
-			// 83.64 ns/op	     240 B/op	       2 allocs/op
+			// 81.29 ns/op	     240 B/op	       2 allocs/op
 			given: "a + 2",
 		},
 		{
-			// 158.0 ns/op	     355 B/op	       5 allocs/op
+			// 127.4 ns/op	     352 B/op	       4 allocs/op
 			given: "[a b] + c",
 		},
 		{
-			// 205.9 ns/op	     499 B/op	       6 allocs/op
+			// 182.0 ns/op	     496 B/op	       5 allocs/op
 			given: "2 + [a & b] + c",
 		},
 		{
-			// 654.6 ns/op	    1670 B/op	      18 allocs/op
+			// 608.3 ns/op	    1664 B/op	      16 allocs/op
 			given: "2 + [e2 & b2] + [5 8 0 3]",
 		},
 		{
-			// 2486 ns/op	    8841 B/op	      58 allocs/op
+			// 2434 ns/op	    8832 B/op	      55 allocs/op
 			given: "4 + [a b c] + [1 2 3 4] * [1 1 0 1]",
 		},
 		{
-			// 4348 ns/op	   16700 B/op	      94 allocs/op
+			// 4291 ns/op	   16688 B/op	      90 allocs/op
 			given: "[a b c] + [1 2 3] * [x y z] / [.7 .8 .9]",
 		},
 	}

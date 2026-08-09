@@ -60,7 +60,7 @@ func expand(tokens []string) [][]string {
 			continue
 		}
 		group := make([]string, 0, 4)
-		template = append(template, "§"+strconv.FormatInt(int64(len(groups)), 10))
+		template = append(template, "[]")
 		for i++; tokens[i] != "]"; i++ {
 			group = append(group, tokens[i])
 		}
