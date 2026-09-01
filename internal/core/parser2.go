@@ -1,47 +1,50 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 )
 
-var tokenizeReplacer = strings.NewReplacer(
-	"[", " [ ", "]", " ] ", // for each group
-	"(", " ( ", ")", " ) ", // positional arguments
-	"{", " { ", "}", " } ", // named arguments
-	"@", " @", ":", " : ", "&", " & ", "|", " | ", "_", " _ ",
-	"+", " + ", "-", " -", "*", " * ", "/", " / ", "%", " % ", "^", " ^ ",
+var normalizer = strings.NewReplacer(
+	"[", " [ ", "]", " ] ", "(", " ( ", ")", " ) ", "{", " { ", "}", " } ",
+	"@", " @ ", "$", " $ ", "&", " & ", "|", " | ", ":", " : ", "_", " _ ",
+	"+", " + ", "-", " - ", "*", " * ", "/", " / ", "%", " % ", "^", " ^ ",
 )
 
 func split(content string) [][]string {
 	out := make([][]string, 0, 8)
-	mem := make([]string, 0, 16)
-	src := strings.TrimSpace(tokenizeReplacer.Replace(content))
+	buf := make([]string, 0, 16)
+	src := strings.TrimSpace(normalizer.Replace(content))
 	for row := range strings.SplitSeq(src, "\n") {
 		if i := strings.IndexByte(row, '#'); i >= 0 {
-			row = row[:i] // skip rest of the line
+			row = row[:i]
 		}
-		prevIsValue := false // previos is raw value
-		isJoinGroup := false // join into single group
-		for token := range strings.FieldsSeq(row) {
-			currIsValue := strings.IndexByte("+-*/%^", token[0]) < 0
-			if prevIsValue && currIsValue && !isJoinGroup {
-				out = append(out, append([]string(nil), mem...))
-				mem = mem[:0]
-			}
-			switch token[0] {
-			case '[', '(', '{', '@':
-				isJoinGroup = true
+		prevIsValue := false
+		prevIsGroup := false
+		for raw := range strings.FieldsSeq(row) {
+			nextIsValue := true
+			nextIsGroup := prevIsGroup
+			switch raw[0] {
+			case '+', '-', '*', '/', '%', '^', '&', '|', ':':
+				nextIsValue = false
+			case '[', '(', '{', '@', '$':
+				nextIsGroup = true
 			case ']', ')', '}':
-				isJoinGroup = false
+				nextIsGroup = false
 			}
-			mem = append(mem, token)
-			prevIsValue = currIsValue
+			if prevIsValue && nextIsValue && !prevIsGroup {
+				out = append(out, append([]string(nil), buf...))
+				buf = buf[:0]
+			}
+			buf = append(buf, raw)
+			prevIsValue = nextIsValue
+			prevIsGroup = nextIsGroup
 		}
-		if len(mem) > 0 {
-			out = append(out, append([]string(nil), mem...))
-			mem = mem[:0]
+		if len(buf) > 0 {
+			out = append(out, append([]string(nil), buf...))
+			buf = buf[:0]
 		}
 	}
 	return out
@@ -54,6 +57,7 @@ func expand(tokens []string) [][]string {
 	gcoefs := make([]int, 0, 4) // mult of prev groups sizes
 	gmarks := make([]int, 0, 4) // template indices to substitute
 	combos := 1                 // total number of combinations
+	fmt.Printf("START SPLITTING\n")
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i] != "[" {
 			template = append(template, tokens[i])
@@ -61,7 +65,7 @@ func expand(tokens []string) [][]string {
 		}
 		group := make([]string, 0, 4)
 		template = append(template, "[]")
-		for i++; tokens[i] != "]"; i++ {
+		for i++; i < len(tokens) && tokens[i] != "]"; i++ {
 			group = append(group, tokens[i])
 		}
 		groups = append(groups, group)
@@ -69,6 +73,10 @@ func expand(tokens []string) [][]string {
 		gmarks = append(gmarks, len(template)-1)
 		combos *= len(group)
 	}
+	fmt.Printf("T %v\n", template)
+	fmt.Printf("G %v\n", groups)
+	fmt.Printf("C %v\n", gcoefs)
+	fmt.Printf("M %v\n", gmarks)
 	for i := range combos {
 		exp := append([]string(nil), template...)
 		for j, group := range groups {
@@ -77,6 +85,8 @@ func expand(tokens []string) [][]string {
 			case "&":
 				exp = exp[:0]
 				exp = append(exp, "&")
+				goto flush
+			case ":":
 				goto flush
 			case "|":
 				if idx > 0 {
