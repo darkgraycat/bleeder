@@ -42,14 +42,14 @@ func AssertFloats(t *testing.T, exp, act float64) {
 func AssertStrings(t *testing.T, exp, act string) {
 	t.Helper()
 	if exp != act {
-		t.Fatalf("\nexpected: `%s`\nactual:   `%s`", exp, act)
+		t.Fatalf("\nexpected: `%s` (%d)\nactual:   `%s` (%d)", exp, len(exp), act, len(act))
 	}
 }
 
 func AssertSlices[T comparable](t *testing.T, exp, act []T) {
 	t.Helper()
 	if len(exp) != len(act) {
-		t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
+		t.Fatalf("\nexpected: `%v` (%d)\nactual:   `%v` (%d)", exp, len(exp), act, len(act))
 	}
 	for i, v := range act {
 		if v != exp[i] {

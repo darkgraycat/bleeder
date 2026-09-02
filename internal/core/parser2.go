@@ -68,6 +68,14 @@ func scan(content string) (frames [][]string, groups [][]string) {
 	return frames, groups
 }
 
+// Flat templated frames into expressions using substitution groups
+func flat(frames [][]string, groups [][]string) (expressions [][]string) {
+	if len(groups) == 0 {
+		return frames
+	}
+	return expressions
+}
+
 // TODO: isnt needed anymore - we have templates and groups from "scan"
 func expand(tokens []string) [][]string {
 	out := make([][]string, 0, 8)
