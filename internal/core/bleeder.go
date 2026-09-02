@@ -10,24 +10,21 @@ import (
 
 // Core DSL processor and IRs generator
 type Bleeder struct {
-	vibes map[string]*Vibe
-	sqncs map[string]*Sequence
+	patches   map[string]*Patch
+	sequences map[string]*Sequence
 }
 
 // Create new Bleeder instance
 func NewBleeder(bleed *Bleed) *Bleeder {
 	b := &Bleeder{
-		vibes: make(map[string]*Vibe, len(bleed.Vibes)),
-		sqncs: make(map[string]*Sequence, len(bleed.Lanes)+len(bleed.Riffs)),
+		patches:   make(map[string]*Patch, len(bleed.Patches)),
+		sequences: make(map[string]*Sequence, len(bleed.Sequences)),
 	}
-	for k, v := range bleed.Vibes {
-		b.vibes[k] = &v
+	for k, v := range bleed.Patches {
+		b.patches[k] = &v
 	}
-	for k, v := range bleed.Lanes {
-		b.sqncs[k] = &v
-	}
-	for k, v := range bleed.Riffs {
-		b.sqncs[k] = &v
+	for k, v := range bleed.Sequences {
+		b.sequences[k] = &v
 	}
 	return b
 }
@@ -40,23 +37,16 @@ func (b *Bleeder) GenMainIR() (*ir.Program, error) {
 // Get IR of specified section with args
 func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	// log.Printf("[SEQ] %s (%s)\n", name, vars)
-	seq, ok := b.sqncs[name]
+	seq, ok := b.sequences[name]
 	if !ok {
 		return nil, fmt.Errorf("%s not exist", name)
 	}
+	// splitted := split(seq.Content)
+
 	varsMap := parseVars(seq.Vars, splitArgs(vars))
 	tokens := tokenizeContent(applyVars(seq.Content, varsMap))
 
-	var err error
-	var irp *ir.Program
-	switch seq.Type {
-	case SEQ_LANE:
-		irp, err = b.genLaneIR(tokens)
-	case SEQ_RIFF:
-		irp, err = b.genRiffIR(tokens)
-	default:
-		err = fmt.Errorf("unknown type %d", seq.Type)
-	}
+	irp, err := b.genLaneIR(tokens)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", name, err)
 	}
@@ -67,6 +57,12 @@ func (b *Bleeder) GenSeqIR(name string, vars string) (*ir.Program, error) {
 	return irp, nil
 }
 
+func (b *Bleeder) GenRawIR(tokens [][]string) (*ir.Program, error) {
+
+	return nil, nil
+}
+
+// TODO: remove
 // Get IR from raw Lane-DSL
 func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	var cT, aT float64          // current time, advance time
@@ -166,6 +162,7 @@ func (b *Bleeder) genLaneIR(tokens [][]string) (*ir.Program, error) {
 	return outIrp, nil
 }
 
+// TODO: remove
 // Get IR from raw Riff-DSL
 func (b *Bleeder) genRiffIR(tokens [][]string) (*ir.Program, error) {
 	var cT, iT float64          // current time, initial time

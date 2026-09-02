@@ -271,11 +271,10 @@ func TestGenSeqIRErrors(t *testing.T) {
 			name:   "sequence not exist",
 			errMsg: `main: at l1-c2 "@song1": song1 not exist`,
 			bleed: &Bleed{
-				Lanes: map[string]Sequence{
+				Sequences: map[string]Sequence{
 					"main": {
-						Type: SEQ_LANE,
 						Content: `
-						>60 @song1
+						60 @song1
 						`,
 					},
 				},
@@ -285,32 +284,22 @@ func TestGenSeqIRErrors(t *testing.T) {
 			name:   "empty content",
 			errMsg: "",
 			bleed: &Bleed{
-				Lanes: map[string]Sequence{
+				Sequences: map[string]Sequence{
 					"main": {
-						Type:    SEQ_LANE,
 						Content: `@song1`,
 					},
-					"song1": {Type: SEQ_RIFF},
-				},
-			},
-		},
-		{
-			name:   "unknown type",
-			errMsg: `main: unknown type 999`,
-			bleed: &Bleed{
-				Lanes: map[string]Sequence{
-					"main": {Type: 999},
+					"song1": {},
 				},
 			},
 		},
 		{
 			name:   "error in nested sequence",
-			errMsg: `main: at l1-c1 "@song1:2:3": song1: at l1-c2 "@song2": song2: at l1-c3 "dd": play: NaN:1.0:1.0`,
+			errMsg: `main: at l1-c1 "@song1(2 3)": song1: at l1-c2 "@song2": song2: at l1-c3 "dd": play: NaN:1.0:1.0`,
 			bleed: &Bleed{
-				Lanes: map[string]Sequence{
-					"main":  {Type: SEQ_LANE, Content: `@song1:2:3`},
-					"song1": {Type: SEQ_LANE, Content: `>a3 @song2`},
-					"song2": {Type: SEQ_RIFF, Content: `d3 c3 dd`},
+				Sequences: map[string]Sequence{
+					"main":  {Content: `@song1(2 3)`},
+					"song1": {Content: `a3 @song2`},
+					"song2": {Content: `d3 c3 dd`},
 				},
 			},
 		},

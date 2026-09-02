@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var normalizer = strings.NewReplacer(
+var formatter = strings.NewReplacer(
 	"[", " [ ", "]", " ] ", "(", " ( ", ")", " ) ", "{", " { ", "}", " } ",
 	"@", " @ ", "$", " $ ", "&", " & ", "|", " | ", ":", " : ", "_", " _ ",
 	"+", " + ", "-", " - ", "*", " * ", "/", " / ", "%", " % ", "^", " ^ ",
@@ -16,7 +16,7 @@ var normalizer = strings.NewReplacer(
 func split(content string) [][]string {
 	out := make([][]string, 0, 8)
 	buf := make([]string, 0, 16)
-	src := strings.TrimSpace(normalizer.Replace(content))
+	src := strings.TrimSpace(formatter.Replace(content))
 	for row := range strings.SplitSeq(src, "\n") {
 		if i := strings.IndexByte(row, '#'); i >= 0 {
 			row = row[:i]
@@ -48,6 +48,60 @@ func split(content string) [][]string {
 		}
 	}
 	return out
+}
+
+func normalize(content string) ([][]string, [][]string) {
+	out := make([][]string, 0, 8)
+	sub := make([][]string, 0, 4)
+	buf := make([]string, 0, 8)
+	grp := make([]string, 0, 4)
+	src := strings.TrimSpace(formatter.Replace(content))
+
+	for row := range strings.SplitSeq(src, "\n") {
+		if i := strings.IndexByte(row, '#'); i >= 0 {
+			row = row[:i]
+		}
+		prevIsValue := false
+		prevIsJoins := false
+		inEachGroup := false
+		for raw := range strings.FieldsSeq(row) {
+			nextIsValue := true
+			nextIsJoins := prevIsJoins
+			switch raw[0] {
+			case '+', '-', '*', '/', '%', '^', '&', '|', ':':
+				nextIsValue = false
+			case '(', '{', '@', '$':
+				nextIsJoins = true
+			case ')', '}':
+				nextIsJoins = false
+			case '[':
+				inEachGroup = true
+				continue
+			case ']':
+				sub = append(sub, append([]string(nil), grp...))
+				grp = grp[:0]
+				raw = fmt.Sprintf("§%d", len(sub)-1)
+				nextIsValue = true
+				inEachGroup = false
+			}
+			if inEachGroup {
+				grp = append(grp, raw)
+				continue
+			}
+			if prevIsValue && nextIsValue && !prevIsJoins {
+				out = append(out, append([]string(nil), buf...))
+				buf = buf[:0]
+			}
+			buf = append(buf, raw)
+			prevIsValue = nextIsValue
+			prevIsJoins = nextIsJoins
+		}
+		if len(buf) > 0 {
+			out = append(out, append([]string(nil), buf...))
+			buf = buf[:0]
+		}
+	}
+	return out, sub
 }
 
 func expand(tokens []string) [][]string {

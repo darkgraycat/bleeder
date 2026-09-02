@@ -9,25 +9,14 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// SequenceType describes how a sequence content should be parsed
-type SequenceType int
-
 // Bleed entrypoint name
 const MAIN_NAME = "main"
 
-// Sequence types enum
-const (
-	SEQ_UNKNOWN SequenceType = iota
-	SEQ_LANE
-	SEQ_RIFF
-)
-
 // Bleed is the top-level structure representing a parsed .bleed file.
 type Bleed struct {
-	Meta  Meta                `toml:"meta"` // metadata
-	Vibes map[string]Vibe     `toml:"vibe"` // named vibes
-	Lanes map[string]Sequence `toml:"lane"` // named lanes
-	Riffs map[string]Sequence `toml:"riff"` // named riffs
+	Meta      Meta                `toml:"meta"`  // metadata
+	Patches   map[string]Patch    `toml:"patch"` // sound data
+	Sequences map[string]Sequence `toml:"seq"`   // sequence data
 }
 
 // Meta holds global playback settings for a bleed file.
@@ -37,13 +26,12 @@ type Meta struct {
 }
 
 // Audio modification
-type Vibe struct {
+type Patch struct {
 	Wave string // name of wave function to use
 }
 
 // Sequence defines a named playback data using DSL
 type Sequence struct {
-	Type    SequenceType
 	Vars    string `toml:"vars"`    // sequence arguments
 	Tick    string `toml:"tick"`    // sequence tick duration
 	Tune    string `toml:"tune"`    // sequence transposition
@@ -54,41 +42,22 @@ type Sequence struct {
 // Load Bleed file contents
 func LoadBleed(path string) (*Bleed, error) {
 	b := &Bleed{
-		Meta:  Meta{Path: path},
-		Vibes: make(map[string]Vibe),
-		Lanes: make(map[string]Sequence),
-		Riffs: make(map[string]Sequence),
+		Meta:      Meta{Path: path},
+		Patches:   make(map[string]Patch),
+		Sequences: make(map[string]Sequence),
 	}
 	if _, err := toml.DecodeFile(path, &b); err != nil {
 		return nil, err
 	}
-	const invalidChars = chRest + "+-*/$"
-	// assign lane type and validate naming
-	for k, v := range b.Lanes {
-		if strings.ContainsAny(k, invalidChars) {
+	// validate namings
+	for k := range b.Sequences {
+		if strings.ContainsAny(k, "+-*/%^@$_") {
 			return nil, fmt.Errorf("sequence %q name invalid", k)
 		}
-		if _, exists := b.Riffs[k]; exists {
-			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
-		}
-		v.Type = SEQ_LANE
-		b.Lanes[k] = v
 	}
-	// assign riff type and validate naming
-	for k, v := range b.Riffs {
-		if strings.ContainsAny(k, invalidChars) {
-			return nil, fmt.Errorf("sequence %q name invalid", k)
-		}
-		if _, exists := b.Lanes[k]; exists {
-			return nil, fmt.Errorf("sequence %q defined in both lane and riff", k)
-		}
-		v.Type = SEQ_RIFF
-		b.Riffs[k] = v
-	}
-	// validate vibe naming
-	for k := range b.Vibes {
-		if strings.ContainsAny(k, invalidChars) {
-			return nil, fmt.Errorf("vibe %q name invalid", k)
+	for k := range b.Patches {
+		if strings.ContainsAny(k, "+-*/%^@$_") {
+			return nil, fmt.Errorf("patch %q name invalid", k)
 		}
 	}
 	// parse included bleeds
@@ -98,33 +67,21 @@ func LoadBleed(path string) (*Bleed, error) {
 		if err != nil {
 			return nil, err
 		}
-		// load vibes
-		for k, v := range included.Vibes {
-			log.Printf("[INIT] load vibe %q from %q\n", k, includePath)
-			if _, exists := b.Vibes[k]; exists {
-				return nil, fmt.Errorf("vibe %q already exists, conflict with include %q", k, includePath)
+		// load patches
+		for k, v := range included.Patches {
+			log.Printf("[INIT] load patch %q from %q\n", k, includePath)
+			if _, exists := b.Patches[k]; exists {
+				return nil, fmt.Errorf("patch %q already exists, conflict with include %q", k, includePath)
 			}
-			b.Vibes[k] = v
+			b.Patches[k] = v
 		}
-		// load lanes
-		for k, v := range included.Lanes {
-			log.Printf("[INIT] load lane %q from %q\n", k, includePath)
-			_, laneExist := b.Lanes[k]
-			_, riffExist := b.Riffs[k]
-			if laneExist || riffExist {
+		// load sequences
+		for k, v := range included.Sequences {
+			log.Printf("[INIT] load sequence %q from %q\n", k, includePath)
+			if _, exist := b.Sequences[k]; exist {
 				return nil, fmt.Errorf("sequence %q already exists, conflict with include %q", k, includePath)
 			}
-			b.Lanes[k] = v
-		}
-		// load riffs
-		for k, v := range included.Riffs {
-			log.Printf("[INIT] load riff %q from %q\n", k, includePath)
-			_, laneExist := b.Lanes[k]
-			_, riffExist := b.Riffs[k]
-			if laneExist || riffExist {
-				return nil, fmt.Errorf("sequence %q already exists, conflict with include %q", k, includePath)
-			}
-			b.Riffs[k] = v
+			b.Sequences[k] = v
 		}
 	}
 	return b, nil
@@ -134,12 +91,8 @@ func (b Bleed) String() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s\n", b.Meta)
 
-	sb.WriteString("Lanes:\n")
-	for k := range b.Lanes {
-		fmt.Fprintf(&sb, "  - %s\n", k)
-	}
-	sb.WriteString("Riffs:\n")
-	for k := range b.Riffs {
+	sb.WriteString("Sequences:\n")
+	for k := range b.Sequences {
 		fmt.Fprintf(&sb, "  - %s\n", k)
 	}
 	return sb.String()
