@@ -13,51 +13,15 @@ var formatter = strings.NewReplacer(
 	"+", " + ", "-", " - ", "*", " * ", "/", " / ", "%", " % ", "^", " ^ ",
 )
 
-func split(content string) [][]string {
-	out := make([][]string, 0, 8)
-	buf := make([]string, 0, 16)
-	src := strings.TrimSpace(formatter.Replace(content))
-	for row := range strings.SplitSeq(src, "\n") {
-		if i := strings.IndexByte(row, '#'); i >= 0 {
-			row = row[:i]
-		}
-		prevIsValue := false
-		prevIsGroup := false
-		for raw := range strings.FieldsSeq(row) {
-			nextIsValue := true
-			nextIsGroup := prevIsGroup
-			switch raw[0] {
-			case '+', '-', '*', '/', '%', '^', '&', '|', ':':
-				nextIsValue = false
-			case '[', '(', '{', '@', '$':
-				nextIsGroup = true
-			case ']', ')', '}':
-				nextIsGroup = false
-			}
-			if prevIsValue && nextIsValue && !prevIsGroup {
-				out = append(out, append([]string(nil), buf...))
-				buf = buf[:0]
-			}
-			buf = append(buf, raw)
-			prevIsValue = nextIsValue
-			prevIsGroup = nextIsGroup
-		}
-		if len(buf) > 0 {
-			out = append(out, append([]string(nil), buf...))
-			buf = buf[:0]
-		}
-	}
-	return out
-}
+// Scan sequence raw content and return templated frames with substitution groups
+func scan(content string) (frames [][]string, groups [][]string) {
+	frames = make([][]string, 0, 8)
+	groups = make([][]string, 0, 4)
+	fBuffer := make([]string, 0, 8)
+	gBuffer := make([]string, 0, 4)
 
-func normalize(content string) ([][]string, [][]string) {
-	out := make([][]string, 0, 8)
-	sub := make([][]string, 0, 4)
-	buf := make([]string, 0, 8)
-	grp := make([]string, 0, 4)
-	src := strings.TrimSpace(formatter.Replace(content))
-
-	for row := range strings.SplitSeq(src, "\n") {
+	formatted := strings.TrimSpace(formatter.Replace(content))
+	for row := range strings.SplitSeq(formatted, "\n") {
 		if i := strings.IndexByte(row, '#'); i >= 0 {
 			row = row[:i]
 		}
@@ -78,32 +42,33 @@ func normalize(content string) ([][]string, [][]string) {
 				inEachGroup = true
 				continue
 			case ']':
-				sub = append(sub, append([]string(nil), grp...))
-				grp = grp[:0]
-				raw = fmt.Sprintf("§%d", len(sub)-1)
+				groups = append(groups, append([]string(nil), gBuffer...))
+				gBuffer = gBuffer[:0]
+				raw = fmt.Sprintf("§%d", len(groups)-1)
 				nextIsValue = true
 				inEachGroup = false
 			}
 			if inEachGroup {
-				grp = append(grp, raw)
+				gBuffer = append(gBuffer, raw)
 				continue
 			}
 			if prevIsValue && nextIsValue && !prevIsJoins {
-				out = append(out, append([]string(nil), buf...))
-				buf = buf[:0]
+				frames = append(frames, append([]string(nil), fBuffer...))
+				fBuffer = fBuffer[:0]
 			}
-			buf = append(buf, raw)
+			fBuffer = append(fBuffer, raw)
 			prevIsValue = nextIsValue
 			prevIsJoins = nextIsJoins
 		}
-		if len(buf) > 0 {
-			out = append(out, append([]string(nil), buf...))
-			buf = buf[:0]
+		if len(fBuffer) > 0 {
+			frames = append(frames, append([]string(nil), fBuffer...))
+			fBuffer = fBuffer[:0]
 		}
 	}
-	return out, sub
+	return frames, groups
 }
 
+// TODO: isnt needed anymore - we have templates and groups from "scan"
 func expand(tokens []string) [][]string {
 	out := make([][]string, 0, 8)
 	template := make([]string, 0, 8)
