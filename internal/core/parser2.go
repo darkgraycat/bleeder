@@ -21,50 +21,59 @@ func scan(content string) (frames [][]string, groups [][]string) {
 	gBuffer := make([]string, 0, 4)
 
 	formatted := strings.TrimSpace(formatter.Replace(content))
+
 	for row := range strings.SplitSeq(formatted, "\n") {
 		if i := strings.IndexByte(row, '#'); i >= 0 {
 			row = row[:i]
 		}
+
 		prevIsValue := false
 		prevIsJoins := false
 		inEachGroup := false
+
 		for raw := range strings.FieldsSeq(row) {
 			nextIsValue := true
 			nextIsJoins := prevIsJoins
-			switch raw[0] {
-			case '+', '-', '*', '/', '%', '^', '&', '|', ':':
+
+			switch raw {
+			case "+", "-", "*", "/", "%", "^", "|", ":":
 				nextIsValue = false
-			case '(', '{', '@', '$':
+			case "(", "{", "@", "$":
 				nextIsJoins = true
-			case ')', '}':
+			case ")", "}":
 				nextIsJoins = false
-			case '[':
+			case "[":
 				inEachGroup = true
 				continue
-			case ']':
+			case "]":
 				groups = append(groups, append([]string(nil), gBuffer...))
 				gBuffer = gBuffer[:0]
-				raw = fmt.Sprintf("§%d", len(groups)-1)
+				raw = "§"
 				nextIsValue = true
 				inEachGroup = false
 			}
+
 			if inEachGroup {
 				gBuffer = append(gBuffer, raw)
 				continue
 			}
+
 			if prevIsValue && nextIsValue && !prevIsJoins {
 				frames = append(frames, append([]string(nil), fBuffer...))
 				fBuffer = fBuffer[:0]
 			}
+
 			fBuffer = append(fBuffer, raw)
 			prevIsValue = nextIsValue
 			prevIsJoins = nextIsJoins
 		}
+
 		if len(fBuffer) > 0 {
 			frames = append(frames, append([]string(nil), fBuffer...))
 			fBuffer = fBuffer[:0]
 		}
 	}
+
 	return frames, groups
 }
 
@@ -73,6 +82,61 @@ func flat(frames [][]string, groups [][]string) (expressions [][]string) {
 	if len(groups) == 0 {
 		return frames
 	}
+
+	expressions = make([][]string, 0, len(frames)*4)
+	groupIdx := 0
+
+	for _, frame := range frames {
+		numPlaceholders := 0
+
+		for _, raw := range frame {
+			if raw == "§" {
+				numPlaceholders++
+			}
+		}
+
+		if numPlaceholders == 0 {
+			expressions = append(expressions, frame)
+			continue
+		}
+		counters := make([]int, numPlaceholders)
+
+	repeat:
+		temp := make([]string, 0, len(frame))
+		placeholderIdx := 0
+
+		for _, raw := range frame {
+			if raw != "§" {
+				temp = append(temp, raw)
+				continue
+			}
+
+			groupIndex := groupIdx + placeholderIdx
+			itemIndex := counters[placeholderIdx]
+			val := groups[groupIndex][itemIndex]
+
+			if val == "&" {
+				temp = append(temp[:0], "&")
+				expressions = append(expressions, temp)
+				goto increment
+			}
+
+			temp = append(temp, val)
+			placeholderIdx++
+		}
+		expressions = append(expressions, temp)
+
+	increment:
+		for i := 0; i < numPlaceholders; i++ {
+			counters[i]++
+			if counters[i] < len(groups[groupIdx+i]) {
+				goto repeat
+			}
+			counters[i] = 0
+		}
+		groupIdx += numPlaceholders
+	}
+
 	return expressions
 }
 

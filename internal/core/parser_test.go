@@ -56,7 +56,7 @@ func TestTokenizeContent(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			actual := tokenizeContent(tc.given)
 
 			testutils.AssertInts(t, len(tc.expected), len(actual))
@@ -187,7 +187,7 @@ func TestParseVars(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			actual := parseVars(tc.given, tc.values)
 			testutils.AssertMaps(t, tc.expected, actual)
 		})
@@ -312,7 +312,7 @@ func TestEvalVars(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			actual := evalVars(tc.given, tc.vars)
 			if math.IsNaN(tc.expected) && math.IsNaN(actual) {
 				return
@@ -394,7 +394,7 @@ func TestApplyVars(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			actual := applyVars(tc.given, tc.vars)
 			testutils.AssertStrings(t, tc.expected, actual)
 		})
@@ -488,7 +488,7 @@ func TestGetArg(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			actual := getArg(tc.given, tc.idx, tc.prev)
 			testutils.AssertStrings(t, tc.expected, actual)
 		})

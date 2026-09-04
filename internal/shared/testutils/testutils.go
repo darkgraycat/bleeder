@@ -70,7 +70,7 @@ func AssertMaps[T comparable, K comparable](t *testing.T, exp, act map[K]T) {
 	}
 }
 
-func CheckFlags(t *testing.T) {
+func UseFlags(t *testing.T) {
 	t.Helper()
 	parts := strings.Split(t.Name(), "/")
 	name := parts[len(parts)-1]

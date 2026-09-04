@@ -77,7 +77,7 @@ func TestGenLaneIR(t *testing.T) {
 	b := NewBleeder(&Bleed{})
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			irp, err := b.genLaneIR(tc.given)
 
 			testutils.AssertErr(t, err, tc.errMsg)
@@ -199,7 +199,7 @@ func TestGenRiffIR(t *testing.T) {
 	b := NewBleeder(&Bleed{})
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			irp, err := b.genRiffIR(tc.given)
 
 			testutils.AssertErr(t, err, tc.errMsg)
@@ -307,7 +307,7 @@ func TestGenSeqIRErrors(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			testutils.CheckFlags(t)
+			testutils.UseFlags(t)
 			b := NewBleeder(tc.bleed)
 			_, err := b.GenMainIR()
 			testutils.AssertErr(t, err, tc.errMsg)
