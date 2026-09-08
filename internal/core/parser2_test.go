@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bleeder/internal/shared"
 	"bleeder/internal/shared/testutils"
 	"fmt"
 	"strings"
@@ -9,12 +10,31 @@ import (
 
 func TestExperiments(t *testing.T) {
 	given := `
+	#@chord(e2) + [0 1 2] # it works perfectly
+
+	#12 + [@chord(g3) @chord(d2)] # doesnt work - dont care for now
+
+	#12 + [e2:3 d3:4] # doesnt work either, but - should we handle this?
+	# if so - we need a way to consume more than one character
+
+	12 + [e2+T g2+T] # same problem here. its:
+	# EXPRESSIONS: [[12 + e2] [12 + :] [12 + 3] [12 + d3] [12 + :] [12 + 4] [12 + e2] [12 + +] [12 + T] [12 + g2] [12 + +] [12 + T]]
+	# posible solution
+
+	# (12) 12
+	# (+) 12 +
+	# (§ as e2) 12 + e2
+
+	# (12) 12
+	# (+) 12 +
+	# (§ as +) 12 + e2 + (append to last)
+
 	#2 + [a b]
 	# gb7
-	2 + [e3 a3] + [0 1 2]
-	2 + [g2 & f2] + [0 1 2]
-	e2:[3 4 3]
-	[c2 d2]:3
+	# 2 + [e3 a3] + [0 1 2]
+	# 2 + [g2 & f2] + [0 1 2]
+	# e2:[3 4 3]
+	# [c2 d2]:3
 
 	# T+ [e2 c3 d4] + [0 0 1 2]
 	# c2 c4 @chord(e4)
@@ -36,8 +56,8 @@ func TestScan(t *testing.T) {
 	tests := []struct {
 		name   string
 		given  string
-		frames [][]string
-		groups [][]string
+		frames []string
+		groups []string
 	}{
 		{
 			name: "Simple sequence",
@@ -45,9 +65,9 @@ func TestScan(t *testing.T) {
 			2+a*3 b/8 c+b
 			a b c 2 + D * 2
 			`,
-			frames: [][]string{
-				{"2", "+", "a", "*", "3"}, {"b", "/", "8"}, {"c", "+", "b"},
-				{"a"}, {"b"}, {"c"}, {"2", "+", "D", "*", "2"},
+			frames: []string{
+				"2 + a * 3", "b / 8", "c + b",
+				"a", "b", "c", "2 + D * 2",
 			},
 		},
 		{
@@ -59,10 +79,10 @@ func TestScan(t *testing.T) {
 			$bass(0.77 12)
 			@intro{vol 0.5 tone g3}
 			`,
-			frames: [][]string{
-				{"e2", ":", "4"}, {"a2", ":", "4"}, {"f2", ":", "2", "|", "2"},
-				{"$", "bass", "(", "0.77", "12", ")"},
-				{"@", "intro", "{", "vol", "0.5", "tone", "g3", "}"},
+			frames: []string{
+				"e2 : 4", "a2 : 4", "f2 : 2 | 2",
+				"$ bass ( 0.77 12 )",
+				"@ intro { vol 0.5 tone g3 }",
 			},
 		},
 		{
@@ -72,15 +92,15 @@ func TestScan(t *testing.T) {
 			[x y] * 3 + 5
 			c + [0 1 2]
 			`,
-			frames: [][]string{
-				{"§", "+", "2"},
-				{"§", "*", "3", "+", "5"},
-				{"c", "+", "§"},
+			frames: []string{
+				"§ + 2",
+				"§ * 3 + 5",
+				"c + §",
 			},
-			groups: [][]string{
-				{"a", "b"},
-				{"x", "y"},
-				{"0", "1", "2"},
+			groups: []string{
+				"a b",
+				"x y",
+				"0 1 2",
 			},
 		},
 		{
@@ -90,15 +110,15 @@ func TestScan(t *testing.T) {
 			[a b] [c:2 d|3]
 			c [x y z] d
 			`,
-			frames: [][]string{
-				{"§"}, {"2"},
-				{"§"}, {"§"},
-				{"c"}, {"§"}, {"d"},
+			frames: []string{
+				"§", "2",
+				"§", "§",
+				"c", "§", "d",
 			},
-			groups: [][]string{
-				{"a", "&", "b"},
-				{"a", "b"}, {"c", ":", "2", "d", "|", "3"},
-				{"x", "y", "z"},
+			groups: []string{
+				"a & b",
+				"a b", "c : 2 d | 3",
+				"x y z",
 			},
 		},
 		{
@@ -108,15 +128,15 @@ func TestScan(t *testing.T) {
 			e2 2 + [a b c] + [0 1] d3
 			[x y] * 2 a3
 			`,
-			frames: [][]string{
-				{"§", "+", "§"},
-				{"e2"}, {"2", "+", "§", "+", "§"}, {"d3"},
-				{"§", "*", "2"}, {"a3"},
+			frames: []string{
+				"§ + §",
+				"e2", "2 + § + §", "d3",
+				"§ * 2", "a3",
 			},
-			groups: [][]string{
-				{"a", "b"}, {"c", "d"},
-				{"a", "b", "c"}, {"0", "1"},
-				{"x", "y"},
+			groups: []string{
+				"a b", "c d",
+				"a b c", "0 1",
+				"x y",
 			},
 		},
 		{
@@ -126,15 +146,15 @@ func TestScan(t *testing.T) {
 			[a b] @chord(e2)
 			$bass() 20 [0 4 7]
 			`,
-			frames: [][]string{
-				{"@", "chord", "(", "e2", "7", ")"}, {"§"},
-				{"§"}, {"@", "chord", "(", "e2", ")"},
-				{"$", "bass", "(", ")"}, {"20"}, {"§"},
+			frames: []string{
+				"@ chord ( e2 7 )", "§",
+				"§", "@ chord ( e2 )",
+				"$ bass ( )", "20", "§",
 			},
-			groups: [][]string{
-				{"a", "b"},
-				{"a", "b"},
-				{"0", "4", "7"},
+			groups: []string{
+				"a b",
+				"a b",
+				"0 4 7",
 			},
 		},
 		{
@@ -144,15 +164,15 @@ func TestScan(t *testing.T) {
 			[a b] + [c d] % [e f]
 			10 + [1 2] * 3 [4 5]
 			`,
-			frames: [][]string{
-				{"§"},
-				{"§", "+", "§", "%", "§"},
-				{"10", "+", "§", "*", "3"}, {"§"},
+			frames: []string{
+				"§",
+				"§ + § % §",
+				"10 + § * 3", "§",
 			},
-			groups: [][]string{
-				{"a", "b"},
-				{"a", "b"}, {"c", "d"}, {"e", "f"},
-				{"1", "2"}, {"4", "5"},
+			groups: []string{
+				"a b",
+				"a b", "c d", "e f",
+				"1 2", "4 5",
 			},
 		},
 	}
@@ -160,17 +180,20 @@ func TestScan(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
-			frames, groups := scan(tc.given)
 
-			testutils.AssertInts(t, len(tc.frames), len(frames))
+			frames, groups := scan(tc.given)
+			expFrames := shared.Map(tc.frames, strings.Fields)
+			expGroups := shared.Map(tc.groups, strings.Fields)
+
+			testutils.AssertInts(t, len(expFrames), len(frames))
 			for i, act := range frames {
-				exp := tc.frames[i]
+				exp := expFrames[i]
 				testutils.AssertSlices(t, exp, act)
 			}
 
-			testutils.AssertInts(t, len(tc.groups), len(groups))
+			testutils.AssertInts(t, len(expGroups), len(groups))
 			for i, act := range groups {
-				exp := tc.groups[i]
+				exp := expGroups[i]
 				testutils.AssertSlices(t, exp, act)
 			}
 		})
@@ -258,38 +281,37 @@ func BenchmarkScan(b *testing.B) {
 }
 
 func TestFlat(t *testing.T) {
-	f := strings.Fields
 	tests := []struct {
 		name     string
-		frames   [][]string
-		groups   [][]string
-		expected [][]string
+		frames   []string
+		groups   []string
+		expected []string
 	}{
 		{
 			name: "Dev",
-			frames: [][]string{
-				{"2", "+", "§", "+", "§"},
-				{"§", "+", "§", "*", ".5"},
-				{"e2", ":", "§"},
-				{"§", ":", "3"},
+			frames: []string{
+				"2 + § + §",
+				"§ + § * .5",
+				"e2 : §",
+				"§ : 3",
 			},
-			groups: [][]string{
-				{"e3", "a3"}, {"0", "1", "2"},
-				{"g2", "&", "f2"}, {"3", "4", "5"},
-				{"3", "4", "3"},
-				{"c2", "d2"},
+			groups: []string{
+				"e3 a3", "0 1 2",
+				"g2 & f2", "3 4 5",
+				"3 4 3",
+				"c2 d2",
 			},
-			expected: [][]string{
-				f("2 + e3 + 0"), f("2 + a3 + 0"),
-				f("2 + e3 + 1"), f("2 + a3 + 1"),
-				f("2 + e3 + 2"), f("2 + a3 + 2"),
+			expected: []string{
+				"2 + e3 + 0", "2 + a3 + 0",
+				"2 + e3 + 1", "2 + a3 + 1",
+				"2 + e3 + 2", "2 + a3 + 2",
 
-				f("g2 + 3 * .5"), {"&"}, f("f2 + 3 * .5"),
-				f("g2 + 4 * .5"), {"&"}, f("f2 + 4 * .5"),
-				f("g2 + 5 * .5"), {"&"}, f("f2 + 5 * .5"),
+				"g2 + 3 * .5", "&", "f2 + 3 * .5",
+				"g2 + 4 * .5", "&", "f2 + 4 * .5",
+				"g2 + 5 * .5", "&", "f2 + 5 * .5",
 
-				f("e2 : 3"), f("e2 : 4"), f("e2 : 3"),
-				f("c2 : 3"), f("d2 : 3"),
+				"e2 : 3", "e2 : 4", "e2 : 3",
+				"c2 : 3", "d2 : 3",
 			},
 		},
 	}
@@ -297,11 +319,16 @@ func TestFlat(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
-			actual := flat(tc.frames, tc.groups)
+
+			frames := shared.Map(tc.frames, strings.Fields)
+			groups := shared.Map(tc.groups, strings.Fields)
+			expected := shared.Map(tc.expected, strings.Fields)
+
+			actual := flat(frames, groups)
 
 			testutils.AssertInts(t, len(tc.expected), len(actual))
 			for i, act := range actual {
-				exp := tc.expected[i]
+				exp := expected[i]
 				testutils.AssertSlices(t, exp, act)
 			}
 		})
@@ -311,79 +338,123 @@ func TestFlat(t *testing.T) {
 func BenchmarkFlat(b *testing.B) {
 	tests := []struct {
 		name   string
-		frames [][]string
-		groups [][]string
+		frames []string
+		groups []string
 	}{
 		{
 			// 555.3 ns/op	    1632 B/op	      15 allocs/op
 			name: "For comparison with old expand",
-			frames: [][]string{
-				{"2", "+", "§", "+", "§"},
+			frames: []string{
+				"2 + § + §",
 			},
-			groups: [][]string{
-				{"e2", "&", "b2"}, {"5", "8", "0", "3"},
+			groups: []string{
+				"e2 & b2", "5 8 0 3",
 			},
 		},
 		{
 			// 853.7 ns/op	    2720 B/op	      22 allocs/op
 			name: "Dev",
-			frames: [][]string{
-				{"2", "+", "§", "+", "§"},
-				{"§", "+", "§", "*", ".5"},
-				{"e2", ":", "§"},
-				{"§", ":", "3"},
+			frames: []string{
+				"2 + § + §",
+				"§ + § * .5",
+				"e2 : §",
+				"§ : 3",
 			},
-			groups: [][]string{
-				{"e3", "a3"}, {"0", "1", "2"},
-				{"g2", "&", "f2"}, {"3", "4", "5"},
-				{"3", "4", "3"},
-				{"c2", "d2"},
+			groups: []string{
+				"e3 a3", "0 1 2",
+				"g2 § f2", "3 4 5",
+				"3 4 3",
+				"c2 d2",
 			},
+		},
+	}
+
+	for _, tc := range tests {
+		frames := shared.Map(tc.frames, strings.Fields)
+		groups := shared.Map(tc.groups, strings.Fields)
+
+		b.Run(tc.name, func(b *testing.B) {
+			for b.Loop() {
+				flat(frames, groups)
+			}
+		})
+	}
+}
+
+func TestScanFlat(t *testing.T) {
+	tests := []struct {
+		name     string
+		given    string
+		expected []string
+	}{
+		{
+			name: "No groups is used",
+			given: `
+			e2:4 b3:2|2
+			f1|3 & c2|2 d2
+			`,
+			expected: []string{
+				"e2 : 4", "b3 : 2 | 2",
+				"f1 | 3", "&", "c2 | 2", "d2",
+			},
+		},
+		{
+			name: "Riff with simple chord",
+			given: `
+			[e2 & b3] + [0 4 5]
+			`,
+			expected: []string{
+				"e2 + 0", "&", "b3 + 0",
+				"e2 + 4", "&", "b3 + 4",
+				"e2 + 5", "&", "b3 + 5",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.UseFlags(t)
+			expected := shared.Map(tc.expected, strings.Fields)
+
+			frames, groups := scan(tc.given)
+			expressions := flat(frames, groups)
+
+			testutils.AssertInts(t, len(expected), len(expressions))
+			for i, act := range expressions {
+				exp := expected[i]
+				testutils.AssertSlices(t, exp, act)
+			}
+		})
+	}
+}
+
+func BenchmarkScanFlat(b *testing.B) {
+	tests := []struct {
+		name  string
+		given string
+	}{
+		{
+			// 458.5 ns/op	     672 B/op	      10 allocs/op
+			name: "No groups is used",
+			given: `
+			e2:4 b3:2|2
+			f1|3 & c2|2 d2
+			`,
+		},
+		{
+			// 695.2 ns/op	    1632 B/op	      19 allocs/op
+			name: "Riff with simple chord",
+			given: `
+			[e2 & b3] + [0 4 5]
+			`,
 		},
 	}
 
 	for _, tc := range tests {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				flat(tc.frames, tc.groups)
-			}
-		})
-	}
-}
-
-func BenchmarkExpand(b *testing.B) {
-	tests := []struct{ given string }{
-		{
-			// 81.29 ns/op	     240 B/op	       2 allocs/op
-			given: "a + 2",
-		},
-		{
-			// 127.4 ns/op	     352 B/op	       4 allocs/op
-			given: "[a b] + c",
-		},
-		{
-			// 182.0 ns/op	     496 B/op	       5 allocs/op
-			given: "2 + [a & b] + c",
-		},
-		{
-			// 608.3 ns/op	    1664 B/op	      16 allocs/op
-			given: "2 + [e2 & b2] + [5 8 0 3]",
-		},
-		{
-			// 2434 ns/op	    8832 B/op	      55 allocs/op
-			given: "4 + [a b c] + [1 2 3 4] * [1 1 0 1]",
-		},
-		{
-			// 4291 ns/op	   16688 B/op	      90 allocs/op
-			given: "[a b c] + [1 2 3] * [x y z] / [.7 .8 .9]",
-		},
-	}
-
-	for i, tc := range tests {
-		splitted, _ := scan(tc.given)
-		b.Run(fmt.Sprintf("case%d", i), func(b *testing.B) {
-			for b.Loop() {
-				expand(splitted[0])
+				frames, groups := scan(tc.given)
+				flat(frames, groups)
 			}
 		})
 	}

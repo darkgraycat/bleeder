@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -14,13 +13,13 @@ var formatter = strings.NewReplacer(
 )
 
 // Scan sequence raw content and return templated frames with substitution groups
-func scan(content string) (frames [][]string, groups [][]string) {
+func scan(raw string) (frames [][]string, groups [][]string) {
 	frames = make([][]string, 0, 8)
 	groups = make([][]string, 0, 4)
 	fBuffer := make([]string, 0, 8)
 	gBuffer := make([]string, 0, 4)
 
-	formatted := strings.TrimSpace(formatter.Replace(content))
+	formatted := strings.TrimSpace(formatter.Replace(raw))
 
 	for row := range strings.SplitSeq(formatted, "\n") {
 		if i := strings.IndexByte(row, '#'); i >= 0 {
@@ -31,11 +30,11 @@ func scan(content string) (frames [][]string, groups [][]string) {
 		prevIsJoins := false
 		inEachGroup := false
 
-		for raw := range strings.FieldsSeq(row) {
+		for tok := range strings.FieldsSeq(row) {
 			nextIsValue := true
 			nextIsJoins := prevIsJoins
 
-			switch raw {
+			switch tok {
 			case "+", "-", "*", "/", "%", "^", "|", ":":
 				nextIsValue = false
 			case "(", "{", "@", "$":
@@ -48,13 +47,13 @@ func scan(content string) (frames [][]string, groups [][]string) {
 			case "]":
 				groups = append(groups, append([]string(nil), gBuffer...))
 				gBuffer = gBuffer[:0]
-				raw = "§"
+				tok = "§"
 				nextIsValue = true
 				inEachGroup = false
 			}
 
 			if inEachGroup {
-				gBuffer = append(gBuffer, raw)
+				gBuffer = append(gBuffer, tok)
 				continue
 			}
 
@@ -63,7 +62,7 @@ func scan(content string) (frames [][]string, groups [][]string) {
 				fBuffer = fBuffer[:0]
 			}
 
-			fBuffer = append(fBuffer, raw)
+			fBuffer = append(fBuffer, tok)
 			prevIsValue = nextIsValue
 			prevIsJoins = nextIsJoins
 		}
@@ -84,118 +83,82 @@ func flat(frames [][]string, groups [][]string) (expressions [][]string) {
 	}
 
 	expressions = make([][]string, 0, len(frames)*4)
-	groupIdx := 0
+	groupOffset := 0
 
 	for _, frame := range frames {
-		numPlaceholders := 0
-
-		for _, raw := range frame {
-			if raw == "§" {
-				numPlaceholders++
+		subsTotal := 0
+		for _, tok := range frame {
+			if tok == "§" {
+				subsTotal++
 			}
 		}
 
-		if numPlaceholders == 0 {
+		if subsTotal == 0 {
 			expressions = append(expressions, frame)
 			continue
 		}
-		counters := make([]int, numPlaceholders)
 
-	repeat:
-		temp := make([]string, 0, len(frame))
-		placeholderIdx := 0
+		subsIndices := make([]int, subsTotal)
+		appendFlags := make([]bool, subsTotal)
+		template := make([]string, 0, len(frame))
 
-		for _, raw := range frame {
-			if raw != "§" {
-				temp = append(temp, raw)
+	build:
+		template = template[:0]
+		subIndex := 0
+
+		for _, tok := range frame {
+			if tok != "§" {
+				template = append(template, tok)
 				continue
 			}
 
-			groupIndex := groupIdx + placeholderIdx
-			itemIndex := counters[placeholderIdx]
-			val := groups[groupIndex][itemIndex]
-
-			if val == "&" {
-				temp = append(temp[:0], "&")
-				expressions = append(expressions, temp)
-				goto increment
+			val := groups[groupOffset+subIndex][subsIndices[subIndex]]
+			switch val {
+			case "&":
+				expressions = append(expressions, []string{"&"})
+				appendFlags[subIndex] = false
+				goto next
+			case "+", "-", "*", "/", "%", "^", "|", ":":
+				last := len(expressions) - 1
+				expressions[last] = append(expressions[last], val)
+				appendFlags[subIndex] = true
+				goto next
+			default:
+				if appendFlags[subIndex] {
+					last := len(expressions) - 1
+					expressions[last] = append(expressions[last], val)
+					appendFlags[subIndex] = false
+					goto next
+				}
+				template = append(template, val)
+				subIndex++
 			}
-
-			temp = append(temp, val)
-			placeholderIdx++
 		}
-		expressions = append(expressions, temp)
+		expressions = append(expressions, append([]string(nil), template...))
 
-	increment:
-		for i := 0; i < numPlaceholders; i++ {
-			counters[i]++
-			if counters[i] < len(groups[groupIdx+i]) {
-				goto repeat
+	next:
+		for subIndex := range subsTotal {
+			subsIndices[subIndex]++
+			if subsIndices[subIndex] < len(groups[groupOffset+subIndex]) {
+				goto build
 			}
-			counters[i] = 0
+			subsIndices[subIndex] = 0
 		}
-		groupIdx += numPlaceholders
+		groupOffset += subsTotal
 	}
 
 	return expressions
 }
 
-// TODO: isnt needed anymore - we have templates and groups from "scan"
-func expand(tokens []string) [][]string {
-	out := make([][]string, 0, 8)
-	template := make([]string, 0, 8)
-	groups := make([][]string, 0, 4)
-	gcoefs := make([]int, 0, 4) // mult of prev groups sizes
-	gmarks := make([]int, 0, 4) // template indices to substitute
-	combos := 1                 // total number of combinations
-	fmt.Printf("START SPLITTING\n")
-	for i := 0; i < len(tokens); i++ {
-		if tokens[i] != "[" {
-			template = append(template, tokens[i])
-			continue
-		}
-		group := make([]string, 0, 4)
-		template = append(template, "[]")
-		for i++; i < len(tokens) && tokens[i] != "]"; i++ {
-			group = append(group, tokens[i])
-		}
-		groups = append(groups, group)
-		gcoefs = append(gcoefs, combos)
-		gmarks = append(gmarks, len(template)-1)
-		combos *= len(group)
-	}
-	fmt.Printf("T %v\n", template)
-	fmt.Printf("G %v\n", groups)
-	fmt.Printf("C %v\n", gcoefs)
-	fmt.Printf("M %v\n", gmarks)
-	for i := range combos {
-		exp := append([]string(nil), template...)
-		for j, group := range groups {
-			idx := (i / gcoefs[j]) % len(group)
-			switch group[idx] {
-			case "&":
-				exp = exp[:0]
-				exp = append(exp, "&")
-				goto flush
-			case ":":
-				goto flush
-			case "|":
-				if idx > 0 {
-					exp[gmarks[j]] = group[idx-1]
-				} else {
-					exp[gmarks[j]] = "0"
-				}
-			default:
-				exp[gmarks[j]] = group[idx]
-			}
-		}
-	flush:
-		out = append(out, exp)
-	}
-	return out
+// TODO:
+// To complete the list of functions parser should have we need:
+func vars(raw string) (vars map[string]string) {
+	// to parse args from sequence
+	return vars
 }
 
 // NOT USED
+// TODO: write "eval function" that actualy evaluates whole
 // evaluate arithmetic expression with variables map
 func evalVars2(s string, vars map[string]string) float64 {
 	i := strings.LastIndexAny(s, "+-*/%^")

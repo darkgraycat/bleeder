@@ -21,6 +21,28 @@ func Match[K comparable, V any](mapping map[K]V, key K, def V) V {
 	return def
 }
 
+// Map over each element
+func Map[T, R any](items []T, fn func(T) R) []R {
+	result := make([]R, len(items))
+
+	for i, item := range items {
+		result[i] = fn(item)
+	}
+
+	return result
+}
+
+// Reduce over each element
+func Reduce[T, R any](items []T, initial R, fn func(R, T) R) R {
+	result := initial
+
+	for _, item := range items {
+		result = fn(result, item)
+	}
+
+	return result
+}
+
 // Replace substrings by values from map
 func ReplaceByMap(m map[string]string, lines ...string) []string {
 	pairs := make([]string, 0, len(m)*2)
