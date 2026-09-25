@@ -35,6 +35,7 @@ func scan(raw string) (frames [][]string, groups [][]string) {
 			nextIsJoins := prevIsJoins
 
 			switch tok {
+			// case "+", "-", "*", "/", "%", "^", "&", "|", ":":
 			case "+", "-", "*", "/", "%", "^", "|", ":":
 				nextIsValue = false
 			case "(", "{", "@", "$":
@@ -87,8 +88,11 @@ func flat(frames [][]string, groups [][]string) (expressions [][]string) {
 
 	for _, frame := range frames {
 		subsTotal := 0
-		for _, tok := range frame {
+		subsPositions := make([]int, 0, 4)
+
+		for i, tok := range frame {
 			if tok == "§" {
+				subsPositions = append(subsPositions, i)
 				subsTotal++
 			}
 		}
@@ -98,51 +102,54 @@ func flat(frames [][]string, groups [][]string) (expressions [][]string) {
 			continue
 		}
 
-		subsIndices := make([]int, subsTotal)
+		divisors := make([]int, subsTotal)
+		divisors[0] = 1
+
+		for i := 1; i < subsTotal; i++ {
+			divisors[i] = divisors[i-1] * len(groups[groupOffset+i-1])
+		}
+
+		totalCombos := divisors[subsTotal-1] * len(groups[groupOffset+subsTotal-1])
 		appendFlags := make([]bool, subsTotal)
-		template := make([]string, 0, len(frame))
 
-	build:
-		template = template[:0]
-		subIndex := 0
+		for combo := range totalCombos {
+			template := append([]string(nil), frame...)
+			shouldSkip := false
 
-		for _, tok := range frame {
-			if tok != "§" {
-				template = append(template, tok)
-				continue
-			}
+			for sub := range subsTotal {
+				idx := (combo / divisors[sub]) % len(groups[groupOffset+sub])
+				val := groups[groupOffset+sub][idx]
 
-			val := groups[groupOffset+subIndex][subsIndices[subIndex]]
-			switch val {
-			case "&":
-				expressions = append(expressions, []string{"&"})
-				appendFlags[subIndex] = false
-				goto next
-			case "+", "-", "*", "/", "%", "^", "|", ":":
-				last := len(expressions) - 1
-				expressions[last] = append(expressions[last], val)
-				appendFlags[subIndex] = true
-				goto next
-			default:
-				if appendFlags[subIndex] {
+				switch val {
+				case "&":
+					template = append(template[:0], "&")
+					expressions = append(expressions, template)
+					appendFlags[sub] = false
+					shouldSkip = true
+				case "+", "-", "*", "/", "%", "^", "|", ":":
 					last := len(expressions) - 1
 					expressions[last] = append(expressions[last], val)
-					appendFlags[subIndex] = false
-					goto next
+					appendFlags[sub] = true
+					shouldSkip = true
+				default:
+					if appendFlags[sub] {
+						last := len(expressions) - 1
+						expressions[last] = append(expressions[last], val)
+						appendFlags[sub] = false
+						shouldSkip = true
+					} else {
+						template[subsPositions[sub]] = val
+					}
 				}
-				template = append(template, val)
-				subIndex++
-			}
-		}
-		expressions = append(expressions, append([]string(nil), template...))
 
-	next:
-		for subIndex := range subsTotal {
-			subsIndices[subIndex]++
-			if subsIndices[subIndex] < len(groups[groupOffset+subIndex]) {
-				goto build
+				if shouldSkip {
+					break
+				}
 			}
-			subsIndices[subIndex] = 0
+
+			if !shouldSkip {
+				expressions = append(expressions, template)
+			}
 		}
 		groupOffset += subsTotal
 	}

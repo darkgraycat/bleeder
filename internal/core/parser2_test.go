@@ -10,6 +10,12 @@ import (
 
 func TestExperiments(t *testing.T) {
 	given := `
+	e2 & b3 + [0 4 5]
+	[a b] + [2 3 4]
+	# a+2 b+2   a+3 b+3   a+4 b+4
+	# [a+2 b+3]*4
+	# [x y] : [2/d 3/d]
+
 	#@chord(e2) + [0 1 2] # it works perfectly
 
 	#12 + [@chord(g3) @chord(d2)] # doesnt work - dont care for now
@@ -17,7 +23,7 @@ func TestExperiments(t *testing.T) {
 	#12 + [e2:3 d3:4] # doesnt work either, but - should we handle this?
 	# if so - we need a way to consume more than one character
 
-	12 + [e2+T g2+T] # same problem here. its:
+	# 12 + [e2+T g2+T] # same problem here. its:
 	# EXPRESSIONS: [[12 + e2] [12 + :] [12 + 3] [12 + d3] [12 + :] [12 + 4] [12 + e2] [12 + +] [12 + T] [12 + g2] [12 + +] [12 + T]]
 	# posible solution
 
@@ -46,6 +52,8 @@ func TestExperiments(t *testing.T) {
 
 		expressions := flat(frames, groups)
 		fmt.Printf("EXPRESSIONS: %v\n", expressions)
+
+		fmt.Printf("RESULT:\n")
 		for _, expr := range expressions {
 			fmt.Printf("%v\n", expr)
 		}
@@ -155,6 +163,21 @@ func TestScan(t *testing.T) {
 				"a b",
 				"a b",
 				"0 4 7",
+			},
+		},
+		{
+			name: "With operators",
+			given: `
+			T + [a:2 b:3]:2
+			[x y] : [2/d 3/d]
+			`,
+			frames: []string{
+				"T + § : 2",
+				"§ : §",
+			},
+			groups: []string{
+				"a : 2 b : 3",
+				"x y", "2 / d 3 / d",
 			},
 		},
 		{
@@ -342,7 +365,7 @@ func BenchmarkFlat(b *testing.B) {
 		groups []string
 	}{
 		{
-			// 555.3 ns/op	    1632 B/op	      15 allocs/op
+			// 620.1 ns/op	    1456 B/op	      16 allocs/op
 			name: "For comparison with old expand",
 			frames: []string{
 				"2 + § + §",
@@ -352,7 +375,7 @@ func BenchmarkFlat(b *testing.B) {
 			},
 		},
 		{
-			// 853.7 ns/op	    2720 B/op	      22 allocs/op
+			// 1165 ns/op	    2976 B/op	      26 allocs/op
 			name: "Dev",
 			frames: []string{
 				"2 + § + §",
@@ -407,6 +430,26 @@ func TestScanFlat(t *testing.T) {
 				"e2 + 0", "&", "b3 + 0",
 				"e2 + 4", "&", "b3 + 4",
 				"e2 + 5", "&", "b3 + 5",
+			},
+		},
+		{
+			name: "All features",
+			given: `
+			e2|3 b3:2|2 & d2 # no groups
+			[a&b] + [2 4] # simple chord
+			[e2 d2 c3]:3 # mod duration
+			[a b] & [c d] # two groups
+			[e2+T a2:d] * 2 # groups with operators
+			[a b] + [0 1] * [I J] # triple group
+			`,
+			expected: []string{
+				"e2 | 3", "b3 : 2 | 2", "&", "d2",
+				"a + 2", "&", "b + 2", "a + 4", "&", "b + 4",
+				"e2 : 3", "d2 : 3", "c3 : 3",
+				"a", "b", "&", "c", "d",
+				"e2 * 2 + T", "a2 * 2 : d",
+				"a + 0 * I", "b + 0 * I", "a + 1 * I", "b + 1 * I",
+				"a + 0 * J", "b + 0 * J", "a + 1 * J", "b + 1 * J",
 			},
 		},
 	}
