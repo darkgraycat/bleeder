@@ -148,7 +148,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name: "With functions",
+			name: "With sequences",
 			given: `
 			@chord(e2 7) [a b]
 			[a b] @chord(e2)
@@ -435,19 +435,23 @@ func TestScanFlat(t *testing.T) {
 		{
 			name: "All features",
 			given: `
-			e2|3 b3:2|2 & d2 # no groups
+			e2|3 b3:2|2 & d2 # inline
+			@song1(e2 2):8+T # sequence
 			[a&b] + [2 4] # simple chord
 			[e2 d2 c3]:3 # mod duration
 			[a b] & [c d] # two groups
 			[e2+T a2:d] * 2 # groups with operators
+			12 + [@chord(g3)] # with sequences
 			[a b] + [0 1] * [I J] # triple group
 			`,
 			expected: []string{
 				"e2 | 3", "b3 : 2 | 2", "&", "d2",
+				"@ song1 ( e2 2 ) : 8 + T",
 				"a + 2", "&", "b + 2", "a + 4", "&", "b + 4",
 				"e2 : 3", "d2 : 3", "c3 : 3",
 				"a", "b", "&", "c", "d",
 				"e2 * 2 + T", "a2 * 2 : d",
+				"12 + @", "12 + chord", "12 + (", "12 + g3", "12 + )",
 				"a + 0 * I", "b + 0 * I", "a + 1 * I", "b + 1 * I",
 				"a + 0 * J", "b + 0 * J", "a + 1 * J", "b + 1 * J",
 			},
@@ -462,11 +466,14 @@ func TestScanFlat(t *testing.T) {
 			frames, groups := scan(tc.given)
 			expressions := flat(frames, groups)
 
-			testutils.AssertInts(t, len(expected), len(expressions))
 			for i, act := range expressions {
+				if i >= len(expected) {
+					break
+				}
 				exp := expected[i]
 				testutils.AssertSlices(t, exp, act)
 			}
+			testutils.AssertInts(t, len(expected), len(expressions))
 		})
 	}
 }
