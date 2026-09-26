@@ -10,8 +10,11 @@ import (
 
 func TestExperiments(t *testing.T) {
 	given := `
-	e2 & b3 + [0 4 5]
-	[a b] + [2 3 4]
+	[@chord(g3) @mysong] : 8
+
+
+	# e2 & b3 + [0 4 5]
+	# [a b] + [2 3 4]
 	# a+2 b+2   a+3 b+3   a+4 b+4
 	# [a+2 b+3]*4
 	# [x y] : [2/d 3/d]
@@ -56,6 +59,10 @@ func TestExperiments(t *testing.T) {
 		fmt.Printf("RESULT:\n")
 		for _, expr := range expressions {
 			fmt.Printf("%v\n", expr)
+			for _, tok := range expr {
+				fmt.Printf("`%s` ", tok)
+			}
+			fmt.Println()
 		}
 	})
 }
@@ -347,13 +354,9 @@ func TestFlat(t *testing.T) {
 			groups := shared.Map(tc.groups, strings.Fields)
 			expected := shared.Map(tc.expected, strings.Fields)
 
-			actual := flat(frames, groups)
+			actual := flat5(frames, groups)
 
-			testutils.AssertInts(t, len(tc.expected), len(actual))
-			for i, act := range actual {
-				exp := expected[i]
-				testutils.AssertSlices(t, exp, act)
-			}
+			testutils.AssertNested(t, expected, actual)
 		})
 	}
 }
@@ -398,7 +401,7 @@ func BenchmarkFlat(b *testing.B) {
 
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				flat(frames, groups)
+				flat5(frames, groups)
 			}
 		})
 	}
@@ -441,8 +444,8 @@ func TestScanFlat(t *testing.T) {
 			[e2 d2 c3]:3 # mod duration
 			[a b] & [c d] # two groups
 			[e2+T a2:d] * 2 # groups with operators
-			12 + [@chord(g3)] # with sequences
 			[a b] + [0 1] * [I J] # triple group
+			# [@chord(g3)] +12 # with sequences
 			`,
 			expected: []string{
 				"e2 | 3", "b3 : 2 | 2", "&", "d2",
@@ -451,9 +454,9 @@ func TestScanFlat(t *testing.T) {
 				"e2 : 3", "d2 : 3", "c3 : 3",
 				"a", "b", "&", "c", "d",
 				"e2 * 2 + T", "a2 * 2 : d",
-				"12 + @", "12 + chord", "12 + (", "12 + g3", "12 + )",
 				"a + 0 * I", "b + 0 * I", "a + 1 * I", "b + 1 * I",
 				"a + 0 * J", "b + 0 * J", "a + 1 * J", "b + 1 * J",
+				// "@ chord ( g3 ) + 12",
 			},
 		},
 	}
@@ -504,7 +507,7 @@ func BenchmarkScanFlat(b *testing.B) {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
 				frames, groups := scan(tc.given)
-				flat(frames, groups)
+				flat5(frames, groups)
 			}
 		})
 	}

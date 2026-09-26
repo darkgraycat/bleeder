@@ -1,6 +1,8 @@
 package testutils
 
 import (
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -11,10 +13,8 @@ func AssertErr(t *testing.T, err error, expMsg string) {
 		if err != nil {
 			t.Fatalf("\nexpected no error, got: %v", err)
 		}
-	} else {
-		if err == nil || err.Error() != expMsg {
-			t.Fatalf("\nexpected error: %q, got: %v", expMsg, err)
-		}
+	} else if err == nil || err.Error() != expMsg {
+		t.Fatalf("\nexpected error: %q, got: %v", expMsg, err)
 	}
 }
 
@@ -35,38 +35,45 @@ func AssertInts(t *testing.T, exp, act int) {
 func AssertFloats(t *testing.T, exp, act float64) {
 	t.Helper()
 	if exp != act {
-		t.Fatalf("\nexpected: `%f`\nactual:   `%f`", exp, act)
+		t.Fatalf("\nexpected: `%g`\nactual:   `%g`", exp, act)
 	}
 }
 
 func AssertStrings(t *testing.T, exp, act string) {
 	t.Helper()
 	if exp != act {
-		t.Fatalf("\nexpected: `%s` (%d)\nactual:   `%s` (%d)", exp, len(exp), act, len(act))
+		t.Fatalf("\nexpected: %q (%d)\nactual:   %q (%d)", exp, len(exp), act, len(act))
 	}
 }
 
 func AssertSlices[T comparable](t *testing.T, exp, act []T) {
 	t.Helper()
+	for i := range min(len(exp), len(act)) {
+		if exp[i] != act[i] {
+			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
+		}
+	}
 	if len(exp) != len(act) {
 		t.Fatalf("\nexpected: `%v` (%d)\nactual:   `%v` (%d)", exp, len(exp), act, len(act))
 	}
-	for i, v := range act {
-		if v != exp[i] {
-			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
+}
+
+func AssertNested[T comparable](t *testing.T, exp, act [][]T) {
+	t.Helper()
+	for i := range min(len(exp), len(act)) {
+		if !slices.Equal(exp[i], act[i]) {
+			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp[i], act[i])
 		}
+	}
+	if len(exp) != len(act) {
+		t.Fatalf("\nexpected: `%v` (%d)\nactual:   `%v` (%d)", exp, len(exp), act, len(act))
 	}
 }
 
-func AssertMaps[T comparable, K comparable](t *testing.T, exp, act map[K]T) {
+func AssertMaps[K, V comparable](t *testing.T, exp, act map[K]V) {
 	t.Helper()
-	if len(exp) != len(act) {
+	if !maps.Equal(exp, act) {
 		t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
-	}
-	for k, v := range act {
-		if v != exp[k] {
-			t.Fatalf("\nexpected: `%v`\nactual:   `%v`", exp, act)
-		}
 	}
 }
 
@@ -74,14 +81,14 @@ func UseFlags(t *testing.T) {
 	t.Helper()
 	parts := strings.Split(t.Name(), "/")
 	name := parts[len(parts)-1]
-	if len(name) < 1 {
+	if name == "" {
 		return
 	}
 	switch name[0] {
 	case '-':
-		t.SkipNow()
+		t.Skip("flagged as skip")
 	case '!':
-		t.FailNow()
+		t.Fatal("flagged as fail")
 	case '|':
 		t.Parallel()
 	}
