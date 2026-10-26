@@ -9,62 +9,121 @@ import (
 )
 
 func TestExperiments(t *testing.T) {
-	given := `
-	[@chord(g3) @mysong] : 8
+	tests := []string{
+		"2 + [a b] * [c d e] + 3",
+		// "2 + [a b] 7 [c d] + 3",
+		// "e2 g3 a + 7 b * [a b] d3 d6",
+		// "2 + [a b] 3 + [c d]",
+		// "2 + [a b] * [8 9 0] : T",
+		// "[a & b] + [2 4]",
+		// "[a b+3] + [2 4] : 8",
+		// "e2|3 b3:2|2 & d2",
+		// "@song1(e2 2):8+T",
+		// "[@chord(g3)]:4",
+		// "2 + [e2 2]",
+		// "[e2 d2 c3]:3",
+		// "[a b] & [c d]",
+		// "[e2+T a2:d] * 2",
+		// "[a b] + [0 1] * [I J]",
+		// "@song2(e2 2) + [0 0]",
+		// "[@chord{note g3 dur 7} @mysong(g2 a4)] : 8 + [a b] * 3",
+	}
 
+	for _, tc := range tests {
+		t.Run("experiments", func(t *testing.T) {
+			out1 := split(tc)
+			out2 := plain(out1)
+			fmt.Printf("INPUT: %v\n", tc)
+			fmt.Printf("SPLIT: %v\n", out1)
+			fmt.Printf("PLAIN: %v\n", out2)
+			// for i, expr := range out {
+			// 	fmt.Printf("[%d] ", i)
+			// 	for _, tok := range expr {
+			// 		fmt.Printf("%s", tok)
+			// 	}
+			// 	fmt.Println()
+			// }
 
-	# e2 & b3 + [0 4 5]
-	# [a b] + [2 3 4]
-	# a+2 b+2   a+3 b+3   a+4 b+4
-	# [a+2 b+3]*4
-	# [x y] : [2/d 3/d]
+			// frames, groups := scan(tc)
+			// fmt.Printf("FRAMES: %v\n", frames)
+			// fmt.Printf("GROUPS: %v\n", groups)
+			// expressions := flat(frames, groups)
+			// fmt.Printf("EXPRESSIONS: %v\n", expressions)
+			// for i, expr := range expressions {
+			// 	fmt.Printf("[%d] ", i)
+			// 	for _, tok := range expr {
+			// 		fmt.Printf("%s", tok)
+			// 	}
+			// 	fmt.Println()
+			// }
+		})
+		fmt.Println()
+	}
+}
 
-	#@chord(e2) + [0 1 2] # it works perfectly
+func TestSplit(t *testing.T) {
+	tests := []struct {
+		name     string
+		given    string
+		expected []string
+	}{
+		{
+			name:  "Sequential frames",
+			given: "a2 b2 c3+x d4|2:8",
+			expected: []string{
+				"a2", "b2", "c3 + x", "d4 | 2 : 8",
+			},
+		},
+		{
+			name:  "Grouped frames",
+			given: "e2 3+[a b]*[1 2+x]:T f2",
+			expected: []string{
+				"e2", "3 + [", "a", "b", "] * [", "1", "2 + x", "] : T", "f2",
+			},
+		},
+		{
+			name:  "Links to sequence",
+			given: "@chord(a2) @chord(f2):T",
+			expected: []string{
+				// want to
+				"@ chord (", "a2", ")", " @chord (", "f2", ") : T",
+				// current
+				// "@", "chord", "(", "a2", ") @", "chord", "(", "f2", ") : T",
+			},
+		},
+	}
 
-	#12 + [@chord(g3) @chord(d2)] # doesnt work - dont care for now
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.UseFlags(t)
+			frames := split(tc.given)
+			expFrames := shared.Map(tc.expected, strings.Fields)
+			testutils.AssertNested(t, expFrames, frames)
+		})
+	}
+}
 
-	#12 + [e2:3 d3:4] # doesnt work either, but - should we handle this?
-	# if so - we need a way to consume more than one character
+func BenchmarkSplit(b *testing.B) {
+	tests := []struct {
+		name  string
+		given string
+	}{
 
-	# 12 + [e2+T g2+T] # same problem here. its:
-	# EXPRESSIONS: [[12 + e2] [12 + :] [12 + 3] [12 + d3] [12 + :] [12 + 4] [12 + e2] [12 + +] [12 + T] [12 + g2] [12 + +] [12 + T]]
-	# posible solution
+		// 264.1 ns/op	     376 B/op	       6 allocs/op
+		{name: "Sequential frames", given: "a2 b2 c3+x d4|2:8"},
+		// 510.6 ns/op	     944 B/op	      13 allocs/op
+		{name: "Grouped frames", given: "e2 3+[a b]*[1 2+x]:T f2"},
+		// 486.9 ns/op	     864 B/op	      14 allocs/op
+		{name: "Links to sequence", given: "@chord(a2) @chord(f2):T"},
+	}
 
-	# (12) 12
-	# (+) 12 +
-	# (§ as e2) 12 + e2
-
-	# (12) 12
-	# (+) 12 +
-	# (§ as +) 12 + e2 + (append to last)
-
-	#2 + [a b]
-	# gb7
-	# 2 + [e3 a3] + [0 1 2]
-	# 2 + [g2 & f2] + [0 1 2]
-	# e2:[3 4 3]
-	# [c2 d2]:3
-
-	# T+ [e2 c3 d4] + [0 0 1 2]
-	# c2 c4 @chord(e4)
-	`
-	t.Run("dev", func(t *testing.T) {
-		frames, groups := scan(given)
-		fmt.Printf("FRAMES: %v\n", frames)
-		fmt.Printf("GROUPS: %v\n", groups)
-
-		expressions := flat(frames, groups)
-		fmt.Printf("EXPRESSIONS: %v\n", expressions)
-
-		fmt.Printf("RESULT:\n")
-		for _, expr := range expressions {
-			fmt.Printf("%v\n", expr)
-			for _, tok := range expr {
-				fmt.Printf("`%s` ", tok)
+	for _, tc := range tests {
+		b.Run(tc.name, func(b *testing.B) {
+			for b.Loop() {
+				split(tc.given)
 			}
-			fmt.Println()
-		}
-	})
+		})
+	}
 }
 
 func TestScan(t *testing.T) {
@@ -211,7 +270,7 @@ func TestScan(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
 
-			frames, groups := scan(tc.given)
+			frames, groups := scanNew(tc.given)
 			expFrames := shared.Map(tc.frames, strings.Fields)
 			expGroups := shared.Map(tc.groups, strings.Fields)
 
@@ -237,6 +296,7 @@ func BenchmarkScan(b *testing.B) {
 	}{
 		{
 			// 515.1 ns/op	     720 B/op	      11 allocs/op
+			// 413.5 ns/op	     592 B/op	       9 allocs/op
 			name: "Simple sequence",
 			given: `
 			2+a*3 b/8 c+b
@@ -245,6 +305,7 @@ func BenchmarkScan(b *testing.B) {
 		},
 		{
 			// 751.5 ns/op	     976 B/op	       9 allocs/op
+			// 489.0 ns/op	     688 B/op	       7 allocs/op
 			name: "Simple sequence with comments",
 			given: `
 			# eeee aaaa ff ff
@@ -256,6 +317,7 @@ func BenchmarkScan(b *testing.B) {
 		},
 		{
 			// 535.3 ns/op	     736 B/op	      10 allocs/op
+			// 412.6 ns/op	     576 B/op	       8 allocs/op
 			name: "Value + operator + value",
 			given: `
 			[a b] + 2
@@ -265,6 +327,7 @@ func BenchmarkScan(b *testing.B) {
 		},
 		{
 			// 685.2 ns/op	     912 B/op	      16 allocs/op
+			// 559.2 ns/op	     752 B/op	      14 allocs/op
 			name: "Value value",
 			given: `
 			[a & b] 2
@@ -274,6 +337,7 @@ func BenchmarkScan(b *testing.B) {
 		},
 		{
 			// 817.3 ns/op	    1072 B/op	      16 allocs/op
+			// 654.1 ns/op	     880 B/op	      14 allocs/op
 			name: "Mixed",
 			given: `
 			[a b] + [c d]
@@ -283,6 +347,7 @@ func BenchmarkScan(b *testing.B) {
 		},
 		{
 			// 775.2 ns/op	     928 B/op	      14 allocs/op
+			// 587.9 ns/op	     704 B/op	      12 allocs/op
 			name: "With functions",
 			given: `
 			@chord(e2 7) [a b]
@@ -292,6 +357,7 @@ func BenchmarkScan(b *testing.B) {
 		},
 		{
 			// 781.8 ns/op	    1056 B/op	      15 allocs/op
+			// 625.7 ns/op	     864 B/op	      13 allocs/op
 			name: "Edge cases",
 			given: `
 			[a b]
@@ -304,7 +370,7 @@ func BenchmarkScan(b *testing.B) {
 	for _, tc := range tests {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				scan(tc.given)
+				scanNew(tc.given)
 			}
 		})
 	}
@@ -354,7 +420,7 @@ func TestFlat(t *testing.T) {
 			groups := shared.Map(tc.groups, strings.Fields)
 			expected := shared.Map(tc.expected, strings.Fields)
 
-			actual := flat5(frames, groups)
+			actual := flat(frames, groups)
 
 			testutils.AssertNested(t, expected, actual)
 		})
@@ -401,7 +467,7 @@ func BenchmarkFlat(b *testing.B) {
 
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				flat5(frames, groups)
+				flat(frames, groups)
 			}
 		})
 	}
@@ -445,7 +511,7 @@ func TestScanFlat(t *testing.T) {
 			[a b] & [c d] # two groups
 			[e2+T a2:d] * 2 # groups with operators
 			[a b] + [0 1] * [I J] # triple group
-			# [@chord(g3)] +12 # with sequences
+			[@chord(g3)] +12 # with sequences
 			`,
 			expected: []string{
 				"e2 | 3", "b3 : 2 | 2", "&", "d2",
@@ -456,7 +522,7 @@ func TestScanFlat(t *testing.T) {
 				"e2 * 2 + T", "a2 * 2 : d",
 				"a + 0 * I", "b + 0 * I", "a + 1 * I", "b + 1 * I",
 				"a + 0 * J", "b + 0 * J", "a + 1 * J", "b + 1 * J",
-				// "@ chord ( g3 ) + 12",
+				"@ chord ( g3 ) + 12",
 			},
 		},
 	}
@@ -507,7 +573,7 @@ func BenchmarkScanFlat(b *testing.B) {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
 				frames, groups := scan(tc.given)
-				flat5(frames, groups)
+				flat(frames, groups)
 			}
 		})
 	}

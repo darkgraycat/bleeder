@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -88,150 +89,6 @@ func flat(frames [][]string, groups [][]string) (expressions [][]string) {
 
 	for _, frame := range frames {
 		subsTotal := 0
-		subsPositions := make([]int, 0, 4)
-
-		for i, tok := range frame {
-			if tok == "§" {
-				subsPositions = append(subsPositions, i)
-				subsTotal++
-			}
-		}
-
-		if subsTotal == 0 {
-			expressions = append(expressions, frame)
-			continue
-		}
-
-		// Pre-process groups to collapse multi-token items (joined sequences)
-		processedGroups := make([][]string, subsTotal)
-		for i := 0; i < subsTotal; i++ {
-			group := groups[groupOffset+i]
-			collapsed := make([]string, 0, len(group))
-
-			for j := 0; j < len(group); j++ {
-				val := group[j]
-				if val == "@" || val == "$" {
-					// Consume tokens until closing ) or }
-					for j < len(group)-1 {
-						next := group[j+1]
-						val += " " + next
-						j++
-						if next == ")" || next == "}" {
-							break
-						}
-					}
-				}
-				collapsed = append(collapsed, val)
-			}
-			processedGroups[i] = collapsed
-		}
-
-		divisors := make([]int, subsTotal)
-		divisors[0] = 1
-
-		for i := 1; i < subsTotal; i++ {
-			divisors[i] = divisors[i-1] * len(processedGroups[i-1])
-		}
-
-		totalCombos := divisors[subsTotal-1] * len(processedGroups[subsTotal-1])
-		appendFlags := make([]bool, subsTotal)
-
-		for combo := range totalCombos {
-			template := append([]string(nil), frame...)
-			shouldSkip := false
-
-			for sub := range subsTotal {
-				idx := (combo / divisors[sub]) % len(processedGroups[sub])
-				val := processedGroups[sub][idx]
-
-				switch val {
-				case "&":
-					template = append(template[:0], "&")
-					expressions = append(expressions, template)
-					appendFlags[sub] = false
-					shouldSkip = true
-				case "+", "-", "*", "/", "%", "^", "|", ":":
-					last := len(expressions) - 1
-					expressions[last] = append(expressions[last], val)
-					appendFlags[sub] = true
-					shouldSkip = true
-				default:
-					if appendFlags[sub] {
-						last := len(expressions) - 1
-						expressions[last] = append(expressions[last], val)
-						appendFlags[sub] = false
-						shouldSkip = true
-					} else {
-						template[subsPositions[sub]] = val
-					}
-				}
-
-				if shouldSkip {
-					break
-				}
-			}
-
-			if !shouldSkip {
-				expressions = append(expressions, template)
-			}
-		}
-		groupOffset += subsTotal
-	}
-
-	return expressions
-}
-
-// TODO:
-// To complete the list of functions parser should have we need:
-func vars(raw string) (vars map[string]string) {
-	// to parse args from sequence
-	return vars
-}
-
-// NOT USED
-// TODO: write "eval function" that actualy evaluates whole
-// evaluate arithmetic expression with variables map
-func evalVars2(s string, vars map[string]string) float64 {
-	i := strings.LastIndexAny(s, "+-*/%^")
-	if i > 0 {
-		lhs := evalVars2(s[:i], vars)
-		rhs := evalVars2(s[i+1:], vars)
-		switch s[i] {
-		case '+':
-			return lhs + rhs
-		case '-':
-			return lhs - rhs
-		case '*':
-			return lhs * rhs
-		case '/':
-			return lhs / rhs
-		case '%':
-			return math.Mod(lhs, rhs)
-		case '^':
-			return math.Pow(lhs, rhs)
-		}
-		return math.NaN()
-	}
-	if ref, ok := vars[s]; ok {
-		val, err := strconv.ParseFloat(ref, 64)
-		if err != nil {
-			return math.NaN()
-		}
-		return val
-	}
-	return parseTone(s)
-}
-
-func flat2(frames [][]string, groups [][]string) (expressions [][]string) {
-	if len(groups) == 0 {
-		return frames
-	}
-
-	expressions = make([][]string, 0, len(frames)*4)
-	groupOffset := 0
-
-	for _, frame := range frames {
-		subsTotal := 0
 		for _, tok := range frame {
 			if tok == "§" {
 				subsTotal++
@@ -293,4 +150,132 @@ func flat2(frames [][]string, groups [][]string) (expressions [][]string) {
 	}
 
 	return expressions
+}
+
+// TODO:
+// To complete the list of functions parser should have we need:
+func vars(raw string) (vars map[string]string) {
+	// to parse args from sequence
+	return vars
+}
+
+// NOT USED
+// TODO: write "eval function" that actualy evaluates whole
+// evaluate arithmetic expression with variables map
+func evalVars2(s string, vars map[string]string) float64 {
+	i := strings.LastIndexAny(s, "+-*/%^")
+	if i > 0 {
+		lhs := evalVars2(s[:i], vars)
+		rhs := evalVars2(s[i+1:], vars)
+		switch s[i] {
+		case '+':
+			return lhs + rhs
+		case '-':
+			return lhs - rhs
+		case '*':
+			return lhs * rhs
+		case '/':
+			return lhs / rhs
+		case '%':
+			return math.Mod(lhs, rhs)
+		case '^':
+			return math.Pow(lhs, rhs)
+		}
+		return math.NaN()
+	}
+	if ref, ok := vars[s]; ok {
+		val, err := strconv.ParseFloat(ref, 64)
+		if err != nil {
+			return math.NaN()
+		}
+		return val
+	}
+	return parseTone(s)
+}
+
+// TODO: dont know if I gonna use it, will try to rewrite scan first
+func split(s string) [][]string {
+	out := make([][]string, 0, 8)
+	buf := make([]string, 0, 8)
+	raw := strings.TrimSpace(formatter.Replace(s))
+
+	for line := range strings.SplitSeq(raw, "\n") {
+		if i := strings.IndexByte(line, '#'); i >= 0 {
+			line = line[:i]
+		}
+
+		prevIsValue := false
+		prevIsJoins := false
+
+		for token := range strings.FieldsSeq(line) {
+			currIsValue := true
+			currIsJoins := prevIsJoins
+
+			switch token {
+			case "+", "-", "*", "/", "%", "^", "|", ":", "&":
+				currIsValue = false
+			case "@", "$", "(", "{":
+				currIsJoins = true
+			case ")", "}":
+				currIsJoins = false
+			}
+
+			if prevIsValue && currIsValue && !prevIsJoins {
+				out = append(out, append([]string(nil), buf...))
+				buf = buf[:0]
+			}
+
+			prevIsValue = currIsValue
+			prevIsJoins = currIsJoins
+			buf = append(buf, token)
+		}
+
+		if len(buf) > 0 {
+			out = append(out, append([]string(nil), buf...))
+			buf = buf[:0]
+		}
+	}
+
+	return out
+}
+
+func plain(frames [][]string) [][]string {
+	out := make([][]string, 0, 8)
+	buf := make([]string, 0, 8)
+	tpl := make([]string, 0, 8)
+
+	inGroup := false
+	for _, f := range frames {
+		b, e := f[0], f[len(f)-1]
+		switch {
+		case b == "]" && e == "[":
+			middle := f[1 : len(f)-1]
+			tpl = append(tpl, middle...)
+			fmt.Printf("MID %q\n", strings.Join(middle, " "))
+		case e == "[":
+			head := f[:len(f)-1]
+			tpl = append(append(tpl, head...), "§")
+			inGroup = true
+			fmt.Printf("HEAD %q\n", strings.Join(head, " "))
+		case b == "]":
+			tail := f[1:]
+			tpl = append(append(tpl, "§"), tail...)
+			inGroup = false
+			fmt.Printf("TAIL %q\n", strings.Join(tail, " "))
+			// TODO: flush
+			fmt.Printf("buf %v\n", buf)
+			fmt.Printf("tpl %v\n", tpl)
+			buf = buf[:0] // clean
+			tpl = tpl[:0]
+		default:
+			if inGroup {
+				buf = append(buf, f...)
+			} else {
+				out = append(out, f)
+			}
+		}
+		fmt.Printf("FRAME %q, IN GROUP %v\n", strings.Join(f, " "), inGroup)
+	}
+
+	return out
 }
