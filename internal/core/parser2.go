@@ -1,8 +1,8 @@
 package core
 
 import (
-	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -193,13 +193,12 @@ func evalVars2(s string, vars map[string]string) float64 {
 	return parseTone(s)
 }
 
-// TODO: dont know if I gonna use it, will try to rewrite scan first
-func split(s string) [][]string {
+func split(raw string) [][]string {
 	out := make([][]string, 0, 8)
 	buf := make([]string, 0, 8)
-	raw := strings.TrimSpace(formatter.Replace(s))
+	normal := strings.TrimSpace(formatter.Replace(raw))
 
-	for line := range strings.SplitSeq(raw, "\n") {
+	for line := range strings.SplitSeq(normal, "\n") {
 		if i := strings.IndexByte(line, '#'); i >= 0 {
 			line = line[:i]
 		}
@@ -239,42 +238,37 @@ func split(s string) [][]string {
 	return out
 }
 
-func plain(frames [][]string) [][]string {
+// plain2 is plain without a template: rows are built group by group while reading frames.
+func plain2(frames [][]string) [][]string {
 	out := make([][]string, 0, 8)
-	buf := make([]string, 0, 8)
-	tpl := make([]string, 0, 8)
+	var base, next [][]string // rows before the current group / rows built with it
+	var conn []string         // tokens between the previous item and the next one
 
 	inGroup := false
 	for _, f := range frames {
 		b, e := f[0], f[len(f)-1]
 		switch {
 		case b == "]" && e == "[":
-			middle := f[1 : len(f)-1]
-			tpl = append(tpl, middle...)
-			fmt.Printf("MID %q\n", strings.Join(middle, " "))
+			base, next = next, nil
+			conn = f[1 : len(f)-1]
 		case e == "[":
-			head := f[:len(f)-1]
-			tpl = append(append(tpl, head...), "§")
+			base, next = [][]string{nil}, nil
+			conn = f[:len(f)-1]
 			inGroup = true
-			fmt.Printf("HEAD %q\n", strings.Join(head, " "))
 		case b == "]":
-			tail := f[1:]
-			tpl = append(append(tpl, "§"), tail...)
+			for _, row := range next {
+				out = append(out, append(row, f[1:]...))
+			}
 			inGroup = false
-			fmt.Printf("TAIL %q\n", strings.Join(tail, " "))
-			// TODO: flush
-			fmt.Printf("buf %v\n", buf)
-			fmt.Printf("tpl %v\n", tpl)
-			buf = buf[:0] // clean
-			tpl = tpl[:0]
 		default:
-			if inGroup {
-				buf = append(buf, f...)
-			} else {
+			if !inGroup {
 				out = append(out, f)
+				continue
+			}
+			for _, row := range base {
+				next = append(next, slices.Concat(row, conn, f))
 			}
 		}
-		fmt.Printf("FRAME %q, IN GROUP %v\n", strings.Join(f, " "), inGroup)
 	}
 
 	return out
