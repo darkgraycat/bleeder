@@ -2,7 +2,6 @@ package core
 
 import (
 	"math"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -93,7 +92,9 @@ func flat(frames [][]string) [][]string {
 					next = append(next, x)
 					continue
 				}
-				next = append(next, slices.Concat(x, conn, f))
+				row := make([]string, 0, len(x)+len(conn)+len(f)+4)
+				row = append(append(append(row, x...), conn...), f...)
+				next = append(next, row)
 			}
 		}
 	}

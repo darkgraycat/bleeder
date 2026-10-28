@@ -4,7 +4,6 @@ import (
 	"bleeder/internal/shared"
 	"bleeder/internal/shared/testutils"
 	"fmt"
-	"slices"
 	"strings"
 	"testing"
 )
@@ -77,259 +76,9 @@ func TestExperiments(t *testing.T) {
 	}
 }
 
-var scanTestCases = []struct {
-	name     string
-	given    string
-	expected []string
-}{
-	{ // 169.5 ns/op	     256 B/op	       5 allocs/op
-		name:     "Simple sequence",
-		given:    "a2 b2 c3 d4",
-		expected: []string{"a2", "b2", "c3", "d4"},
-	},
-	{ // 244.1 ns/op	     392 B/op	       5 allocs/op
-		name:     "Simple sequence with modifications",
-		given:    "a2+A b2+B:T 80/d",
-		expected: []string{"a2 + A", "b2 + B : T", "80 / d"},
-	},
-	{ // 271.5 ns/op	     480 B/op	       5 allocs/op
-		name:     "Simple sequence with repeated and parallel notes",
-		given:    "a2 & b2|2 c3|3 & d4 & e4",
-		expected: []string{"a2 & b2 | 2", "c3 | 3 & d4 & e4"},
-	},
-	{ // 541.2 ns/op	     800 B/op	       7 allocs/op
-		name:  "Sequence with links",
-		given: "@chord(a2) @chord{n a2 vol .5} @song(a3) @song{n a3 vol .5}",
-		expected: []string{
-			"@ chord ( a2 )", "@ chord { n a2 vol .5 }",
-			"@ song ( a3 )", "@ song { n a3 vol .5 }",
-		},
-	},
-	{ // 487.4 ns/op	     960 B/op	       6 allocs/op
-		name:  "Sequence with parallel links/patches and modifications",
-		given: "$bass(.4 .6) @chord(a2):8 & @bassRiff(a2 5)-12",
-		expected: []string{
-			"$ bass ( .4 .6 )",
-			"@ chord ( a2 ) : 8 & @ bassRiff ( a2 5 ) - 12",
-		},
-	},
-	{ // 309.1 ns/op	     360 B/op	       7 allocs/op
-		name:     "Grouped notes with modifications",
-		given:    "[a2 b2 c3]+2:8",
-		expected: []string{"[", "a2", "b2", "c3", "] + 2 : 8"},
-	},
-	{ // 709.1 ns/op	     400 B/op	       9 allocs/op
-		name:     "Grouped notes repeated with modifications",
-		given:    "[a2 b2]:2 + [0 2]",
-		expected: []string{"[", "a2", "b2", "] : 2 + [", "0", "2", "]"},
-	},
-	{ // 377.3 ns/op	     368 B/op	       9 allocs/op
-		name:     "Grouped notes played in parallel",
-		given:    "[a2 & b2 & c3]:3",
-		expected: []string{"[", "a2", "&", "b2", "&", "c3", "] : 3"},
-	},
-	{ // 471.2 ns/op	     400 B/op	       9 allocs/op
-		name:     "Grouped notes intersected with another group",
-		given:    "[a2 b2] & [c2 d2]+2",
-		expected: []string{"[", "a2", "b2", "] & [", "c2", "d2", "] + 2"},
-	},
-	{ // 548.8 ns/op	     624 B/op	      10 allocs/op
-		name:  "Grouped links repeated with modifications",
-		given: "[@chord(a2) @chord(b2)]:4 + [0 2]",
-		expected: []string{
-			"[", "@ chord ( a2 )", "@ chord ( b2 )",
-			"] : 4 + [", "0", "2", "]",
-		},
-	},
-	{ // 495.8 ns/op	     912 B/op	      13 allocs/op
-		name:  "Grouped notes mixed with ungrouped",
-		given: "[a2 b2]:2 c2:4 12+[d2 e2]",
-		expected: []string{
-			"[", "a2", "b2", "] : 2", "c2 : 4",
-			"12 + [", "d2", "e2", "]",
-		},
-	},
-}
-
-func TestScan(t *testing.T) {
-	for _, tc := range scanTestCases {
-		t.Run(tc.name, func(t *testing.T) {
-			testutils.UseFlags(t)
-			act := scan(tc.given)
-			exp := shared.Map(tc.expected, strings.Fields)
-			testutils.AssertNested(t, exp, act)
-		})
-	}
-}
-
-func BenchmarkScan(b *testing.B) {
-	for _, tc := range scanTestCases {
-		b.Run(tc.name, func(b *testing.B) {
-			for b.Loop() {
-				scan(tc.given)
-			}
-		})
-	}
-}
-
-var flatTestCases = []struct {
-	name     string
-	given    string
-	expected []string
-}{
-	{ // 53.01 ns/op	     192 B/op	       1 allocs/op
-		// 58.54 ns/op	     192 B/op	       1 allocs/op
-		// 58.94 ns/op	     192 B/op	       1 allocs/op (pre-alloc)
-		name:     "No groups is used",
-		given:    "a2 b2 c3+5",
-		expected: []string{"a2", "b2", "c3 + 5"},
-	},
-	{ // 339.1 ns/op	     576 B/op	      11 allocs/op
-		// 334.3 ns/op	     552 B/op	      10 allocs/op
-		// 250.3 ns/op	     384 B/op	       7 allocs/op
-		name:     "Group with modification",
-		given:    "[a2 b2 c2]:8",
-		expected: []string{"a2 : 8", "b2 : 8", "c2 : 8"},
-	},
-	{ // 948.5 ns/op	    1680 B/op	      25 allocs/op
-		// 892.8 ns/op	    1560 B/op	      21 allocs/op
-		// 751.7 ns/op	    1248 B/op	      16 allocs/op
-		name:  "Intersection of multiple small groups",
-		given: "[a2 b2] + [0 2] * [x y]",
-		expected: []string{
-			"a2 + 0 * x", "b2 + 0 * x",
-			"a2 + 2 * x", "b2 + 2 * x",
-			"a2 + 0 * y", "b2 + 0 * y",
-			"a2 + 2 * y", "b2 + 2 * y",
-		},
-	},
-	{ // 722.1 ns/op	    1896 B/op	      17 allocs/op
-		// 644.5 ns/op	    1848 B/op	      15 allocs/op
-		// 541.4 ns/op	    1632 B/op	      11 allocs/op
-		name:  "Groups with modifications",
-		given: "12+[a2 b2]:8 + [4 6]/c",
-		expected: []string{
-			"12 + a2 : 8 + 4 / c", "12 + b2 : 8 + 4 / c",
-			"12 + a2 : 8 + 6 / c", "12 + b2 : 8 + 6 / c",
-		},
-	},
-	{ // 621.5 ns/op	    1064 B/op	      17 allocs/op
-		// 595.4 ns/op	    1016 B/op	      15 allocs/op
-		// 431.8 ns/op	     800 B/op	      11 allocs/op
-		name:  "Groups with parallel intersected notes",
-		given: "[a2 b2] & [c2 d2]:2",
-		expected: []string{
-			"a2 & c2 : 2", "b2 & c2 : 2",
-			"a2 & d2 : 2", "b2 & d2 : 2",
-		},
-	},
-	{ // 867.2 ns/op	    1880 B/op	      22 allocs/op
-		// 762.4 ns/op	    1784 B/op	      17 allocs/op
-		// 713.0 ns/op	    1472 B/op	      12 allocs/op
-		name:  "Groups to play multiple chords",
-		given: "[a2 & b2] + [0 1 2]",
-		expected: []string{
-			"a2 + 0", "&", "b2 + 0",
-			"a2 + 1", "&", "b2 + 1",
-			"a2 + 2", "&", "b2 + 2",
-		},
-	},
-	{ // 588.2 ns/op	    1016 B/op	      18 allocs/op
-		// 493.8 ns/op	     920 B/op	      13 allocs/op
-		// 471.4 ns/op	     608 B/op	       8 allocs/op
-		name:  "Groups with all notes parallel",
-		given: "[a2 & b2] & [c2 & d2]",
-		expected: []string{
-			"a2 & c2", "&", "b2 & c2", "&",
-			"a2 & d2", "&", "b2 & d2",
-		},
-	},
-	{ // 231.3 ns/op	     416 B/op	       8 allocs/op
-		// 223.2 ns/op	     392 B/op	       7 allocs/op
-		// 199.3 ns/op	     320 B/op	       5 allocs/op
-		name:     "Group with one parallel note",
-		given:    "[a2 b2] & c2",
-		expected: []string{"a2 & c2", "b2 & c2"},
-	},
-	{ // 279.1 ns/op	     768 B/op	       8 allocs/op
-		// 275.7 ns/op	     744 B/op	       7 allocs/op
-		// 327.1 ns/op	     672 B/op	       5 allocs/op
-		name:  "Group with parallel note and modifications",
-		given: "a2:4 & [b2 c2]|2",
-		expected: []string{
-			"a2 : 4 & b2 | 2",
-			"a2 : 4 & c2 | 2",
-		},
-	},
-	{ // 799.4 ns/op	    2216 B/op	      21 allocs/op
-		// 726.8 ns/op	    2136 B/op	      17 allocs/op
-		// 596.1 ns/op	    1824 B/op	      12 allocs/op
-		name:  "Groups with various modifications",
-		given: "7+[a2 & b2]|4 + [0 1]*7:2",
-		expected: []string{
-			"7 + a2 | 4 + 0 * 7 : 2", "&", "7 + b2 | 4 + 0 * 7 : 2",
-			"7 + a2 | 4 + 1 * 7 : 2", "&", "7 + b2 | 4 + 1 * 7 : 2",
-		},
-	},
-}
-
-func TestFlat(t *testing.T) {
-	for _, tc := range flatTestCases {
-		t.Run(tc.name, func(t *testing.T) {
-			testutils.UseFlags(t)
-			act := flat(scan(tc.given))
-			exp := shared.Map(tc.expected, strings.Fields)
-			testutils.AssertNested(t, exp, act)
-		})
-	}
-}
-
-func BenchmarkFlat(b *testing.B) {
-	for _, tc := range flatTestCases {
-		frames := scan(tc.given)
-		b.Run(tc.name, func(b *testing.B) {
-			for b.Loop() {
-				flat(frames)
-			}
-		})
-	}
-}
-
-func BenchmarkScanFlat(b *testing.B) {
-	// Simple_sequence-8         	                                 5005995	       219.0 ns/op	     448 B/op	       6 allocs/op
-	// Simple_sequence_with_modifications-8         	             3845840	       300.2 ns/op	     584 B/op	       6 allocs/op
-	// Simple_sequence_with_repeated_and_parallel_notes-8         	 3772772	       315.4 ns/op	     672 B/op	       6 allocs/op
-	// Sequence_with_links-8                                      	 2037150	       593.3 ns/op	     992 B/op	       8 allocs/op
-	// Sequence_with_parallel_links/patches_and_modifications-8   	 2250682	       528.1 ns/op	    1152 B/op	       7 allocs/op
-	// Grouped_notes_with_modifications-8                         	 1939105	       614.9 ns/op	    1032 B/op	      18 allocs/op
-	// Grouped_notes_repeated_with_modifications-8                	 1484674	       806.6 ns/op	    1208 B/op	      22 allocs/op
-	// Grouped_notes_played_in_parallel-8                         	 1641362	       746.4 ns/op	    1168 B/op	      23 allocs/op
-	// Grouped_notes_intersected_with_another_group-8             	 1279154	       932.0 ns/op	    1464 B/op	      26 allocs/op
-	// Grouped_links_repeated_with_modifications-8                	 1000000	      1008 ns/op	    1816 B/op	      23 allocs/op
-	// Grouped_notes_mixed_with_ungrouped-8                       	 1368540	       878.7 ns/op	    1520 B/op	      26 allocs/op
-	// No_groups_is_used-8                                        	 5472892	       219.5 ns/op	     480 B/op	       6 allocs/op
-	// Group_with_modification-8                                  	 2087001	       575.2 ns/op	     904 B/op	      18 allocs/op
-	// Intersection_of_multiple_small_groups-8                    	  806496	      1483 ns/op	    2576 B/op	      39 allocs/op
-	// Groups_with_modifications-8                                	 1000000	      1080 ns/op	    2424 B/op	      27 allocs/op
-	// Groups_with_parallel_intersected_notes-8                   	 1311914	       914.3 ns/op	    1464 B/op	      26 allocs/op
-	// Groups_to_play_multiple_chords-8                           	  968802	      1241 ns/op	    2664 B/op	      34 allocs/op
-	// Groups_with_all_notes_parallel-8                           	 1000000	      1043 ns/op	    1864 B/op	      31 allocs/op
-	// Group_with_one_parallel_note-8                             	 2712619	       443.3 ns/op	     728 B/op	      14 allocs/op
-	// Group_with_parallel_note_and_modifications-8               	 2244489	       535.2 ns/op	    1152 B/op	      14 allocs/op
-	// Groups_with_various_modifications-8                        	  925500	      1309 ns/op	    2792 B/op	      32 allocs/op
-	tests := slices.Concat(scanTestCases, flatTestCases)
-	for _, tc := range tests {
-		b.Run(tc.name, func(b *testing.B) {
-			for b.Loop() {
-				flat(scan(tc.given))
-			}
-		})
-	}
-}
-
-var cases = []struct {
-	name, given  string
-	split, plain []string
+var scanFlatCases = []struct {
+	name, raw  string
+	scan, flat []string
 }{
 	// --- no groups
 	{"empty input", ``,
@@ -540,4 +289,204 @@ var cases = []struct {
 	{"multi-line groups and comments", "[a b] # first\n# note\n[c d]:2 # second",
 		[]string{"[", "a", "b", "]", "[", "c", "d", "] : 2"}, []string{"a", "b", "c : 2", "d : 2"},
 	},
+}
+
+func TestScan2(t *testing.T) {
+	for _, tc := range scanFlatCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.UseFlags(t)
+			act := scan(tc.raw)
+			exp := shared.Map(tc.scan, strings.Fields)
+			testutils.AssertNested(t, exp, act)
+		})
+	}
+}
+
+func TestFlat2(t *testing.T) {
+	for _, tc := range scanFlatCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.UseFlags(t)
+			act := flat(scan(tc.raw))
+			exp := shared.Map(tc.flat, strings.Fields)
+			testutils.AssertNested(t, exp, act)
+		})
+	}
+}
+
+func BenchmarkScan2(b *testing.B) {
+	// empty_input-8         	               73.65 ns/op	     192 B/op	       1 allocs/op
+	// only_comment-8        	               76.35 ns/op	     192 B/op	       1 allocs/op
+	// single_token-8        	               74.94 ns/op	     208 B/op	       2 allocs/op
+	// values_on_one_line-8  	               129.0 ns/op	     240 B/op	       4 allocs/op
+	// operators_glue-8      	               218.5 ns/op	     360 B/op	       5 allocs/op
+	// all_operators-8       	               261.0 ns/op	     688 B/op	       4 allocs/op
+	// inline_comment-8      	               106.5 ns/op	     224 B/op	       3 allocs/op
+	// comment_lines_between-8        	       117.9 ns/op	     224 B/op	       3 allocs/op
+	// blank_lines-8                  	       128.1 ns/op	     224 B/op	       3 allocs/op
+	// tabs_and_spaces-8              	       237.4 ns/op	     272 B/op	       4 allocs/op
+	// link_positional_args-8         	       251.1 ns/op	     312 B/op	       3 allocs/op
+	// link_named_args-8              	       232.4 ns/op	     352 B/op	       3 allocs/op
+	// patch-8                        	       239.5 ns/op	     312 B/op	       3 allocs/op
+	// link_with_modification-8       	       254.4 ns/op	     640 B/op	       4 allocs/op
+	// two_links_in_a_row-8           	       215.0 ns/op	     376 B/op	       4 allocs/op
+	// empty_args-8                   	       142.3 ns/op	     272 B/op	       3 allocs/op
+	// simple_group-8                 	       173.7 ns/op	     272 B/op	       6 allocs/op
+	// group_with_spaces_inside-8     	       183.9 ns/op	     272 B/op	       6 allocs/op
+	// group_single_item-8            	       147.1 ns/op	     248 B/op	       5 allocs/op
+	// empty_group-8                  	       137.3 ns/op	     232 B/op	       4 allocs/op
+	// group_with_suffix-8            	       251.9 ns/op	     320 B/op	       7 allocs/op
+	// group_with_prefix-8            	       210.9 ns/op	     304 B/op	       6 allocs/op
+	// group_both_sides-8             	       243.0 ns/op	     344 B/op	       6 allocs/op
+	// item_with_operator-8           	       202.2 ns/op	     304 B/op	       6 allocs/op
+	// group_then_value-8             	       220.1 ns/op	     288 B/op	       7 allocs/op
+	// value_then_group-8             	       219.0 ns/op	     288 B/op	       7 allocs/op
+	// repeat_modifier-8              	       245.7 ns/op	     344 B/op	       6 allocs/op
+	// two_groups_joined-8            	       321.3 ns/op	     360 B/op	       9 allocs/op
+	// two_groups_with_tails-8        	       405.8 ns/op	     496 B/op	      10 allocs/op
+	// three_groups-8                 	       537.0 ns/op	     896 B/op	      14 allocs/op
+	// modification_on_both-8          	  	   419.3 ns/op	     528 B/op	      10 allocs/op
+	// adjacent_groups_no_operator-8   	  	   319.1 ns/op	     344 B/op	      10 allocs/op
+	// adjacent_groups_with_space-8    	  	   313.8 ns/op	     344 B/op	      10 allocs/op
+	// group_of_links-8                	  	   319.5 ns/op	     464 B/op	       7 allocs/op
+	// group_of_links_with_suffix-8    	  	   608.2 ns/op	     752 B/op	      10 allocs/op
+	// parallel_outside_groups-8       	  	   120.8 ns/op	     256 B/op	       3 allocs/op
+	// parallel_with_modifications-8   	  	   194.6 ns/op	     344 B/op	       4 allocs/op
+	// chord_group-8                   	  	   207.9 ns/op	     288 B/op	       7 allocs/op
+	// chord_group_with_suffix-8       	  	   242.8 ns/op	     328 B/op	       7 allocs/op
+	// chord_of_three-8                	  	   312.1 ns/op	     368 B/op	       9 allocs/op
+	// chord_times_group-8             	  	   331.8 ns/op	     384 B/op	      10 allocs/op
+	// note_then_group-8               	  	   210.4 ns/op	     304 B/op	       6 allocs/op
+	// group_then_note-8               	  	   205.9 ns/op	     304 B/op	       6 allocs/op
+	// groups_in_parallel-8            	  	   312.5 ns/op	     360 B/op	       9 allocs/op
+	// chords_in_both_groups-8         	  	   620.2 ns/op	     784 B/op	      12 allocs/op
+	// chord_in_second_group-8         	  	   407.8 ns/op	     384 B/op	      10 allocs/op
+	// chord_in_third_group-8          	  	   551.9 ns/op	     912 B/op	      15 allocs/op
+	// multi-line_mixed-8              	  	   594.9 ns/op	     912 B/op	      15 allocs/op
+	// multi-line_groups_and_comments-8   	   430.8 ns/op	     448 B/op	      11 allocs/op
+	for _, tc := range scanFlatCases {
+		b.Run(tc.name, func(b *testing.B) {
+			for b.Loop() {
+				scan(tc.raw)
+			}
+		})
+	}
+}
+
+func BenchmarkFlat2(b *testing.B) {
+	// empty_input-8         			        	71.35 ns/op	     192 B/op	       1 allocs/op
+	// only_comment-8        			        	68.80 ns/op	     192 B/op	       1 allocs/op
+	// single_token-8        			        	54.12 ns/op	     192 B/op	       1 allocs/op
+	// values_on_one_line-8  			        	56.28 ns/op	     192 B/op	       1 allocs/op
+	// operators_glue-8      			        	56.36 ns/op	     192 B/op	       1 allocs/op
+	// all_operators-8       			        	48.66 ns/op	     192 B/op	       1 allocs/op
+	// inline_comment-8      			        	93.14 ns/op	     192 B/op	       1 allocs/op
+	// comment_lines_between-8         		        66.97 ns/op	     192 B/op	       1 allocs/op
+	// blank_lines-8                   		        66.89 ns/op	     192 B/op	       1 allocs/op
+	// tabs_and_spaces-8               		        56.78 ns/op	     192 B/op	       1 allocs/op
+	// link_positional_args-8          		        53.40 ns/op	     192 B/op	       1 allocs/op
+	// link_named_args-8               		        53.47 ns/op	     192 B/op	       1 allocs/op
+	// patch-8                         		        52.87 ns/op	     192 B/op	       1 allocs/op
+	// link_with_modification-8        		        53.41 ns/op	     192 B/op	       1 allocs/op
+	// two_links_in_a_row-8            		        57.81 ns/op	     192 B/op	       1 allocs/op
+	// empty_args-8                    		        60.99 ns/op	     192 B/op	       1 allocs/op
+	// simple_group-8                  		        146.8 ns/op	     224 B/op	       3 allocs/op
+	// group_with_spaces_inside-8      		        128.9 ns/op	     224 B/op	       3 allocs/op
+	// group_single_item-8             		        88.73 ns/op	     208 B/op	       2 allocs/op
+	// empty_group-8                   		        60.93 ns/op	     192 B/op	       1 allocs/op
+	// group_with_suffix-8             		        251.7 ns/op	     384 B/op	       7 allocs/op
+	// group_with_prefix-8             		        138.7 ns/op	     288 B/op	       3 allocs/op
+	// group_both_sides-8              		        198.0 ns/op	     480 B/op	       5 allocs/op
+	// item_with_operator-8            		        133.6 ns/op	     256 B/op	       3 allocs/op
+	// group_then_value-8              		        135.3 ns/op	     224 B/op	       3 allocs/op
+	// value_then_group-8              		        133.7 ns/op	     224 B/op	       3 allocs/op
+	// repeat_modifier-8               		        149.4 ns/op	     352 B/op	       3 allocs/op
+	// two_groups_joined-8             		        307.5 ns/op	     416 B/op	       7 allocs/op
+	// two_groups_with_tails-8         		        486.8 ns/op	    1184 B/op	      11 allocs/op
+	// three_groups-8                  		        747.3 ns/op	    1248 B/op	      16 allocs/op
+	// modification_on_both-8          		        547.4 ns/op	    1632 B/op	      11 allocs/op
+	// adjacent_groups_no_operator-8   		        217.1 ns/op	     256 B/op	       5 allocs/op
+	// adjacent_groups_with_space-8    		        216.9 ns/op	     256 B/op	       5 allocs/op
+	// group_of_links-8                		        149.4 ns/op	     336 B/op	       3 allocs/op
+	// group_of_links_with_suffix-8    		        677.0 ns/op	    2528 B/op	      11 allocs/op
+	// parallel_outside_groups-8       		        50.43 ns/op	     192 B/op	       1 allocs/op
+	// parallel_with_modifications-8   		        56.74 ns/op	     192 B/op	       1 allocs/op
+	// chord_group-8                   		        133.8 ns/op	     224 B/op	       3 allocs/op
+	// chord_group_with_suffix-8       		        180.8 ns/op	     320 B/op	       5 allocs/op
+	// chord_of_three-8                		        303.8 ns/op	     576 B/op	       8 allocs/op
+	// chord_times_group-8             		        352.0 ns/op	     608 B/op	       8 allocs/op
+	// note_then_group-8               		        143.2 ns/op	     288 B/op	       3 allocs/op
+	// group_then_note-8               		        280.9 ns/op	     320 B/op	       5 allocs/op
+	// groups_in_parallel-8            		        315.2 ns/op	     416 B/op	       7 allocs/op
+	// chords_in_both_groups-8         		        365.1 ns/op	     608 B/op	       8 allocs/op
+	// chord_in_second_group-8         		        356.4 ns/op	     608 B/op	       8 allocs/op
+	// chord_in_third_group-8          		        878.6 ns/op	    2016 B/op	      18 allocs/op
+	// multi-line_mixed-8              		        259.4 ns/op	     384 B/op	       5 allocs/op
+	// multi-line_groups_and_comments-8 	        271.5 ns/op	     352 B/op	       7 allocs/op
+	for _, tc := range scanFlatCases {
+		frames := scan(tc.raw)
+		b.Run(tc.name, func(b *testing.B) {
+			for b.Loop() {
+				flat(frames)
+			}
+		})
+	}
+}
+
+func BenchmarkScanFlat2(b *testing.B) {
+	// empty_input-8         	               144.4 ns/op	     384 B/op	       2 allocs/op
+	// only_comment-8        	               133.1 ns/op	     384 B/op	       2 allocs/op
+	// single_token-8        	               114.7 ns/op	     400 B/op	       3 allocs/op
+	// values_on_one_line-8  	               181.9 ns/op	     432 B/op	       5 allocs/op
+	// operators_glue-8      	               272.6 ns/op	     552 B/op	       6 allocs/op
+	// all_operators-8       	               311.2 ns/op	     880 B/op	       5 allocs/op
+	// inline_comment-8      	               155.4 ns/op	     416 B/op	       4 allocs/op
+	// comment_lines_between-8        	       173.3 ns/op	     416 B/op	       4 allocs/op
+	// blank_lines-8                  	       190.4 ns/op	     416 B/op	       4 allocs/op
+	// tabs_and_spaces-8              	       217.7 ns/op	     464 B/op	       5 allocs/op
+	// link_positional_args-8         	       206.1 ns/op	     504 B/op	       4 allocs/op
+	// link_named_args-8              	       243.2 ns/op	     544 B/op	       4 allocs/op
+	// patch-8                        	       205.1 ns/op	     504 B/op	       4 allocs/op
+	// link_with_modification-8       	       551.4 ns/op	     832 B/op	       5 allocs/op
+	// two_links_in_a_row-8           	       314.3 ns/op	     568 B/op	       5 allocs/op
+	// empty_args-8                   	       239.6 ns/op	     464 B/op	       4 allocs/op
+	// simple_group-8                 	       303.5 ns/op	     496 B/op	       9 allocs/op
+	// group_with_spaces_inside-8     	       315.6 ns/op	     496 B/op	       9 allocs/op
+	// group_single_item-8            	       237.8 ns/op	     456 B/op	       7 allocs/op
+	// empty_group-8                  	       172.8 ns/op	     424 B/op	       5 allocs/op
+	// group_with_suffix-8            	       492.8 ns/op	     704 B/op	      14 allocs/op
+	// group_with_prefix-8            	        1384 ns/op	     592 B/op	       9 allocs/op
+	// group_both_sides-8             	       478.4 ns/op	     824 B/op	      11 allocs/op
+	// item_with_operator-8           	       368.3 ns/op	     560 B/op	       9 allocs/op
+	// group_then_value-8             	       370.7 ns/op	     512 B/op	      10 allocs/op
+	// value_then_group-8             	       351.7 ns/op	     512 B/op	      10 allocs/op
+	// repeat_modifier-8              	       384.3 ns/op	     696 B/op	       9 allocs/op
+	// two_groups_joined-8            	       619.9 ns/op	     776 B/op	      16 allocs/op
+	// two_groups_with_tails-8        	       887.8 ns/op	    1680 B/op	      21 allocs/op
+	// three_groups-8                 	        1298 ns/op	    2144 B/op	      30 allocs/op
+	// modification_on_both-8         	       957.2 ns/op	    2160 B/op	      21 allocs/op
+	// adjacent_groups_no_operator-8  	       528.5 ns/op	     600 B/op	      15 allocs/op
+	// adjacent_groups_with_space-8   	       535.1 ns/op	     600 B/op	      15 allocs/op
+	// group_of_links-8               	       456.8 ns/op	     800 B/op	      10 allocs/op
+	// group_of_links_with_suffix-8   	        1297 ns/op	    3280 B/op	      21 allocs/op
+	// parallel_outside_groups-8      	       163.2 ns/op	     448 B/op	       4 allocs/op
+	// parallel_with_modifications-8  	       242.7 ns/op	     536 B/op	       5 allocs/op
+	// chord_group-8                  	       344.7 ns/op	     512 B/op	      10 allocs/op
+	// chord_group_with_suffix-8      	       424.3 ns/op	     648 B/op	      12 allocs/op
+	// chord_of_three-8               	       625.5 ns/op	     944 B/op	      17 allocs/op
+	// chord_times_group-8            	       695.6 ns/op	     992 B/op	      18 allocs/op
+	// note_then_group-8              	       351.4 ns/op	     592 B/op	       9 allocs/op
+	// group_then_note-8              	       385.1 ns/op	     624 B/op	      11 allocs/op
+	// groups_in_parallel-8           	       619.0 ns/op	     776 B/op	      16 allocs/op
+	// chords_in_both_groups-8        	       805.3 ns/op	    1392 B/op	      20 allocs/op
+	// chord_in_second_group-8        	       699.5 ns/op	     992 B/op	      18 allocs/op
+	// chord_in_third_group-8         	        1471 ns/op	    2928 B/op	      33 allocs/op
+	// multi-line_mixed-8             	       834.0 ns/op	    1296 B/op	      20 allocs/op
+	// multi-line_groups_and_comments-8        679.3 ns/op	     800 B/op	      18 allocs/op
+	for _, tc := range scanFlatCases {
+		b.Run(tc.name, func(b *testing.B) {
+			for b.Loop() {
+				flat(scan(tc.raw))
+			}
+		})
+	}
 }
