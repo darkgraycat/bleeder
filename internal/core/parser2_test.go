@@ -47,8 +47,8 @@ func TestExperiments(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run("experiments", func(t *testing.T) {
-			out1 := split(tc)
-			out2 := plain(out1)
+			out1 := scan(tc)
+			out2 := flat(out1)
 			fmt.Printf("INPUT: %v\n", tc)
 			fmt.Printf("SPLIT: %v\n", out1)
 			fmt.Printf("PLAIN: %v\n", out2)
@@ -155,7 +155,7 @@ func TestSplit(t *testing.T) {
 	for _, tc := range splitTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
-			act := split(tc.given)
+			act := scan(tc.given)
 			exp := shared.Map(tc.expected, strings.Fields)
 			testutils.AssertNested(t, exp, act)
 		})
@@ -166,7 +166,7 @@ func BenchmarkSplit(b *testing.B) {
 	for _, tc := range splitTestCases {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				split(tc.given)
+				scan(tc.given)
 			}
 		})
 	}
@@ -178,16 +178,22 @@ var plainTestCases = []struct {
 	expected []string
 }{
 	{ // 53.01 ns/op	     192 B/op	       1 allocs/op
+		// 58.54 ns/op	     192 B/op	       1 allocs/op
+		// 58.94 ns/op	     192 B/op	       1 allocs/op (pre-alloc)
 		name:     "No groups is used",
 		given:    "a2 b2 c3+5",
 		expected: []string{"a2", "b2", "c3 + 5"},
 	},
 	{ // 339.1 ns/op	     576 B/op	      11 allocs/op
+		// 334.3 ns/op	     552 B/op	      10 allocs/op
+		// 250.3 ns/op	     384 B/op	       7 allocs/op
 		name:     "Group with modification",
 		given:    "[a2 b2 c2]:8",
 		expected: []string{"a2 : 8", "b2 : 8", "c2 : 8"},
 	},
 	{ // 948.5 ns/op	    1680 B/op	      25 allocs/op
+		// 892.8 ns/op	    1560 B/op	      21 allocs/op
+		// 751.7 ns/op	    1248 B/op	      16 allocs/op
 		name:  "Intersection of multiple small groups",
 		given: "[a2 b2] + [0 2] * [x y]",
 		expected: []string{
@@ -198,6 +204,8 @@ var plainTestCases = []struct {
 		},
 	},
 	{ // 722.1 ns/op	    1896 B/op	      17 allocs/op
+		// 644.5 ns/op	    1848 B/op	      15 allocs/op
+		// 541.4 ns/op	    1632 B/op	      11 allocs/op
 		name:  "Groups with modifications",
 		given: "12+[a2 b2]:8 + [4 6]/c",
 		expected: []string{
@@ -206,6 +214,8 @@ var plainTestCases = []struct {
 		},
 	},
 	{ // 621.5 ns/op	    1064 B/op	      17 allocs/op
+		// 595.4 ns/op	    1016 B/op	      15 allocs/op
+		// 431.8 ns/op	     800 B/op	      11 allocs/op
 		name:  "Groups with parallel intersected notes",
 		given: "[a2 b2] & [c2 d2]:2",
 		expected: []string{
@@ -214,6 +224,8 @@ var plainTestCases = []struct {
 		},
 	},
 	{ // 867.2 ns/op	    1880 B/op	      22 allocs/op
+		// 762.4 ns/op	    1784 B/op	      17 allocs/op
+		// 713.0 ns/op	    1472 B/op	      12 allocs/op
 		name:  "Groups to play multiple chords",
 		given: "[a2 & b2] + [0 1 2]",
 		expected: []string{
@@ -223,6 +235,8 @@ var plainTestCases = []struct {
 		},
 	},
 	{ // 588.2 ns/op	    1016 B/op	      18 allocs/op
+		// 493.8 ns/op	     920 B/op	      13 allocs/op
+		// 471.4 ns/op	     608 B/op	       8 allocs/op
 		name:  "Groups with all notes parallel",
 		given: "[a2 & b2] & [c2 & d2]",
 		expected: []string{
@@ -231,11 +245,15 @@ var plainTestCases = []struct {
 		},
 	},
 	{ // 231.3 ns/op	     416 B/op	       8 allocs/op
+		// 223.2 ns/op	     392 B/op	       7 allocs/op
+		// 199.3 ns/op	     320 B/op	       5 allocs/op
 		name:     "Group with one parallel note",
 		given:    "[a2 b2] & c2",
 		expected: []string{"a2 & c2", "b2 & c2"},
 	},
 	{ // 279.1 ns/op	     768 B/op	       8 allocs/op
+		// 275.7 ns/op	     744 B/op	       7 allocs/op
+		// 327.1 ns/op	     672 B/op	       5 allocs/op
 		name:  "Group with parallel note and modifications",
 		given: "a2:4 & [b2 c2]|2",
 		expected: []string{
@@ -244,6 +262,8 @@ var plainTestCases = []struct {
 		},
 	},
 	{ // 799.4 ns/op	    2216 B/op	      21 allocs/op
+		// 726.8 ns/op	    2136 B/op	      17 allocs/op
+		// 596.1 ns/op	    1824 B/op	      12 allocs/op
 		name:  "Groups with various modifications",
 		given: "7+[a2 & b2]|4 + [0 1]*7:2",
 		expected: []string{
@@ -257,7 +277,7 @@ func TestPlain(t *testing.T) {
 	for _, tc := range plainTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
-			act := plain(split(tc.given))
+			act := flat(scan(tc.given))
 			exp := shared.Map(tc.expected, strings.Fields)
 			testutils.AssertNested(t, exp, act)
 		})
@@ -266,10 +286,10 @@ func TestPlain(t *testing.T) {
 
 func BenchmarkPlain(b *testing.B) {
 	for _, tc := range plainTestCases {
-		frames := split(tc.given)
+		frames := scan(tc.given)
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				plain(frames)
+				flat(frames)
 			}
 		})
 	}
@@ -301,515 +321,223 @@ func BenchmarkSplitPlain(b *testing.B) {
 	for _, tc := range tests {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
-				plain(split(tc.given))
+				flat(scan(tc.given))
 			}
 		})
 	}
 }
 
-// old stuff below
+var cases = []struct {
+	name, given  string
+	split, plain []string
+}{
+	// --- no groups
+	{"empty input", ``,
+		nil,
+		nil,
+	},
+	{"only comment", `# nothing here`,
+		nil,
+		nil,
+	},
+	{"single token", `a2`,
+		[]string{"a2"},
+		[]string{"a2"},
+	},
+	{"values on one line", `a2 b2 c3`,
+		[]string{"a2", "b2", "c3"},
+		[]string{"a2", "b2", "c3"},
+	},
+	{"operators glue", `a2+1 b2:4 c3|2`,
+		[]string{"a2 + 1", "b2 : 4", "c3 | 2"},
+		[]string{"a2 + 1", "b2 : 4", "c3 | 2"},
+	},
+	{"all operators", `a+1-2*3/4%5^6`,
+		[]string{"a + 1 - 2 * 3 / 4 % 5 ^ 6"},
+		[]string{"a + 1 - 2 * 3 / 4 % 5 ^ 6"},
+	},
+	{"inline comment", `a2 b2 # c3 d3`,
+		[]string{"a2", "b2"},
+		[]string{"a2", "b2"},
+	},
+	{"comment lines between", "a2\n# skip\nb2",
+		[]string{"a2", "b2"},
+		[]string{"a2", "b2"},
+	},
+	{"blank lines", "a2\n\n\nb2",
+		[]string{"a2", "b2"},
+		[]string{"a2", "b2"},
+	},
+	{"tabs and spaces", "a2 \t b2   +  1",
+		[]string{"a2", "b2 + 1"},
+		[]string{"a2", "b2 + 1"},
+	},
 
-func TestScan(t *testing.T) {
-	tests := []struct {
-		name   string
-		given  string
-		frames []string
-		groups []string
-	}{
-		{
-			name: "Simple sequence",
-			given: `
-			2+a*3 b/8 c+b
-			a b c 2 + D * 2
-			`,
-			frames: []string{
-				"2 + a * 3", "b / 8", "c + b",
-				"a", "b", "c", "2 + D * 2",
-			},
-		},
-		{
-			name: "Simple sequence with comments",
-			given: `
-			# eeee aaaa ff ff
-			e2:4 a2:4 f2:2|2
-			# run bass intro
-			$bass(0.77 12)
-			@intro{vol 0.5 tone g3}
-			`,
-			frames: []string{
-				"e2 : 4", "a2 : 4", "f2 : 2 | 2",
-				"$ bass ( 0.77 12 )",
-				"@ intro { vol 0.5 tone g3 }",
-			},
-		},
-		{
-			name: "Value + operator + value",
-			given: `
-			[a b] + 2
-			[x y] * 3 + 5
-			c + [0 1 2]
-			`,
-			frames: []string{
-				"§ + 2",
-				"§ * 3 + 5",
-				"c + §",
-			},
-			groups: []string{
-				"a b",
-				"x y",
-				"0 1 2",
-			},
-		},
-		{
-			name: "Value value",
-			given: `
-			[a & b] 2
-			[a b] [c:2 d|3]
-			c [x y z] d
-			`,
-			frames: []string{
-				"§", "2",
-				"§", "§",
-				"c", "§", "d",
-			},
-			groups: []string{
-				"a & b",
-				"a b", "c : 2 d | 3",
-				"x y z",
-			},
-		},
-		{
-			name: "Mixed",
-			given: `
-			[a b] + [c d]
-			e2 2 + [a b c] + [0 1] d3
-			[x y] * 2 a3
-			`,
-			frames: []string{
-				"§ + §",
-				"e2", "2 + § + §", "d3",
-				"§ * 2", "a3",
-			},
-			groups: []string{
-				"a b", "c d",
-				"a b c", "0 1",
-				"x y",
-			},
-		},
-		{
-			name: "With sequences",
-			given: `
-			@chord(e2 7) [a b]
-			[a b] @chord(e2)
-			$bass() 20 [0 4 7]
-			`,
-			frames: []string{
-				"@ chord ( e2 7 )", "§",
-				"§", "@ chord ( e2 )",
-				"$ bass ( )", "20", "§",
-			},
-			groups: []string{
-				"a b",
-				"a b",
-				"0 4 7",
-			},
-		},
-		{
-			name: "With operators",
-			given: `
-			T + [a:2 b:3]:2
-			[x y] : [2/d 3/d]
-			`,
-			frames: []string{
-				"T + § : 2",
-				"§ : §",
-			},
-			groups: []string{
-				"a : 2 b : 3",
-				"x y", "2 / d 3 / d",
-			},
-		},
-		{
-			name: "Edge cases",
-			given: `
-			[a b]
-			[a b] + [c d] % [e f]
-			10 + [1 2] * 3 [4 5]
-			`,
-			frames: []string{
-				"§",
-				"§ + § % §",
-				"10 + § * 3", "§",
-			},
-			groups: []string{
-				"a b",
-				"a b", "c d", "e f",
-				"1 2", "4 5",
-			},
-		},
-	}
+	// --- links and patches (always one frame)
+	{"link positional args", `@chord(a2 3)`,
+		[]string{"@ chord ( a2 3 )"},
+		[]string{"@ chord ( a2 3 )"},
+	},
+	{"link named args", `@chord{note g3 dur 7}`,
+		[]string{"@ chord { note g3 dur 7 }"},
+		[]string{"@ chord { note g3 dur 7 }"},
+	},
+	{"patch", `$bass(0.77 12)`,
+		[]string{"$ bass ( 0.77 12 )"},
+		[]string{"$ bass ( 0.77 12 )"},
+	},
+	{"link with modification", `@song(e2 2):8+T`,
+		[]string{"@ song ( e2 2 ) : 8 + T"},
+		[]string{"@ song ( e2 2 ) : 8 + T"},
+	},
+	{"two links in a row", `@a(1) @b(2)`,
+		[]string{"@ a ( 1 )", "@ b ( 2 )"},
+		[]string{"@ a ( 1 )", "@ b ( 2 )"},
+	},
+	{"empty args", `@mysong()`,
+		[]string{"@ mysong ( )"},
+		[]string{"@ mysong ( )"},
+	},
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testutils.UseFlags(t)
+	// --- single group
+	{"simple group", `[a b]`,
+		[]string{"[", "a", "b", "]"},
+		[]string{"a", "b"},
+	},
+	{"group with spaces inside", `[ a   b ]`,
+		[]string{"[", "a", "b", "]"},
+		[]string{"a", "b"},
+	},
+	{"group single item", `[a]`,
+		[]string{"[", "a", "]"},
+		[]string{"a"},
+	},
+	{"empty group", `[]`,
+		[]string{"[", "]"},
+		nil,
+	},
+	{"group with suffix", `[a b c]:3`,
+		[]string{"[", "a", "b", "c", "] : 3"},
+		[]string{"a : 3", "b : 3", "c : 3"},
+	},
+	{"group with prefix", `2 + [a b]`,
+		[]string{"2 + [", "a", "b", "]"},
+		[]string{"2 + a", "2 + b"},
+	},
+	{"group both sides", `2 + [a b] * 3`,
+		[]string{"2 + [", "a", "b", "] * 3"},
+		[]string{"2 + a * 3", "2 + b * 3"},
+	},
+	{"item with operator", `[a b+3]`,
+		[]string{"[", "a", "b + 3", "]"},
+		[]string{"a", "b + 3"},
+	},
+	{"group then value", `[a b] c`,
+		[]string{"[", "a", "b", "]", "c"},
+		[]string{"a", "b", "c"},
+	},
+	{"value then group", `c [a b]`,
+		[]string{"c", "[", "a", "b", "]"},
+		[]string{"c", "a", "b"},
+	},
+	{"repeat modifier", `a|2 + [x y]`,
+		[]string{"a | 2 + [", "x", "y", "]"},
+		[]string{"a | 2 + x", "a | 2 + y"},
+	},
 
-			frames, groups := scanNew(tc.given)
-			expFrames := shared.Map(tc.frames, strings.Fields)
-			expGroups := shared.Map(tc.groups, strings.Fields)
+	// --- several groups (leftmost varies fastest)
+	{"two groups joined", `[a b] + [c d]`,
+		[]string{"[", "a", "b", "] + [", "c", "d", "]"},
+		[]string{"a + c", "b + c", "a + d", "b + d"},
+	},
+	{"two groups with tails", `[a b] + 2 * [c d] : 8`,
+		[]string{"[", "a", "b", "] + 2 * [", "c", "d", "] : 8"},
+		[]string{"a + 2 * c : 8", "b + 2 * c : 8", "a + 2 * d : 8", "b + 2 * d : 8"},
+	},
+	{"three groups", `[a b] + [0 1] * [x y]`,
+		[]string{"[", "a", "b", "] + [", "0", "1", "] * [", "x", "y", "]"},
+		[]string{"a + 0 * x", "b + 0 * x", "a + 1 * x", "b + 1 * x", "a + 0 * y", "b + 0 * y", "a + 1 * y", "b + 1 * y"},
+	},
+	{"modification on both", `12+[a2 b2]:8 + [4 6]/c`,
+		[]string{"12 + [", "a2", "b2", "] : 8 + [", "4", "6", "] / c"},
+		[]string{"12 + a2 : 8 + 4 / c", "12 + b2 : 8 + 4 / c", "12 + a2 : 8 + 6 / c", "12 + b2 : 8 + 6 / c"},
+	},
+	{"adjacent groups no operator", `[a b][c d]`,
+		[]string{"[", "a", "b", "]", "[", "c", "d", "]"},
+		[]string{"a", "b", "c", "d"},
+	},
+	{"adjacent groups with space", `[a b] [c d]`,
+		[]string{"[", "a", "b", "]", "[", "c", "d", "]"},
+		[]string{"a", "b", "c", "d"},
+	},
 
-			testutils.AssertInts(t, len(expFrames), len(frames))
-			for i, act := range frames {
-				exp := expFrames[i]
-				testutils.AssertSlices(t, exp, act)
-			}
+	// --- links inside groups
+	{"group of links", `[@chord(g3) @bass()]`,
+		[]string{"[", "@ chord ( g3 )", "@ bass ( )", "]"},
+		[]string{"@ chord ( g3 )", "@ bass ( )"},
+	},
+	{"group of links with suffix", `[@chord{note g3 dur 7} @mysong(g2 a4)] : 8 + [a b] * 3`,
+		[]string{"[", "@ chord { note g3 dur 7 }", "@ mysong ( g2 a4 )", "] : 8 + [", "a", "b", "] * 3"},
+		[]string{"@ chord { note g3 dur 7 } : 8 + a * 3", "@ mysong ( g2 a4 ) : 8 + a * 3",
+			"@ chord { note g3 dur 7 } : 8 + b * 3", "@ mysong ( g2 a4 ) : 8 + b * 3"},
+	},
 
-			testutils.AssertInts(t, len(expGroups), len(groups))
-			for i, act := range groups {
-				exp := expGroups[i]
-				testutils.AssertSlices(t, exp, act)
-			}
-		})
-	}
-}
+	// --- parallel (&)
+	{"parallel outside groups", `a2 & b2`,
+		[]string{"a2 & b2"},
+		[]string{"a2 & b2"},
+	},
+	{"parallel with modifications", `a2:4 & b2|2 c3`,
+		[]string{"a2 : 4 & b2 | 2", "c3"},
+		[]string{"a2 : 4 & b2 | 2", "c3"},
+	},
+	{"chord group", `[a & b]`,
+		[]string{"[", "a", "&", "b", "]"},
+		[]string{"a", "&", "b"},
+	},
+	{"chord group with suffix", `[a & b]:2`,
+		[]string{"[", "a", "&", "b", "] : 2"},
+		[]string{"a : 2", "&", "b : 2"},
+	},
+	{"chord of three", `[a & b & c] + 1`,
+		[]string{"[", "a", "&", "b", "&", "c", "] + 1"},
+		[]string{"a + 1", "&", "b + 1", "&", "c + 1"},
+	},
+	{"chord times group", `[a & b] + [2 4]`,
+		[]string{"[", "a", "&", "b", "] + [", "2", "4", "]"},
+		[]string{"a + 2", "&", "b + 2", "a + 4", "&", "b + 4"}},
+	{"note then group", `a & [b c]`,
+		[]string{"a & [", "b", "c", "]"},
+		[]string{"a & b", "a & c"},
+	},
+	{"group then note", `[b c] & a`,
+		[]string{"[", "b", "c", "] & a"},
+		[]string{"b & a", "c & a"},
+	},
+	{"groups in parallel", `[a b] & [c d]`,
+		[]string{"[", "a", "b", "] & [", "c", "d", "]"},
+		[]string{"a & c", "b & c", "a & d", "b & d"},
+	},
+	{"chords in both groups", `[a & b] & [c & d]`,
+		[]string{"[", "a", "&", "b", "] & [", "c", "&", "d", "]"},
+		[]string{"a & c", "&", "b & c", "&", "a & d", "&", "b & d"},
+	},
+	// pin current behaviour: the lone & lands BETWEEN the blocks, not between pair members
+	{"chord in second group", `[a b] & [c & d]`,
+		[]string{"[", "a", "b", "] & [", "c", "&", "d", "]"},
+		[]string{"a & c", "b & c", "&", "a & d", "b & d"},
+	},
+	{"chord in third group", `[a b] + [c d] * [e & f]`,
+		[]string{"[", "a", "b", "] + [", "c", "d", "] * [", "e", "&", "f", "]"},
+		[]string{"a + c * e", "b + c * e", "a + d * e", "b + d * e", "&", "a + c * f", "b + c * f", "a + d * f", "b + d * f"},
+	},
 
-func BenchmarkScan(b *testing.B) {
-	tests := []struct {
-		name  string
-		given string
-	}{
-		{
-			// 515.1 ns/op	     720 B/op	      11 allocs/op
-			// 413.5 ns/op	     592 B/op	       9 allocs/op
-			name: "Simple sequence",
-			given: `
-			2+a*3 b/8 c+b
-			a b c 2 + D * 2
-			`,
-		},
-		{
-			// 751.5 ns/op	     976 B/op	       9 allocs/op
-			// 489.0 ns/op	     688 B/op	       7 allocs/op
-			name: "Simple sequence with comments",
-			given: `
-			# eeee aaaa ff ff
-			e2:4 a2:4 f2:2|2
-			# run bass intro
-			$bass(0.77 12)
-			@intro{vol 0.5 tone g3}
-			`,
-		},
-		{
-			// 535.3 ns/op	     736 B/op	      10 allocs/op
-			// 412.6 ns/op	     576 B/op	       8 allocs/op
-			name: "Value + operator + value",
-			given: `
-			[a b] + 2
-			[x y] * 3 + 5
-			c + [0 1 2]
-			`,
-		},
-		{
-			// 685.2 ns/op	     912 B/op	      16 allocs/op
-			// 559.2 ns/op	     752 B/op	      14 allocs/op
-			name: "Value value",
-			given: `
-			[a & b] 2
-			[a b] [c:2 d|3]
-			c [x y z] d
-			`,
-		},
-		{
-			// 817.3 ns/op	    1072 B/op	      16 allocs/op
-			// 654.1 ns/op	     880 B/op	      14 allocs/op
-			name: "Mixed",
-			given: `
-			[a b] + [c d]
-			e2 2 + [a b c] + [0 1] d3
-			[x y] * 2 a3
-			`,
-		},
-		{
-			// 775.2 ns/op	     928 B/op	      14 allocs/op
-			// 587.9 ns/op	     704 B/op	      12 allocs/op
-			name: "With functions",
-			given: `
-			@chord(e2 7) [a b]
-			[a b] @chord(e2)
-			$bass() 20 [0 4 7]
-			`,
-		},
-		{
-			// 781.8 ns/op	    1056 B/op	      15 allocs/op
-			// 625.7 ns/op	     864 B/op	      13 allocs/op
-			name: "Edge cases",
-			given: `
-			[a b]
-			[a b] + [c d] % [e f]
-			10 + [1 2] * 3 [4 5]
-			`,
-		},
-	}
-
-	for _, tc := range tests {
-		b.Run(tc.name, func(b *testing.B) {
-			for b.Loop() {
-				scanNew(tc.given)
-			}
-		})
-	}
-}
-
-func TestFlat(t *testing.T) {
-	tests := []struct {
-		name     string
-		frames   []string
-		groups   []string
-		expected []string
-	}{
-		{
-			name: "Dev",
-			frames: []string{
-				"2 + § + §",
-				"§ + § * .5",
-				"e2 : §",
-				"§ : 3",
-			},
-			groups: []string{
-				"e3 a3", "0 1 2",
-				"g2 & f2", "3 4 5",
-				"3 4 3",
-				"c2 d2",
-			},
-			expected: []string{
-				"2 + e3 + 0", "2 + a3 + 0",
-				"2 + e3 + 1", "2 + a3 + 1",
-				"2 + e3 + 2", "2 + a3 + 2",
-
-				"g2 + 3 * .5", "&", "f2 + 3 * .5",
-				"g2 + 4 * .5", "&", "f2 + 4 * .5",
-				"g2 + 5 * .5", "&", "f2 + 5 * .5",
-
-				"e2 : 3", "e2 : 4", "e2 : 3",
-				"c2 : 3", "d2 : 3",
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testutils.UseFlags(t)
-
-			frames := shared.Map(tc.frames, strings.Fields)
-			groups := shared.Map(tc.groups, strings.Fields)
-			expected := shared.Map(tc.expected, strings.Fields)
-
-			actual := flat(frames, groups)
-
-			testutils.AssertNested(t, expected, actual)
-		})
-	}
-}
-
-func BenchmarkFlat(b *testing.B) {
-	tests := []struct {
-		name   string
-		frames []string
-		groups []string
-	}{
-		{
-			// 620.1 ns/op	    1456 B/op	      16 allocs/op
-			name: "For comparison with old expand",
-			frames: []string{
-				"2 + § + §",
-			},
-			groups: []string{
-				"e2 & b2", "5 8 0 3",
-			},
-		},
-		{
-			// 1165 ns/op	    2976 B/op	      26 allocs/op
-			name: "Dev",
-			frames: []string{
-				"2 + § + §",
-				"§ + § * .5",
-				"e2 : §",
-				"§ : 3",
-			},
-			groups: []string{
-				"e3 a3", "0 1 2",
-				"g2 § f2", "3 4 5",
-				"3 4 3",
-				"c2 d2",
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		frames := shared.Map(tc.frames, strings.Fields)
-		groups := shared.Map(tc.groups, strings.Fields)
-
-		b.Run(tc.name, func(b *testing.B) {
-			for b.Loop() {
-				flat(frames, groups)
-			}
-		})
-	}
-}
-
-func TestScanFlat(t *testing.T) {
-	tests := []struct {
-		name     string
-		given    string
-		expected []string
-	}{
-		{
-			name: "No groups is used",
-			given: `
-			e2:4 b3:2|2
-			f1|3 & c2|2 d2
-			`,
-			expected: []string{
-				"e2 : 4", "b3 : 2 | 2",
-				// "f1 | 3", "&", "c2 | 2", "d2",
-				// a split+plain:
-				"f1 | 3 & c2 | 2", "d2",
-			},
-		},
-		{
-			name: "Riff with simple chord",
-			given: `
-			[e2 & b3] + [0 4 5]
-			`,
-			expected: []string{
-				// "e2 + 0", "&", "b3 + 0",
-				// "e2 + 4", "&", "b3 + 4",
-				// "e2 + 5", "&", "b3 + 5",
-				// a split+plain:
-				"e2 & b3 + 0",
-				"e2 & b3 + 4",
-				"e2 & b3 + 5",
-			},
-		},
-		{
-			name: "All features",
-			given: `
-			e2|3 b3:2|2 & d2 # inline
-			@song1(e2 2):8+T # sequence
-			[a&b] + [2 4] # simple chord
-			[e2 d2 c3]:3 # mod duration
-			[a b] & [c d] # two groups
-			# [e2+T a2:d] * 2 # groups with operators
-			# [a b] + [0 1] * [I J] # triple group
-			# [@chord(g3)] +12 # with sequences
-			`,
-			expected: []string{
-				// "e2 | 3", "b3 : 2 | 2", "&", "d2",
-				"e2 | 3", "b3 : 2 | 2 & d2", // < split+plain
-				"@ song1 ( e2 2 ) : 8 + T",
-				// "a + 2", "&", "b + 2", "a + 4", "&", "b + 4",
-				"a & b + 2", "a & b + 4", // < split+plain
-				"e2 : 3", "d2 : 3", "c3 : 3",
-				// "a", "b", "&", "c", "d",
-				"a & c", "b & c", "a & d", "b & d", // < split+plain
-				// "e2 * 2 + T", "a2 * 2 : d",
-				// "a + 0 * I", "b + 0 * I", "a + 1 * I", "b + 1 * I",
-				// "a + 0 * J", "b + 0 * J", "a + 1 * J", "b + 1 * J",
-				// "@ chord ( g3 ) + 12",
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testutils.UseFlags(t)
-			expected := shared.Map(tc.expected, strings.Fields)
-
-			out1 := split(tc.given)
-			out2 := plain(out1)
-			for i, act := range out2 {
-				if i >= len(expected) {
-					break
-				}
-				exp := expected[i]
-				testutils.AssertSlices(t, exp, act)
-			}
-			testutils.AssertInts(t, len(expected), len(out2))
-
-			// frames, groups := scan(tc.given)
-			// expressions := flat(frames, groups)
-
-			// for i, act := range expressions {
-			// 	if i >= len(expected) {
-			// 		break
-			// 	}
-			// 	exp := expected[i]
-			// 	testutils.AssertSlices(t, exp, act)
-			// }
-			// testutils.AssertInts(t, len(expected), len(expressions))
-		})
-	}
-}
-
-func BenchmarkScanFlat(b *testing.B) {
-	tests := []struct {
-		name  string
-		given string
-	}{
-		// scan+flat(old, doesnt work properly)
-		// 458.5 ns/op	     672 B/op	      10 allocs/op
-		// 695.2 ns/op	    1632 B/op	      19 allocs/op
-		// 2316 ns/op	    4096 B/op	      38 allocs/op
-		// split+plain:
-		// 429.6 ns/op	     768 B/op	       8 allocs/op
-		// 694.1 ns/op	    1168 B/op	      19 allocs/op
-		// 2995 ns/op	    5032 B/op	      55 allocs/op
-		// split+plain2:
-		// 432.3 ns/op	     768 B/op	       8 allocs/op
-		// 694.8 ns/op	    1136 B/op	      19 allocs/op
-		// 2829 ns/op	    4632 B/op	      57 allocs/op
-		// fixed split+plain:
-		// 430.5 ns/op	     768 B/op	       8 allocs/op
-		// 1273 ns/op	    2728 B/op	      35 allocs/op
-		// 3175 ns/op	    5136 B/op	      69 allocs/op
-		// with plain3:
-		//  429.7 ns/op	     672 B/op	       8 allocs/op
-		//  993.7 ns/op	    1720 B/op	      25 allocs/op
-		// 3398 ns/op	    4568 B/op	      53 allocs/op
-		{
-			// 458.5 ns/op	     672 B/op	      10 allocs/op
-			name: "No groups is used",
-			given: `
-			e2:4 b3:2|2
-			f1|3 & c2|2 d2
-			`,
-		},
-		{
-			// 695.2 ns/op	    1632 B/op	      19 allocs/op
-			name: "Riff with simple chord",
-			given: `
-			[e2 & b3] + [0 4 5]
-			`,
-		},
-		{
-			// 2316 ns/op	    4096 B/op	      38 allocs/op
-			name: "All features",
-			given: `
-			e2|3 b3:2|2 & d2 # inline
-			@song1(e2 2):8+T # sequence
-			[a&b] + [2 4] # simple chord
-			[e2 d2 c3]:3 # mod duration
-			[a b] & [c d] # two groups
-			`,
-		},
-	}
-
-	for _, tc := range tests {
-		b.Run(tc.name, func(b *testing.B) {
-			for b.Loop() {
-				// frames, groups := scan(tc.given)
-				// flat(frames, groups)
-				plain3(split(tc.given))
-			}
-		})
-	}
+	// --- multi-line
+	{"multi-line mixed", "x y\n2 + [a b]\n3 + [c d]\nz",
+		[]string{"x", "y", "2 + [", "a", "b", "]", "3 + [", "c", "d", "]", "z"},
+		[]string{"x", "y", "2 + a", "2 + b", "3 + c", "3 + d", "z"},
+	},
+	{"multi-line groups and comments", "[a b] # first\n# note\n[c d]:2 # second",
+		[]string{"[", "a", "b", "]", "[", "c", "d", "] : 2"}, []string{"a", "b", "c : 2", "d : 2"},
+	},
 }
