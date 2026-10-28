@@ -202,33 +202,30 @@ func split(raw string) [][]string {
 		if i := strings.IndexByte(line, '#'); i >= 0 {
 			line = line[:i]
 		}
-
-		prevIsValue := false
-		prevIsJoins := false
-
-		for token := range strings.FieldsSeq(line) {
-			currIsValue := true
-			currIsJoins := prevIsJoins
-
-			switch token {
-			case "+", "-", "*", "/", "%", "^", "|", ":", "&":
-				currIsValue = false
+		var inSeq, inLink, inEach bool
+		for tok := range strings.FieldsSeq(line) {
+			seq, link := true, inLink
+			switch tok {
+			case "+", "-", "*", "/", "%", "^", "|", ":":
+				seq = false
+			case "&":
+				seq = inEach
+			case "[":
+				inEach = true
+			case "]":
+				inEach = false
 			case "@", "$", "(", "{":
-				currIsJoins = true
+				link = true
 			case ")", "}":
-				currIsJoins = false
+				link = false
 			}
-
-			if prevIsValue && currIsValue && !prevIsJoins {
+			if seq && inSeq && !inLink {
 				out = append(out, append([]string(nil), buf...))
 				buf = buf[:0]
 			}
-
-			prevIsValue = currIsValue
-			prevIsJoins = currIsJoins
-			buf = append(buf, token)
+			inSeq, inLink = seq, link
+			buf = append(buf, tok)
 		}
-
 		if len(buf) > 0 {
 			out = append(out, append([]string(nil), buf...))
 			buf = buf[:0]
@@ -238,13 +235,12 @@ func split(raw string) [][]string {
 	return out
 }
 
-// plain2 is plain without a template: rows are built group by group while reading frames.
-func plain2(frames [][]string) [][]string {
+func plain(frames [][]string) [][]string {
 	out := make([][]string, 0, 8)
 	var base, next [][]string // rows before the current group / rows built with it
 	var conn []string         // tokens between the previous item and the next one
-
 	inGroup := false
+
 	for _, f := range frames {
 		b, e := f[0], f[len(f)-1]
 		switch {
@@ -256,18 +252,77 @@ func plain2(frames [][]string) [][]string {
 			conn = f[:len(f)-1]
 			inGroup = true
 		case b == "]":
-			for _, row := range next {
-				out = append(out, append(row, f[1:]...))
+			for _, x := range next {
+				if len(x) > 0 && x[0] == "&" {
+					out = append(out, x)
+					continue
+				}
+				out = append(out, append(x, f[1:]...))
 			}
 			inGroup = false
+		case !inGroup:
+			out = append(out, f)
+		case b == "&":
+			next = append(next, f)
 		default:
-			if !inGroup {
-				out = append(out, f)
-				continue
+			for _, x := range base {
+				if len(x) > 0 && x[0] == "&" {
+					next = append(next, x)
+					continue
+				}
+				next = append(next, slices.Concat(x, conn, f))
 			}
-			for _, row := range base {
-				next = append(next, slices.Concat(row, conn, f))
+		}
+	}
+
+	return out
+}
+
+// plain3 is plain, but rows are built once: items are only counted while reading,
+// and each row (tail included) is created when its group closes.
+func plain3(frames [][]string) [][]string {
+	out := make([][]string, 0, len(frames))
+	var base [][]string // rows before the current group
+	var conn []string   // tokens between the previous item and the next one
+	start := 0          // index of the current group's first item
+	inGroup := false
+
+	for i, f := range frames {
+		b, e := f[0], f[len(f)-1]
+		if b == "]" {
+			items := frames[start:i]
+			var tail []string
+			if e != "[" {
+				tail = f[1:]
 			}
+			rows := make([][]string, 0, len(base)*len(items))
+			for _, item := range items {
+				if item[0] == "&" {
+					rows = append(rows, item)
+					continue
+				}
+				for _, row := range base {
+					if len(row) > 0 && row[0] == "&" {
+						rows = append(rows, row)
+						continue
+					}
+					rows = append(rows, slices.Concat(row, conn, item, tail))
+				}
+			}
+			if e == "[" {
+				base, conn, start = rows, f[1:len(f)-1], i+1
+			} else {
+				out = append(out, rows...)
+				inGroup = false
+			}
+			continue
+		}
+		if e == "[" {
+			base, conn, start, inGroup = [][]string{nil}, f[:len(f)-1], i+1, true
+			continue
+		}
+		if !inGroup {
+			out = append(out, f)
 		}
 	}
 
