@@ -77,7 +77,7 @@ func TestExperiments(t *testing.T) {
 	}
 }
 
-var splitTestCases = []struct {
+var scanTestCases = []struct {
 	name     string
 	given    string
 	expected []string
@@ -151,8 +151,8 @@ var splitTestCases = []struct {
 	},
 }
 
-func TestSplit(t *testing.T) {
-	for _, tc := range splitTestCases {
+func TestScan(t *testing.T) {
+	for _, tc := range scanTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
 			act := scan(tc.given)
@@ -162,8 +162,8 @@ func TestSplit(t *testing.T) {
 	}
 }
 
-func BenchmarkSplit(b *testing.B) {
-	for _, tc := range splitTestCases {
+func BenchmarkScan(b *testing.B) {
+	for _, tc := range scanTestCases {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
 				scan(tc.given)
@@ -172,7 +172,7 @@ func BenchmarkSplit(b *testing.B) {
 	}
 }
 
-var plainTestCases = []struct {
+var flatTestCases = []struct {
 	name     string
 	given    string
 	expected []string
@@ -273,8 +273,8 @@ var plainTestCases = []struct {
 	},
 }
 
-func TestPlain(t *testing.T) {
-	for _, tc := range plainTestCases {
+func TestFlat(t *testing.T) {
+	for _, tc := range flatTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testutils.UseFlags(t)
 			act := flat(scan(tc.given))
@@ -284,8 +284,8 @@ func TestPlain(t *testing.T) {
 	}
 }
 
-func BenchmarkPlain(b *testing.B) {
-	for _, tc := range plainTestCases {
+func BenchmarkFlat(b *testing.B) {
+	for _, tc := range flatTestCases {
 		frames := scan(tc.given)
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
@@ -295,7 +295,7 @@ func BenchmarkPlain(b *testing.B) {
 	}
 }
 
-func BenchmarkSplitPlain(b *testing.B) {
+func BenchmarkScanFlat(b *testing.B) {
 	// Simple_sequence-8         	                                 5005995	       219.0 ns/op	     448 B/op	       6 allocs/op
 	// Simple_sequence_with_modifications-8         	             3845840	       300.2 ns/op	     584 B/op	       6 allocs/op
 	// Simple_sequence_with_repeated_and_parallel_notes-8         	 3772772	       315.4 ns/op	     672 B/op	       6 allocs/op
@@ -317,7 +317,7 @@ func BenchmarkSplitPlain(b *testing.B) {
 	// Group_with_one_parallel_note-8                             	 2712619	       443.3 ns/op	     728 B/op	      14 allocs/op
 	// Group_with_parallel_note_and_modifications-8               	 2244489	       535.2 ns/op	    1152 B/op	      14 allocs/op
 	// Groups_with_various_modifications-8                        	  925500	      1309 ns/op	    2792 B/op	      32 allocs/op
-	tests := slices.Concat(splitTestCases, plainTestCases)
+	tests := slices.Concat(scanTestCases, flatTestCases)
 	for _, tc := range tests {
 		b.Run(tc.name, func(b *testing.B) {
 			for b.Loop() {
